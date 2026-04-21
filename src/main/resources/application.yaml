@@ -2,18 +2,10 @@ spring:
   application:
     name: Backend
   datasource:
-    url: jdbc:h2:mem:backend;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-    # MySQL 설정은 추후 복구용으로 잠시 주석 처리한다.
-    # url: ${MYSQL_URL:jdbc:mysql://localhost:3306/backend?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul}
-    # driver-class-name: com.mysql.cj.jdbc.Driver
-    # username: ${MYSQL_USERNAME:TODO}
-    # password: ${MYSQL_PASSWORD:TODO}
-  h2:
-    console:
-      enabled: true
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/backend}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:test1234}
   jpa:
     hibernate:
       ddl-auto: validate
