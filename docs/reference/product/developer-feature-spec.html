@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>동갑내기 과외하기 — 개발자 기능 명세서</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0e0e10;
+  --card: #1a1a1e;
+  --border: #2a2a2e;
+  --text: #e4e4e7;
+  --muted: #9c9ca4;
+  --accent: #6366f1;
+  --red: #ef4444;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --blue: #3b82f6;
+  --orange: #f97316;
+  --phone-bg: #fafaf9;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+
+/* === Layout === */
+.container { max-width:1400px; margin:0 auto; padding:40px 32px; }
+.page-header { text-align:center; margin-bottom:60px; border-bottom:1px solid var(--border); padding-bottom:40px; }
+.page-header h1 { font-size:32px; font-weight:800; margin-bottom:8px; }
+.page-header .subtitle { color:var(--muted); font-size:15px; }
+.meta-row { display:flex; gap:24px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+.meta-item { font-size:13px; color:var(--muted); }
+.meta-item strong { color:var(--text); }
+
+/* === Screen Section === */
+.screen-section {
+  margin-bottom:80px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  background:var(--card);
+}
+.section-header {
+  background:linear-gradient(135deg,#1e1b4b,#312e81);
+  padding:20px 32px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.section-header h2 { font-size:20px; font-weight:700; }
+.section-header .page-code {
+  background:rgba(255,255,255,.1);
+  padding:4px 12px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.5px;
+}
+
+/* Meta table */
+.spec-meta {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+}
+.spec-meta .meta-cell {
+  padding:10px 16px;
+  border-right:1px solid var(--border);
+}
+.spec-meta .meta-cell:last-child { border-right:none; }
+.spec-meta .meta-label { color:var(--muted); font-size:11px; display:block; margin-bottom:2px; }
+
+/* Content layout */
+.spec-body {
+  display:grid;
+  grid-template-columns:320px 1fr;
+  min-height:500px;
+}
+
+/* Phone mockup */
+.mockup-side {
+  padding:24px;
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+  background:#111114;
+}
+.phone-frame {
+  width:220px;
+  height:420px;
+  border:3px solid #555;
+  border-radius:24px;
+  background:var(--phone-bg);
+  overflow:hidden;
+  position:relative;
+  flex-shrink:0;
+}
+.phone-frame.small { width:180px; height:340px; border-radius:20px; }
+.phone-notch {
+  width:80px; height:20px;
+  background:#555;
+  border-radius:0 0 12px 12px;
+  margin:0 auto;
+}
+.phone-body { padding:8px; height:calc(100% - 20px); display:flex; flex-direction:column; font-size:8px; color:#333; overflow:hidden; }
+
+/* Phone inner components */
+.ph-header { display:flex; justify-content:space-between; align-items:center; padding:4px 2px; margin-bottom:4px; font-size:7px; font-weight:600; }
+.ph-badge { background:#eee; padding:1px 4px; border-radius:3px; font-size:6px; }
+.ph-title { text-align:center; font-weight:700; font-size:10px; margin:6px 0; color:#1a1a2e; }
+.ph-subtitle { text-align:center; font-size:7px; color:#666; margin-bottom:6px; }
+.ph-btn {
+  display:block; width:90%; margin:6px auto;
+  background:#6c5ce7; color:white;
+  border:none; border-radius:8px;
+  padding:6px; font-size:8px; font-weight:600;
+  text-align:center;
+}
+.ph-btn.disabled { background:#ccc; color:#999; }
+.ph-btn.green { background:#00b894; }
+.ph-chip-group { display:flex; flex-wrap:wrap; gap:3px; padding:0 4px; margin:4px 0; }
+.ph-chip { padding:2px 5px; border:1px solid #ddd; border-radius:4px; font-size:6px; background:white; }
+.ph-chip.sel { background:#6c5ce7; color:white; border-color:#6c5ce7; }
+.ph-character { text-align:center; font-size:40px; margin:8px 0; }
+.ph-bubble { background:#fff; border:2px solid #6c5ce7; border-radius:10px; padding:5px 8px; margin:4px 8px; font-size:7px; position:relative; text-align:center; }
+.ph-card { background:#f0edff; border-radius:8px; padding:8px; margin:4px; font-size:7px; }
+.ph-progress { height:6px; background:#eee; border-radius:3px; margin:4px 8px; overflow:hidden; }
+.ph-progress-fill { height:100%; background:linear-gradient(90deg,#6c5ce7,#a29bfe); border-radius:3px; }
+.ph-nav { display:flex; justify-content:space-around; padding:4px; border-top:1px solid #eee; margin-top:auto; font-size:6px; }
+.ph-nav-item { text-align:center; }
+.ph-nav-item.active { color:#6c5ce7; font-weight:700; }
+.ph-gnb { display:flex; align-items:center; gap:4px; padding:4px; font-size:7px; font-weight:600; background:#f8f8ff; border-radius:6px; margin-bottom:4px; }
+.ph-gnb .back { font-size:8px; }
+.ph-ox { display:flex; gap:4px; justify-content:center; margin:4px 0; }
+.ph-ox button { padding:3px 8px; border-radius:6px; border:1px solid #ddd; font-size:7px; font-weight:600; background:white; }
+.ph-ox .correct { border-color:#00b894; color:#00b894; }
+.ph-ox .wrong { border-color:#e17055; color:#e17055; }
+.ph-mic { text-align:center; font-size:24px; margin:8px 0; }
+.ph-wave { display:flex; justify-content:center; gap:2px; height:12px; align-items:end; }
+.ph-wave span { width:2px; background:#6c5ce7; border-radius:1px; }
+.ph-questbook { background:#8b7355; color:white; font-size:6px; padding:3px 6px; border-radius:4px 4px 0 0; text-align:center; margin:0 8px; font-weight:600; }
+.ph-reward-coin { text-align:center; font-size:28px; }
+.ph-schedule { padding:4px 8px; }
+.ph-toggle { display:flex; gap:3px; margin:3px 0; }
+.ph-toggle span { padding:2px 6px; border:1px solid #ddd; border-radius:4px; font-size:6px; background:white; }
+.ph-toggle span.active { background:#6c5ce7; color:white; border-color:#6c5ce7; }
+.ph-days { display:flex; gap:2px; margin:3px 0; }
+.ph-days span { width:16px; height:16px; display:flex; align-items:center; justify-content:center; border:1px solid #ddd; border-radius:50%; font-size:5px; }
+.ph-days span.active { background:#6c5ce7; color:white; border-color:#6c5ce7; }
+
+/* Annotation numbers */
+.ann {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px;
+  background:var(--red);
+  color:white;
+  border-radius:50%;
+  font-size:8px; font-weight:700;
+  position:absolute;
+  z-index:2;
+}
+
+.mockup-label { font-size:11px; color:var(--muted); font-weight:500; text-align:center; }
+
+/* Multi-state row */
+.state-row {
+  display:flex; gap:16px; flex-wrap:wrap;
+  padding:16px; justify-content:center;
+}
+.state-col { text-align:center; }
+.state-label { font-size:10px; color:var(--muted); margin-top:6px; max-width:180px; }
+
+/* Description side */
+.desc-side { padding:24px; overflow-y:auto; }
+
+.desc-block { margin-bottom:24px; }
+.desc-block h3 {
+  font-size:14px; font-weight:700;
+  padding:6px 12px;
+  background:rgba(99,102,241,.15);
+  border-left:3px solid var(--accent);
+  border-radius:0 6px 6px 0;
+  margin-bottom:12px;
+}
+.desc-block h4 {
+  font-size:13px; font-weight:600;
+  color:var(--accent);
+  margin:12px 0 6px;
+}
+.desc-list { list-style:none; padding:0; }
+.desc-list li {
+  position:relative;
+  padding:6px 0 6px 24px;
+  font-size:13px;
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+.desc-list li::before {
+  content:attr(data-num);
+  position:absolute; left:0; top:6px;
+  width:16px; height:16px;
+  background:var(--red);
+  color:white;
+  border-radius:50%;
+  font-size:9px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+.desc-list li:last-child { border-bottom:none; }
+.desc-text { font-size:13px; color:#c4c4cc; margin:4px 0; }
+.desc-detail { font-size:12px; color:var(--muted); margin-left:8px; }
+.desc-detail li::before { display:none; }
+.desc-detail li { padding:3px 0 3px 12px; border-bottom:none; }
+.desc-detail li::after { content:''; position:absolute; left:0; top:11px; width:4px; height:4px; background:var(--muted); border-radius:50%; }
+
+/* Tags */
+.tag {
+  display:inline-block; padding:1px 6px;
+  border-radius:4px; font-size:10px; font-weight:600;
+  margin-right:4px;
+}
+.tag-state { background:rgba(99,102,241,.2); color:#818cf8; }
+.tag-action { background:rgba(34,197,94,.15); color:var(--green); }
+.tag-error { background:rgba(239,68,68,.15); color:var(--red); }
+.tag-trigger { background:rgba(249,115,22,.15); color:var(--orange); }
+.tag-nav { background:rgba(59,130,246,.15); color:var(--blue); }
+.tag-api { background:rgba(234,179,8,.15); color:var(--yellow); }
+
+/* Common rules section */
+.common-section {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:60px;
+}
+.common-header {
+  background:linear-gradient(135deg,#1c1917,#44403c);
+  padding:20px 32px;
+}
+.common-header h2 { font-size:20px; font-weight:700; }
+.common-body { padding:32px; }
+.rule-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.rule-card {
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px;
+  background:rgba(255,255,255,.02);
+}
+.rule-card h4 {
+  font-size:14px; font-weight:700;
+  margin-bottom:12px;
+  color:var(--accent);
+}
+.rule-card ul { list-style:disc; padding-left:16px; }
+.rule-card li { font-size:13px; margin-bottom:6px; color:#c4c4cc; }
+.rule-card code {
+  background:rgba(99,102,241,.12);
+  padding:1px 5px;
+  border-radius:3px;
+  font-size:11px;
+  font-family:'SF Mono',monospace;
+  color:#a5b4fc;
+}
+
+/* State table */
+.state-table {
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+  margin:8px 0;
+}
+.state-table th {
+  background:rgba(99,102,241,.1);
+  padding:6px 10px;
+  text-align:left;
+  font-weight:600;
+  border-bottom:1px solid var(--border);
+}
+.state-table td {
+  padding:6px 10px;
+  border-bottom:1px solid rgba(255,255,255,.04);
+  vertical-align:top;
+}
+.state-table .condition { color:var(--yellow); font-weight:500; }
+.state-table .result { color:#c4c4cc; }
+
+/* Error case box */
+.error-box {
+  border:1px solid rgba(239,68,68,.3);
+  border-radius:8px;
+  padding:12px;
+  margin:8px 0;
+  background:rgba(239,68,68,.05);
+}
+.error-box h5 { font-size:12px; color:var(--red); font-weight:600; margin-bottom:6px; }
+.error-box p { font-size:12px; color:#c4c4cc; }
+
+/* Flow arrow */
+.flow-section { padding:32px; border-top:1px solid var(--border); }
+.flow-title { font-size:14px; font-weight:700; color:var(--accent); margin-bottom:16px; }
+.flow-diagram {
+  display:flex; align-items:center; gap:8px;
+  flex-wrap:wrap; padding:16px;
+  background:rgba(0,0,0,.2);
+  border-radius:12px;
+}
+.flow-box {
+  padding:8px 14px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:12px;
+  font-weight:500;
+  background:var(--card);
+  white-space:nowrap;
+}
+.flow-box.active-flow { border-color:var(--accent); color:var(--accent); }
+.flow-arrow { color:var(--muted); font-size:16px; }
+
+@media (max-width:900px) {
+  .spec-body { grid-template-columns:1fr; }
+  .mockup-side { border-right:none; border-bottom:1px solid var(--border); }
+  .rule-grid { grid-template-columns:1fr; }
+  .spec-meta { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ============ PAGE HEADER ============ -->
+<div class="page-header">
+  <h1>동갑내기 과외하기 — 개발자 기능 명세서</h1>
+  <p class="subtitle">Developer Functional Specification for Peer Tutoring App</p>
+  <div class="meta-row">
+    <div class="meta-item"><strong>PO</strong> 김민채</div>
+    <div class="meta-item"><strong>버전</strong> 1차 프로토타입</div>
+    <div class="meta-item"><strong>작성일</strong> 2026.05.28</div>
+    <div class="meta-item"><strong>대상</strong> 백엔드/프론트엔드 개발자</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!--  COMMON RULES                                                 -->
+<!-- ============================================================ -->
+<div class="common-section">
+  <div class="common-header">
+    <h2>📌 공통 규칙 (Global Rules)</h2>
+  </div>
+  <div class="common-body">
+    <div class="rule-grid">
+
+      <div class="rule-card">
+        <h4>1. 화면 전환 규칙</h4>
+        <ul>
+          <li>모든 화면 전환은 <code>fade-out</code>(400ms) → <code>fade-in</code>(500ms) 순서로 처리</li>
+          <li>전환 중 중복 클릭 방지 처리 필수 (버튼 disable 또는 flag)</li>
+          <li>뒤로가기 시에도 동일한 트랜지션 적용</li>
+          <li>딥링크/푸시알림으로 특정 화면 직접 진입 시 온보딩 완료 여부 체크 필수</li>
+        </ul>
+      </div>
+
+      <div class="rule-card">
+        <h4>2. 하단 네비게이션 바 표시 규칙</h4>
+        <ul>
+          <li>표시 화면: <code>홈(1.0)</code>, <code>수업기록(7.0)</code></li>
+          <li>숨김 화면: 온보딩, 준비화면, 수업공간(Core Loop), 칭찬, 보상, 설정</li>
+          <li>탭 구성: 홈 / 수업공간 / 수업기록 (3탭)</li>
+          <li>수업공간 탭 클릭 시 → <code>2.0 준비 화면</code>으로 직접 이동</li>
+          <li>현재 활성 탭은 <code>.active</code> 클래스로 색상 변경</li>
+        </ul>
+      </div>
+
+      <div class="rule-card">
+        <h4>3. 코인 / 배지 / 레벨 시스템</h4>
+        <ul>
+          <li>코인: 세션 1회 완료 시 <code>+500c</code> 지급 (추후 단원 난이도별 차등)</li>
+          <li>배지 레벨: 세션 완료 횟수 기반 자동 레벨업</li>
+          <li>Lv.1 새내기 선생님 → Lv.2 똑똑한 선생님 → ... (단계별 정의 필요)</li>
+          <li>코인/레벨은 보상 화면에서 갱신 후, 홈 복귀 시 반영</li>
+          <li>코인 잔액은 <code>home-header</code>에 항상 노출</li>
+        </ul>
+      </div>
+
+      <div class="rule-card">
+        <h4>4. 퀘스트북 힌트노트 공통 동작</h4>
+        <ul>
+          <li>수업공간(3.0) 화면에서만 노출, 하단 펼침 패널 (bottom sheet)</li>
+          <li>닫힌 상태: 하단에 "힌트 노트 펼치기" 탭 버튼만 노출</li>
+          <li>열린 상태: <code>.open</code> 클래스 → <code>bottom: 0</code> 전환 (하단에서 위로 슬라이드)</li>
+          <li>자동 펼침 트리거: 오답 선택 시 or 정답 오선택 차단 시</li>
+          <li>글로우 이펙트: <code>.glowing</code> 클래스 → 하단 탭 버튼 발광 애니메이션</li>
+          <li>형광펜: <code>.highlighted</code> 클래스 → 300ms 딜레이로 순차 적용</li>
+        </ul>
+      </div>
+
+      <div class="rule-card">
+        <h4>5. TTS 시뮬레이션 규칙 (프로토타입)</h4>
+        <ul>
+          <li>실제 STT 미구현 — 마이크 UI + Waveform 애니메이션으로 시뮬레이션</li>
+          <li>마이크 클릭 1회: 녹음 시작 (Waveform 활성 + 힌트노트 탭 글로우)</li>
+          <li>마이크 클릭 2회: 녹음 종료 (Waveform 비활성 + "설명완료" 버튼 노출)</li>
+          <li>녹음 중 다른 화면 이동 불가</li>
+          <li>향후 실제 STT 적용 시 마이크 상태를 API 호출로 대체</li>
+        </ul>
+      </div>
+
+      <div class="rule-card">
+        <h4>6. 커리큘럼 칩 선택 규칙</h4>
+        <ul>
+          <li>단일 선택만 허용 (선택 시 나머지 deselect)</li>
+          <li>"실력 진단" 버튼 클릭 시 → 모든 칩 deselect (추후 진단 플로우 연결)</li>
+          <li>칩 목록: 정수와 유리수 / 일차방정식 / 분수의 계산 / 도형의 기초 / 비례와 반비례 / 통계의 기초 / 소수의 나눗셈 / 규칙과 대응</li>
+          <li>선택된 칩은 온보딩 ↔ 설정 화면 간 동기화 필수</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 0.1  온보딩 — 시작 단원 선택                           -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>0.1 시작 단원 선택 (온보딩 1/2)</h2>
+    <span class="page-code">SCR-OB01</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>앱 진입 → 온보딩 1단계</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>회원가입 완료 직후 최초 1회</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>없음 (첫 화면)</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>0.2 시간표 설정</div>
+  </div>
+  <div class="spec-body">
+    <div class="mockup-side">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-body">
+          <div style="text-align:center;margin:8px 0;position:relative">
+            <span class="ann" style="left:4px;top:-2px">1</span>
+            <span style="font-size:9px;color:#999">1 / 2</span>
+          </div>
+          <div style="position:relative">
+            <span class="ann" style="left:4px;top:0">2</span>
+            <div class="ph-title">어떤 수학 단원부터<br/>과외를 시작할까요?</div>
+            <div class="ph-subtitle">선생님이 가르칠 단원을 골라주세요!</div>
+          </div>
+          <div style="position:relative">
+            <span class="ann" style="left:4px;top:2px">3</span>
+            <div style="text-align:center;margin:4px 0">
+              <span style="font-size:7px;background:#f0edff;padding:3px 8px;border-radius:6px;color:#6c5ce7;font-weight:600">📝 나의 수학 실력 진단받기</span>
+            </div>
+          </div>
+          <div style="position:relative">
+            <span class="ann" style="left:4px;top:2px">4</span>
+            <div style="font-size:6px;color:#999;text-align:center;margin:2px 0">또는 직접 선택하기</div>
+            <div class="ph-chip-group">
+              <span class="ph-chip">정수와 유리수</span>
+              <span class="ph-chip">일차방정식</span>
+              <span class="ph-chip sel">분수의 계산</span>
+              <span class="ph-chip">도형의 기초</span>
+              <span class="ph-chip">비례와 반비례</span>
+              <span class="ph-chip">통계의 기초</span>
+              <span class="ph-chip">소수의 나눗셈</span>
+              <span class="ph-chip">규칙과 대응</span>
+            </div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="position:relative">
+            <span class="ann" style="left:4px;top:2px">5</span>
+            <div class="ph-btn">➡️ 다음으로</div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">온보딩 1단계 — 초기 상태</div>
+    </div>
+
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>스텝 인디케이터</strong>
+            <p class="desc-text">"1 / 2" 텍스트 표시. 현재 온보딩 진행 단계를 알려줌.</p>
+          </li>
+          <li data-num="2">
+            <strong>타이틀 & 안내 멘트</strong>
+            <p class="desc-text">메인: "어떤 수학 단원부터 과외를 시작할까요?"<br/>서브: "선생님이 가르칠 단원을 골라주세요!"</p>
+          </li>
+          <li data-num="3">
+            <strong>레벨 진단 버튼</strong> <span class="tag tag-action">ACTION</span>
+            <p class="desc-text">"📝 나의 수학 실력 진단받기" — 클릭 시 모든 커리큘럼 칩 deselect 처리</p>
+            <p class="desc-detail">→ 프로토타입에서는 진단 플로우 미구현. 추후 진단 테스트 화면으로 연결 예정</p>
+          </li>
+          <li data-num="4">
+            <strong>커리큘럼 칩 리스트</strong> <span class="tag tag-state">SINGLE SELECT</span>
+            <p class="desc-text">중1~2 수학 과정 8개 단원. 단일 선택만 허용.</p>
+            <ul class="desc-detail">
+              <li>칩 클릭 시: 해당 칩 <code>.selected</code> + 나머지 deselect</li>
+              <li>기본 선택값: "분수의 계산" (프로토타입 기준)</li>
+              <li>선택값은 로컬 저장 → 설정 화면과 동기화</li>
+              <li>칩 미선택 상태에서 "다음으로" 클릭 시 → 선택 유도 토스트 노출</li>
+            </ul>
+          </li>
+          <li data-num="5">
+            <strong>[다음으로 ➡️] 버튼</strong> <span class="tag tag-nav">NAV</span>
+            <p class="desc-text">클릭 시 → <code>0.2 과외 시간표 설정 화면</code>으로 전환</p>
+            <p class="desc-detail">→ 칩 1개 이상 선택 or 진단 완료 시에만 활성화</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Case</h5>
+        <p>• 칩 미선택 + 진단 미완료 상태에서 "다음으로" 클릭 → 버튼 비활성 또는 "단원을 선택해주세요" 토스트<br/>
+        • 진단 버튼 클릭 → 진단 플로우 진입 후 이탈 시 → 마지막 선택된 칩 유지</p>
+      </div>
+
+      <div class="desc-block">
+        <h4>API 요구사항</h4>
+        <table class="state-table">
+          <tr><th>항목</th><th>설명</th></tr>
+          <tr><td class="condition">GET /api/curriculum</td><td class="result">커리큘럼 칩 목록 조회 (추후 단원 추가 시 동적 로딩)</td></tr>
+          <tr><td class="condition">POST /api/user/onboarding</td><td class="result">선택 단원 저장 <code>{ curriculum_id, step: 1 }</code></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 0.2  온보딩 — 시간표 설정                              -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>0.2 과외 시간표 설정 (온보딩 2/2)</h2>
+    <span class="page-code">SCR-OB02</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>앱 진입 → 온보딩 2단계</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>0.1 완료 후 자동 전환</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>0.1 단원 선택</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>1.0 홈 화면</div>
+  </div>
+  <div class="spec-body">
+    <div class="mockup-side">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-body">
+          <div style="text-align:center;margin:8px 0">
+            <span style="font-size:9px;color:#999">2 / 2</span>
+          </div>
+          <div class="ph-title" style="font-size:9px">AI 학생과 만날<br/>과외 시간을 정해주세요!</div>
+          <div class="ph-subtitle">정해진 시간에 알림을 보내드릴게요</div>
+          <div class="ph-card">
+            <div style="position:relative">
+              <span class="ann" style="left:-4px;top:-4px">1</span>
+              <div style="font-size:7px;font-weight:600;margin-bottom:4px">과외 빈도</div>
+              <div class="ph-toggle">
+                <span>주 2회</span>
+                <span class="active">주 3회</span>
+              </div>
+            </div>
+            <div style="margin-top:8px;position:relative">
+              <span class="ann" style="left:-4px;top:-4px">2</span>
+              <div style="font-size:7px;font-weight:600;margin-bottom:4px">요일 선택</div>
+              <div class="ph-days">
+                <span>월</span><span class="active">화</span><span>수</span><span class="active">목</span><span>금</span><span class="active">토</span><span>일</span>
+              </div>
+            </div>
+            <div style="margin-top:8px;position:relative">
+              <span class="ann" style="left:-4px;top:-4px">3</span>
+              <div style="font-size:7px;font-weight:600;margin-bottom:4px">시간 선택</div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="font-size:7px;background:white;padding:2px 6px;border:1px solid #ddd;border-radius:4px">오후 5시</span>
+              </div>
+            </div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="position:relative">
+            <span class="ann" style="left:4px;top:2px">4</span>
+            <div class="ph-btn">🏠 설정 완료 및 홈으로 가기</div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">온보딩 2단계 — 시간표 설정</div>
+    </div>
+
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>빈도 선택 토글</strong> <span class="tag tag-state">TOGGLE</span>
+            <p class="desc-text">"주 2회" / "주 3회" 택1. 기본값: 주 3회</p>
+            <ul class="desc-detail">
+              <li>선택 변경 시 → 선택된 요일 수가 빈도와 불일치하면 초과 요일 자동 해제 (앞에서부터)</li>
+              <li>주 2회 선택 상태에서 이미 3개 요일 선택 → 가장 먼저 선택된 요일 1개 해제</li>
+            </ul>
+          </li>
+          <li data-num="2">
+            <strong>요일 선택 버튼</strong> <span class="tag tag-state">MULTI SELECT</span>
+            <p class="desc-text">월~일 7개 버튼 다중 선택. 빈도 수에 맞춰 선택 제한.</p>
+            <ul class="desc-detail">
+              <li>"주 2회" 선택 시 최대 2개 요일까지만 선택 가능</li>
+              <li>"주 3회" 선택 시 최대 3개 요일까지만 선택 가능</li>
+              <li>초과 선택 시 → 토스트: "주 N회 설정이에요. 요일을 N개만 골라주세요"</li>
+              <li>기본값: 화, 목, 토</li>
+            </ul>
+          </li>
+          <li data-num="3">
+            <strong>시간 선택 드롭다운</strong> <span class="tag tag-state">DROPDOWN</span>
+            <p class="desc-text">오후 3시 ~ 오후 8시 (1시간 단위, 6개 옵션). 기본값: 오후 5시</p>
+            <p class="desc-detail">설정한 요일 + 시간에 과외 시작 푸시알림을 발송하기 위한 설정</p>
+          </li>
+          <li data-num="4">
+            <strong>[설정 완료 및 홈으로 가기 🏠] 버튼</strong> <span class="tag tag-nav">NAV</span>
+            <p class="desc-text">클릭 시: 온보딩 데이터 저장 + 푸시알림 스케줄 등록 → <code>1.0 홈 화면</code>으로 전환</p>
+            <p class="desc-detail">→ 온보딩 완료 플래그를 서버/로컬에 저장하여 재노출 방지</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Cases</h5>
+        <p>• 요일 미선택 상태에서 [설정 완료] 클릭 → 버튼 비활성 유지 + "요일을 골라주세요" 토스트<br/>
+        • 빈도를 주 3회 → 주 2회로 변경했을 때 이미 3개 요일 선택 → 가장 먼저 선택된 요일 1개 자동 해제<br/>
+        • 푸시알림 권한 미허용 상태에서 [설정 완료] 클릭 → 알림 권한 요청 팝업 노출, 거부 시에도 온보딩은 완료 처리 (알림 없이 사용 가능)<br/>
+        • 뒤로가기(0.1로) 시 → 시간표 설정값 임시 보존, 다시 돌아오면 복원</p>
+      </div>
+
+      <div class="desc-block">
+        <h4>빈도 × 요일 유효성 검증 로직</h4>
+        <table class="state-table">
+          <tr><th>조건</th><th>동작</th></tr>
+          <tr><td class="condition">선택 요일 수 < 빈도 수</td><td class="result">[설정 완료] 버튼 비활성 + "요일을 더 골라주세요" 안내</td></tr>
+          <tr><td class="condition">선택 요일 수 = 빈도 수</td><td class="result">[설정 완료] 버튼 활성</td></tr>
+          <tr><td class="condition">선택 요일 수 > 빈도 수</td><td class="result">초과 요일 자동 해제 또는 추가 선택 차단</td></tr>
+        </table>
+      </div>
+
+      <div class="desc-block">
+        <h4>API 요구사항</h4>
+        <table class="state-table">
+          <tr><th>항목</th><th>설명</th></tr>
+          <tr><td class="condition">POST /api/user/schedule</td><td class="result"><code>{ frequency: 3, days: ["tue","thu","sat"], time: "17:00" }</code></td></tr>
+          <tr><td class="condition">POST /api/notifications/register</td><td class="result">설정된 요일 + 시간 기반 푸시알림 스케줄 등록</td></tr>
+          <tr><td class="condition">POST /api/user/onboarding/complete</td><td class="result">온보딩 완료 플래그 세팅. 이후 앱 진입 시 홈으로 직행</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 1.0  홈 화면                                          -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>1.0 홈 화면 (로비)</h2>
+    <span class="page-code">SCR-HOME</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>메인 → 홈 (탭 1)</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>온보딩 완료 후 / 보상 후 복귀</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>다양 (온보딩, 보상, 설정)</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>2.0 준비 / 6.0 설정 / 7.0 기록</div>
+  </div>
+
+  <!-- Multi-state mockups -->
+  <div class="flow-section">
+    <div class="flow-title">화면 상태 변화 (3가지 상태)</div>
+    <div class="state-row">
+
+      <!-- State A: 초기 -->
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-header">
+              <span>🎖️ <span style="font-size:6px">Lv.1 새내기 선생님</span></span>
+              <span>🪙 0c ⚙️</span>
+            </div>
+            <div style="font-size:7px;padding:0 4px">
+              <div>3단원 분수</div>
+              <div class="ph-progress"><div class="ph-progress-fill" style="width:0%"></div></div>
+              <div style="font-size:6px;color:#999">0% 완료</div>
+            </div>
+            <div class="ph-character">🧒</div>
+            <div class="ph-bubble">안녕 선생님! 오늘도 만나서 반가워요 😊</div>
+            <div style="flex:1"></div>
+            <div class="ph-nav">
+              <div class="ph-nav-item active">🏠 홈</div>
+              <div class="ph-nav-item">📖 수업공간</div>
+              <div class="ph-nav-item">📋 수업기록</div>
+            </div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State A</strong><br/>홈 진입 직후 (말풍선 표시)</div>
+      </div>
+
+      <!-- State B: 과외 요청 팝업 -->
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-header">
+              <span>🎖️ <span style="font-size:6px">Lv.1 새내기 선생님</span></span>
+              <span>🪙 0c ⚙️</span>
+            </div>
+            <div style="font-size:7px;padding:0 4px">
+              <div>3단원 분수</div>
+              <div class="ph-progress"><div class="ph-progress-fill" style="width:0%"></div></div>
+            </div>
+            <div class="ph-character">🧒</div>
+            <div class="ph-bubble" style="border-color:#e17055">쌤 오늘 학교에서 분수 배웠는데 하나도 모르겠어요 ㅠㅠ</div>
+            <div class="ph-btn" style="font-size:7px">📚 과외하러가기</div>
+            <div style="flex:1"></div>
+            <div class="ph-nav">
+              <div class="ph-nav-item active">🏠 홈</div>
+              <div class="ph-nav-item">📖 수업공간</div>
+              <div class="ph-nav-item">📋 수업기록</div>
+            </div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State B</strong><br/>2초 후 과외 요청 팝업 자동 노출</div>
+      </div>
+
+      <!-- State C: 수업 후 복귀 -->
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-header">
+              <span>🎖️ <span style="font-size:6px">Lv.2 똑똑한 선생님</span></span>
+              <span>🪙 500c ⚙️</span>
+            </div>
+            <div style="font-size:7px;padding:0 4px">
+              <div>3단원 분수</div>
+              <div class="ph-progress"><div class="ph-progress-fill" style="width:45%"></div></div>
+              <div style="font-size:6px;color:#22c55e">45% 완료</div>
+            </div>
+            <div class="ph-character">🧒</div>
+            <div class="ph-bubble" style="border-color:#22c55e">선생님 덕분에 분수 마스터! 다음에 또 만나요! 🥰</div>
+            <div style="flex:1"></div>
+            <div class="ph-nav">
+              <div class="ph-nav-item active">🏠 홈</div>
+              <div class="ph-nav-item">📖 수업공간</div>
+              <div class="ph-nav-item">📋 수업기록</div>
+            </div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State C</strong><br/>수업 완료 후 홈 복귀 (갱신된 상태)</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="spec-body" style="border-top:1px solid var(--border)">
+    <div class="mockup-side" style="border-right:1px solid var(--border)">
+      <div style="padding:8px;font-size:12px;text-align:left;color:var(--muted)">
+        <p style="margin-bottom:12px;font-weight:600;color:var(--text)">상태별 전환 흐름</p>
+        <div class="flow-diagram" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <div class="flow-box active-flow">A. 홈 진입 → 말풍선</div>
+          <div style="color:var(--muted);padding-left:12px">↓ 2초 자동 타이머</div>
+          <div class="flow-box active-flow">B. 과외 요청 팝업</div>
+          <div style="color:var(--muted);padding-left:12px">↓ [과외하러가기] 클릭</div>
+          <div class="flow-box">→ 2.0 준비 화면</div>
+          <div style="color:var(--muted);padding-left:12px;margin-top:8px">── 또는 ──</div>
+          <div class="flow-box">보상 화면 [확인] 클릭</div>
+          <div style="color:var(--muted);padding-left:12px">↓</div>
+          <div class="flow-box active-flow">C. 수업 완료 후 홈</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>상단 헤더 바</strong>
+            <p class="desc-text">좌측: 배지 아이콘 🎖️ + 레벨명 (예: "Lv.1 새내기 선생님")</p>
+            <p class="desc-text">우측: 코인 잔액 🪙 "Nc" + 설정 버튼 ⚙️</p>
+            <ul class="desc-detail">
+              <li>레벨명은 <code>GET /api/user/profile</code> 응답의 level 기반</li>
+              <li>코인 잔액은 실시간 갱신 (보상 후 복귀 시 반영)</li>
+              <li>⚙️ 클릭 → <code>6.0 설정 화면</code>으로 이동</li>
+            </ul>
+          </li>
+          <li data-num="2">
+            <strong>단원 진척도 프로그레스 바</strong>
+            <p class="desc-text">현재 선택 단원명 + 진행률(%) + 프로그레스 바</p>
+            <ul class="desc-detail">
+              <li>초기: 0%. 세션 완료 시마다 서버에서 갱신된 값 반영</li>
+              <li>State C에서 자동 업데이트 (예: 0% → 45%)</li>
+              <li>100% 도달 시 → 단원 완료 축하 모달 노출 (추후 구현)</li>
+            </ul>
+          </li>
+          <li data-num="3">
+            <strong>AI 학생 캐릭터 메인 뷰</strong> <span class="tag tag-trigger">TRIGGER</span>
+            <p class="desc-text">캐릭터 이미지 + 부유(float) 애니메이션</p>
+            <ul class="desc-detail">
+              <li>캐릭터 터치/클릭 → 과외 요청 팝업 즉시 표시 (수업 미완료 시에만)</li>
+              <li>수업 완료 상태(State C) → 터치해도 팝업 미노출</li>
+            </ul>
+          </li>
+          <li data-num="4">
+            <strong>대화 말풍선</strong>
+            <p class="desc-text">State A: "안녕 선생님! 오늘도 만나서 반가워요 😊"</p>
+            <p class="desc-text">State C: "선생님 덕분에 분수 마스터! 다음에 또 만나요! 🥰"</p>
+          </li>
+          <li data-num="5">
+            <strong>과외 요청 팝업</strong> <span class="tag tag-trigger">AUTO 2s</span>
+            <p class="desc-text">홈 진입 2초 후 자동 노출 OR 캐릭터 터치로 즉시 노출</p>
+            <ul class="desc-detail">
+              <li>기존 말풍선 숨김 → 과외 요청 말풍선 + [과외하러가기 📚] 버튼 표시</li>
+              <li>말풍선: "쌤 오늘 학교에서 분수 배웠는데 하나도 모르겠어요 ㅠㅠ"</li>
+              <li>버튼 클릭 → <code>2.0 준비 화면</code>으로 전환</li>
+              <li><code>lessonCompleted === true</code> 시 팝업 미노출, 말풍선만 표시</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="desc-block">
+        <h4>State C — 수업 완료 후 홈 복귀 시 갱신 항목</h4>
+        <table class="state-table">
+          <tr><th>UI 요소</th><th>변경 내용</th></tr>
+          <tr><td class="condition">코인 잔액</td><td class="result"><code>totalCoins</code> 값 반영 (예: 0c → 500c)</td></tr>
+          <tr><td class="condition">레벨명</td><td class="result">"Lv.1 새내기 선생님" → "Lv.2 똑똑한 선생님"</td></tr>
+          <tr><td class="condition">프로그레스 바</td><td class="result">0% → 45% (서버 응답 기반)</td></tr>
+          <tr><td class="condition">말풍선</td><td class="result">완료 후 멘트로 교체</td></tr>
+          <tr><td class="condition">과외 요청 팝업</td><td class="result">비노출</td></tr>
+          <tr><td class="condition">수업기록(7.0)</td><td class="result">빈 상태 → 기록 카드 1건 추가</td></tr>
+        </table>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Cases</h5>
+        <p>• 홈 진입 시 네트워크 오류 → 마지막 캐싱된 프로필 표시 + "연결 상태를 확인해주세요" 토스트<br/>
+        • 과외 요청 팝업 2초 자동 타이머 중 캐릭터 터치 → 타이머 취소 + 팝업 즉시 노출<br/>
+        • 수업 완료 상태(State C)에서 수업공간 탭 클릭 → 준비 화면(2.0)으로 이동 (다음 세션 시작 가능)<br/>
+        • 앱 백그라운드 → 포그라운드 복귀 시 → <code>GET /api/session/status</code> 재호출하여 상태 갱신</p>
+      </div>
+
+      <div class="desc-block">
+        <h4>API 요구사항</h4>
+        <table class="state-table">
+          <tr><th>항목</th><th>설명</th></tr>
+          <tr><td class="condition">GET /api/user/profile</td><td class="result">레벨, 코인 잔액, 선택 단원, 진척도 조회</td></tr>
+          <tr><td class="condition">GET /api/session/status</td><td class="result">오늘의 수업 완료 여부 → 팝업 노출 조건 결정</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 2.0  수업 준비 화면                                    -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>2.0 수업 로딩 (준비 화면)</h2>
+    <span class="page-code">SCR-PREP</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>홈 → 과외하러가기 → 준비</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>[과외하러가기] 또는 수업공간 탭</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>1.0 홈</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>3.0 수업 시작</div>
+  </div>
+
+  <div class="flow-section">
+    <div class="flow-title">화면 상태 변화 (5초 대기 → 버튼 활성)</div>
+    <div class="state-row">
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div style="font-size:7px;padding:4px">◀ 돌아가기</div>
+            <div style="padding:8px;text-align:center">
+              <div style="font-size:6px;background:#f0edff;display:inline-block;padding:2px 6px;border-radius:4px;color:#6c5ce7">오늘의 수업</div>
+              <div class="ph-title">📐 분수의 세계</div>
+              <div class="ph-card" style="text-align:left;font-size:7px">
+                <div>① 분수란? (개념이해)</div>
+                <div>② 분수의 덧셈과 뺄셈 (계산과정)</div>
+              </div>
+              <div style="font-size:7px;color:#999;margin-top:6px">💡 설명할 내용을 머릿속으로 정리해 보세요! (약 5초)</div>
+            </div>
+            <div style="flex:1"></div>
+            <div class="ph-btn disabled">🎓 수업 시작하기 (5)</div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State A</strong><br/>진입 직후 — 컨텐츠 바로 노출 + 버튼 비활성 + 5초 대기</div>
+      </div>
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div style="font-size:7px;padding:4px">◀ 돌아가기</div>
+            <div style="padding:8px;text-align:center">
+              <div style="font-size:6px;background:#f0edff;display:inline-block;padding:2px 6px;border-radius:4px;color:#6c5ce7">오늘의 수업</div>
+              <div class="ph-title">📐 분수의 세계</div>
+              <div class="ph-card" style="text-align:left;font-size:7px">
+                <div>① 분수란? (개념이해)</div>
+                <div>② 분수의 덧셈과 뺄셈 (계산과정)</div>
+              </div>
+            </div>
+            <div style="flex:1"></div>
+            <div class="ph-btn" style="animation:none">🎓 수업 시작하기</div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State B</strong><br/>5초 경과 — 버튼 활성 + 바운스 애니메이션</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="spec-body" style="border-top:1px solid var(--border)">
+    <div class="mockup-side" style="border-right:1px solid var(--border);justify-content:center">
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">
+        <p style="font-weight:600;color:var(--text);margin-bottom:8px">카운트다운 타이머 로직</p>
+        <div style="font-family:monospace;font-size:11px;text-align:left;background:rgba(0,0,0,.3);padding:12px;border-radius:8px;line-height:1.8">
+          t=0s → 컨텐츠 즉시 노출, btn disabled<br/>
+          t=0s → 안내문구 표시<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"💡 설명할 내용을 머릿속으로<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;정리해 보세요! (약 5초)"<br/>
+          t=1~4s → "(N)" 카운트다운<br/>
+          t=5s → btn enabled + bounce<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;카운트다운 텍스트 제거
+        </div>
+      </div>
+    </div>
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>[◀ 돌아가기] 뒤로가기 버튼</strong> <span class="tag tag-nav">NAV</span>
+            <p class="desc-text">좌상단 고정. 클릭 시 → <code>1.0 홈</code>으로 즉시 복귀 (confirm 없음)</p>
+          </li>
+          <li data-num="2">
+            <strong>오늘의 수업 주제 타이틀 패널</strong> <span class="tag tag-state">VISIBLE</span>
+            <p class="desc-text">배지: "오늘의 수업" / 타이틀: "📐 분수의 세계"</p>
+            <p class="desc-text">주제 목록: 서버 응답 기반 (현재 단원의 오늘 세션 토픽 2건)</p>
+            <ul class="desc-detail">
+              <li>진입 시 컨텐츠 즉시 노출 (블러 효과 없음)</li>
+              <li>안내 문구: "💡 설명할 내용을 머릿속으로 정리해 보세요! (약 5초)"</li>
+              <li>용도: 학생이 수업 주제를 떠올리고 설명을 준비하는 5초 대기</li>
+            </ul>
+          </li>
+          <li data-num="3">
+            <strong>[수업 시작하기 🎓] 버튼</strong> <span class="tag tag-action">ACTION</span>
+            <p class="desc-text">5초 카운트다운 후 활성화. 카운트다운 중에는 <code>disabled</code></p>
+            <ul class="desc-detail">
+              <li>카운트다운: "(5)" → "(4)" → ... → "(1)" → "" (텍스트 제거)</li>
+              <li>활성화 후 <code>btn-bounce</code> 애니메이션 추가</li>
+              <li>클릭 시 → <code>3.0 수업 시작</code> 화면으로 전환</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Cases</h5>
+        <p>• 카운트다운 5초 중 [◀ 돌아가기] 클릭 → 타이머 취소 + 홈으로 즉시 복귀 (confirm 없음)<br/>
+        • 카운트다운 중 앱 백그라운드 진입 → 포그라운드 복귀 시 남은 시간 이어서 카운트<br/>
+        • <code>GET /api/session/today</code> 응답 지연/실패 → 로딩 스피너 표시, 5초 타임아웃 후 "수업 준비에 실패했습니다" 토스트 + 홈 복귀<br/>
+        • 동일 세션 중복 시작 방지 — 버튼 클릭 즉시 <code>disabled</code> 처리하여 중복 <code>POST /api/session/start</code> 차단</p>
+      </div>
+
+      <div class="desc-block">
+        <h4>API 요구사항</h4>
+        <table class="state-table">
+          <tr><th>항목</th><th>설명</th></tr>
+          <tr><td class="condition">GET /api/session/today</td><td class="result">오늘의 수업 주제 2건 조회 <code>{ topics: [{title, type}] }</code></td></tr>
+          <tr><td class="condition">POST /api/session/start</td><td class="result">세션 시작 기록 (시작 시각, 단원 ID)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 3.0  수업 시작 (초기 질문 + TTS)                       -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>3.0 수업 시작 — 초기 질문 & TTS 설명</h2>
+    <span class="page-code">SCR-LESSON</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>준비 → 수업 시작</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>[수업 시작하기] 클릭</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>2.0 준비 (confirm 필요)</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>3.0 AI 반응 (reaction)</div>
+  </div>
+
+  <div class="flow-section">
+    <div class="flow-title">화면 상태 변화 (질문 → 녹음 → 설명완료)</div>
+    <div class="state-row">
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 개념</div>
+            <div class="ph-bubble">선생님, 분수는 그냥 숫자랑 어떻게 달라요?</div>
+            <div class="ph-character" style="font-size:32px">🧒</div>
+            <div class="ph-mic">🎙️</div>
+            <div style="text-align:center;font-size:6px;color:#999">마이크를 눌러 설명을 시작하세요</div>
+            <div style="flex:1"></div>
+            <div style="text-align:center;font-size:6px;background:#8b7355;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600">📖 힌트 노트 펼치기</div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State A</strong><br/>AI 학생 초기 질문 + 마이크 대기</div>
+      </div>
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 개념</div>
+            <div class="ph-bubble">선생님, 분수는 그냥 숫자랑 어떻게 달라요?</div>
+            <div class="ph-character" style="font-size:32px">🧒</div>
+            <div class="ph-mic" style="color:#e17055">🎙️</div>
+            <div class="ph-wave">
+              <span style="height:4px"></span><span style="height:8px"></span><span style="height:12px"></span><span style="height:6px"></span><span style="height:10px"></span><span style="height:8px"></span><span style="height:4px"></span>
+            </div>
+            <div style="text-align:center;font-size:6px;color:#e17055">설명 중... (마이크를 다시 눌러 종료)</div>
+            <div style="flex:1"></div>
+            <div style="text-align:center;font-size:6px;background:#ff9f43;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600;box-shadow:0 0 6px #ff9f43">📖 힌트 노트 펼치기</div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State B</strong><br/>녹음 중 — Waveform 활성 + 힌트노트 글로우</div>
+      </div>
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 개념</div>
+            <div class="ph-bubble">선생님, 분수는 그냥 숫자랑 어떻게 달라요?</div>
+            <div class="ph-character" style="font-size:32px">🧒</div>
+            <div class="ph-mic">🎙️</div>
+            <div style="text-align:center;font-size:6px;color:#22c55e">설명이 완료되었습니다!</div>
+            <div class="ph-btn green" style="font-size:7px">✅ 설명완료</div>
+            <div style="flex:1"></div>
+            <div style="text-align:center;font-size:6px;background:#8b7355;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600">📖 힌트 노트 펼치기</div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State C</strong><br/>녹음 종료 — [설명완료] 버튼 노출 + 바운스</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="spec-body" style="border-top:1px solid var(--border)">
+    <div class="mockup-side" style="border-right:1px solid var(--border);justify-content:center">
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">
+        <p style="font-weight:600;color:var(--text);margin-bottom:8px">마이크 상태 머신</p>
+        <div style="font-family:monospace;font-size:11px;text-align:left;background:rgba(0,0,0,.3);padding:12px;border-radius:8px;line-height:1.8">
+          IDLE → [클릭] → RECORDING<br/>
+          &nbsp; waveform.active = true<br/>
+          &nbsp; micCircle.recording = true<br/>
+          &nbsp; questbook.glowing = true<br/><br/>
+          RECORDING → [클릭] → DONE<br/>
+          &nbsp; waveform.active = false<br/>
+          &nbsp; micCircle.recording = false<br/>
+          &nbsp; questbook.glowing = false<br/>
+          &nbsp; explainDoneBtn.visible = true
+        </div>
+      </div>
+    </div>
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>GNB 상단 바</strong>
+            <p class="desc-text">[◀] 뒤로가기 + 단원명 "📘 3. 분수의 개념"</p>
+            <p class="desc-detail">◀ 클릭 시 → <code>confirm("수업을 중단하고 홈으로 돌아갈까요?")</code><br/>확인 → 홈으로 이동 / 취소 → 수업 유지</p>
+          </li>
+          <li data-num="2">
+            <strong>AI 학생 캐릭터 + 질문 말풍선</strong>
+            <p class="desc-text">초기 질문: "선생님, 분수는 그냥 숫자랑 어떻게 달라요?"</p>
+            <p class="desc-detail">질문 텍스트는 서버에서 단원 + 토픽 기반으로 동적 생성</p>
+          </li>
+          <li data-num="3">
+            <strong>마이크 버튼 + Waveform</strong> <span class="tag tag-action">TOGGLE</span>
+            <p class="desc-text">1클릭: 녹음 시작 → Waveform 활성 + 마이크 빨간 테두리 + 힌트노트 탭 글로우</p>
+            <p class="desc-text">2클릭: 녹음 종료 → 모든 이펙트 해제 + [설명완료] 버튼 노출</p>
+          </li>
+          <li data-num="4">
+            <strong>[설명완료 ✅] 버튼</strong> <span class="tag tag-nav">NAV</span>
+            <p class="desc-text">녹음 종료 후에만 노출 (<code>display: none → flex</code>)</p>
+            <p class="desc-detail">바운스 애니메이션 적용. 클릭 → <code>3.0 reaction</code> 화면으로 이동</p>
+          </li>
+          <li data-num="5">
+            <strong>힌트 노트 펼치기</strong> <span class="tag tag-state">BOTTOM SHEET</span>
+            <p class="desc-text">하단 탭 "📖 힌트 노트 펼치기" 클릭 → 하단에서 위로 슬라이드 오픈</p>
+            <ul class="desc-detail">
+              <li>내용: 수업 시작용 힌트 (분수의 개념 요약)</li>
+              <li>녹음 중: 탭 글로우 이펙트 → 유저가 힌트를 참고하도록 시각적 유도</li>
+              <li>수동 오픈/클로즈 자유 (탭 다시 클릭 또는 드래그다운으로 닫기)</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Cases</h5>
+        <p>• 마이크 클릭 없이 [설명완료] 직접 노출 불가 — 녹음 시작→종료 완료 후에만 버튼 표시<br/>
+        • 녹음 중 [◀] 뒤로가기 클릭 → confirm 다이얼로그 표시, 확인 시 녹음 중단 + 홈 복귀<br/>
+        • 녹음 중 힌트노트 펼치기 → 정상 작동 (녹음 상태 유지, 힌트 참고 가능)<br/>
+        • 힌트노트 펼친 상태에서 [설명완료] 클릭 → 힌트노트 자동 닫힘 + 다음 화면 전환</p>
+      </div>
+
+      <div class="desc-block">
+        <h4>힌트노트 컨텐츠 (수업 시작용)</h4>
+        <table class="state-table">
+          <tr><th>섹션</th><th>내용</th></tr>
+          <tr><td class="condition">페이지 헤더</td><td class="result">제 3장 / 분수의 개념</td></tr>
+          <tr><td class="condition">Q1. 분수란?</td><td class="result">"전체를 똑같이 나눈 것 중, <strong>일부분</strong>을 나타내는 수"<br/>예시: 피자 1판 4조각 → ¼<br/>비유: 판 = <strong>분모</strong>, 조각 = <strong>분자</strong></td></tr>
+          <tr><td class="condition">Q2. 크기 이해</td><td class="result">"<strong>분모</strong>가 같으면, <strong>분자</strong>가 클수록 더 큰 분수"<br/>예시: 2/5 vs 3/5 → 3/5가 더 크다</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 3.0  AI 반응 (OX 분기)                                -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>3.0 AI 학생의 반응 — OX 판정 & 재설명</h2>
+    <span class="page-code">SCR-REACTION</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>수업 시작 → 설명완료 → AI 반응</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>[설명완료] 클릭</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>3.0 수업 시작 (confirm 필요)</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>4.0 칭찬</div>
+  </div>
+
+  <div class="flow-section">
+    <div class="flow-title">OX 인터랙션 플로우 (핵심 분기 로직)</div>
+    <div class="state-row">
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 덧셈과 뺄셈</div>
+            <div class="ph-bubble">아하! 그럼 2/5 더하기 1/5는 <strong>3/10</strong>이죠?</div>
+            <div class="ph-character" style="font-size:28px">🧒</div>
+            <div class="ph-ox">
+              <button class="correct">⭕ 정답이야!</button>
+              <button class="wrong">❌ 틀렸어!</button>
+            </div>
+            <div style="flex:1"></div>
+            <div style="text-align:center;font-size:6px;background:#8b7355;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600">📖 힌트 노트 펼치기</div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State A</strong><br/>AI 오답 제시 + OX 버튼 노출</div>
+      </div>
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 덧셈과 뺄셈</div>
+            <div class="ph-bubble" style="border-color:#e17055;font-size:6px">어라? 왜요? 분모도 사이좋게 더해야 하는 거 아니에요...? 😢</div>
+            <div class="ph-character" style="font-size:28px">🧒</div>
+            <div class="ph-mic" style="color:#e17055;font-size:20px">🎙️</div>
+            <div style="text-align:center;font-size:6px;color:#e17055">다시 설명해주세요!</div>
+            <div style="flex:1"></div>
+            <div style="text-align:center;font-size:6px;background:#ff9f43;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600;box-shadow:0 0 6px #ff9f43">📖 힌트 노트 펼치기</div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State B-1</strong><br/>[틀렸어!❌] 선택 → 추가 반응 + 재설명 마이크</div>
+      </div>
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 덧셈과 뺄셈</div>
+            <div class="ph-bubble" style="border-color:#e17055;font-size:6px">어...? 그게 아닌가요? 다시 알려주세요! 🤔</div>
+            <div class="ph-character" style="font-size:28px">🧒</div>
+            <div class="ph-mic" style="color:#e17055;font-size:20px">🎙️</div>
+            <div style="text-align:center;font-size:6px;color:#e17055">다시 설명해주세요!</div>
+            <div style="flex:1"></div>
+            <div style="text-align:center;font-size:6px;background:#ff9f43;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600;box-shadow:0 0 6px #ff9f43">📖 힌트 노트 펼치기</div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State B-2</strong><br/>[정답이야!⭕] 선택 차단 → 힌트노트 자동 오픈 + 재설명 유도</div>
+      </div>
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 덧셈과 뺄셈</div>
+            <div class="ph-bubble" style="border-color:#22c55e;font-size:6px">아!! 분모는 그대로 두고 분자끼리만 더하는 거군요! <strong>3/5</strong>가 맞죠? 😄</div>
+            <div class="ph-character" style="font-size:28px">🧒</div>
+            <div class="ph-btn green" style="font-size:7px">🎉 설명 종료</div>
+            <div style="flex:1"></div>
+            <div style="text-align:center;font-size:6px;background:#8b7355;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600">📖 힌트 노트 펼치기</div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State C</strong><br/>재설명 완료 → AI 정답 이해 + [설명 종료] 노출</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="spec-body" style="border-top:1px solid var(--border)">
+    <div class="mockup-side" style="border-right:1px solid var(--border);justify-content:center">
+      <div style="font-size:12px;color:var(--muted);padding:16px">
+        <p style="font-weight:600;color:var(--text);margin-bottom:8px">OX 판정 로직 플로우</p>
+        <div style="font-family:monospace;font-size:10px;text-align:left;background:rgba(0,0,0,.3);padding:12px;border-radius:8px;line-height:2">
+          AI 오답 제시 (State A)<br/>
+          ├─ [❌ 틀렸어!] 클릭<br/>
+          │&nbsp;&nbsp; → 추가 반응 (랜덤 1/2)<br/>
+          │&nbsp;&nbsp; → 힌트노트 하단 패널 자동 펼침 + 형광펜<br/>
+          │&nbsp;&nbsp; → 재설명 마이크 노출<br/>
+          │&nbsp;&nbsp; → 마이크 클릭 → State C<br/>
+          │<br/>
+          └─ [⭕ 정답이야!] 클릭<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp; → ⚠️ 1차 시도: 작동 차단!<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp; → 정답 버튼 disabled 처리<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp; → 힌트노트 하단 패널 자동 펼침 + 형광펜<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp; → "다시 알려주세요" 말풍선<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp; → 재설명 마이크 노출<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp; → 마이크 클릭 → State C<br/><br/>
+          State C: correctBlocked = false<br/>
+          → [🎉 설명 종료] → 4.0 칭찬
+        </div>
+      </div>
+    </div>
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>AI 학생 오답 제시</strong>
+            <p class="desc-text">"아하! 그럼 2/5 더하기 1/5는 <strong>3/10</strong>이죠?" — 의도적 오답</p>
+            <p class="desc-detail">→ 유저가 오답을 판별하고 올바르게 교정하는 것이 핵심 메커니즘</p>
+          </li>
+          <li data-num="2">
+            <strong>[정답이야! ⭕] 버튼</strong> <span class="tag tag-error">BLOCKED</span>
+            <p class="desc-text">오답 상황에서 클릭 시 → <strong>작동 차단</strong> (1차 시도)</p>
+            <ul class="desc-detail">
+              <li><code>correctBlocked = true</code> 상태에서 정답 클릭 시:</li>
+              <li>정답 버튼에 <code>.disabled</code> 클래스 추가 (회색 처리)</li>
+              <li>힌트노트 하단 패널 자동 펼침 + 형광펜 하이라이트 + 탭 글로우</li>
+              <li>말풍선: "어...? 그게 아닌가요? 다시 알려주세요! 🤔"</li>
+              <li>1.5초 후 OX 버튼 숨김 → 재설명 마이크 노출</li>
+            </ul>
+          </li>
+          <li data-num="3">
+            <strong>[틀렸어! ❌] 버튼</strong> <span class="tag tag-action">ACTION</span>
+            <p class="desc-text">클릭 시 → 추가 반응 랜덤 노출 (2가지 중 1)</p>
+            <ul class="desc-detail">
+              <li>반응 A: "어라? 왜요? 분모도 사이좋게 더해야 하는 거 아니에요...? 😢"</li>
+              <li>반응 B: "히익 틀렸다니! 쌤, 어디가 틀린 건지 다시 친절하게 알려주세요 ㅠㅠ"</li>
+              <li>힌트노트 하단 패널 자동 펼침 + 형광펜 순차 하이라이트 (300ms 간격)</li>
+              <li>OX 버튼 숨김 → 재설명 마이크 노출</li>
+            </ul>
+          </li>
+          <li data-num="4">
+            <strong>재설명 마이크</strong> <span class="tag tag-action">ACTION</span>
+            <p class="desc-text">마이크 클릭 1회 → 재설명 완료 처리 (프로토타입 단순화)</p>
+            <ul class="desc-detail">
+              <li><code>correctBlocked = false</code>로 전환</li>
+              <li>힌트노트 하단 패널 닫기 + 글로우 해제</li>
+              <li>말풍선 교체: "아!! 분모는 그대로 두고 분자끼리만 더하는 거군요! <strong>3/5</strong>가 맞죠? 😄"</li>
+              <li>캐릭터 끄덕임(nodding) 애니메이션</li>
+              <li>[설명 종료 🎉] 버튼 노출 + 바운스</li>
+            </ul>
+          </li>
+          <li data-num="5">
+            <strong>[설명 종료 🎉] 버튼</strong> <span class="tag tag-nav">NAV</span>
+            <p class="desc-text">클릭 시 → <code>4.0 세션 종료 & 칭찬</code>으로 전환</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Cases</h5>
+        <p>• 재설명 없이 [설명 종료] 직접 클릭 불가 — 재설명 마이크 완료 후에만 노출됨<br/>
+        • 힌트노트 형광펜은 "분모는 절대 더하지 않고 그대로 둡니다!" + "분자끼리만 더해야 합니다" 2개 요소에 순차 적용<br/>
+        • 뒤로가기(◀) 시 confirm 다이얼로그 필수 — 수업 진행 데이터 유실 방지</p>
+      </div>
+
+      <div class="desc-block">
+        <h4>힌트노트 컨텐츠 (AI 반응용)</h4>
+        <table class="state-table">
+          <tr><th>섹션</th><th>내용</th></tr>
+          <tr><td class="condition">복습: 분수란?</td><td class="result">전체를 똑같이 나눈 것 중 <strong>일부분</strong>을 나타내는 수<br/>판 = 분모, 조각 = 분자</td></tr>
+          <tr><td class="condition">⚠️ 핵심 규칙<br/>(형광펜 대상)</td><td class="result">"분모(아래)는 절대 더하지 않고 그대로 둡니다!"<br/>"분자(위)끼리만 더해야 합니다"<br/>예시: ½ + ½ = 2/2 = 1 (분모 그대로!)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 4.0  세션 종료 & 칭찬                                  -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>4.0 세션 종료 & 칭찬</h2>
+    <span class="page-code">SCR-PRAISE</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>수업 → 설명종료 → 칭찬</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>[설명 종료] 클릭</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>3.0 AI 반응</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>5.0 보상</div>
+  </div>
+  <div class="spec-body">
+    <div class="mockup-side">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-body" style="justify-content:center;align-items:center;text-align:center;background:linear-gradient(180deg,#fef3c7,#fde68a)">
+          <div style="font-size:12px;position:absolute;top:40px;left:20px">✨</div>
+          <div style="font-size:14px;position:absolute;top:60px;right:30px">⭐</div>
+          <div style="font-size:10px;position:absolute;top:100px;left:40px">🌟</div>
+          <div style="font-size:16px;position:absolute;bottom:120px;right:20px">✨</div>
+          <div style="position:relative">
+            <span class="ann" style="left:-8px;top:-4px">1</span>
+            <div class="ph-bubble" style="border-color:#22c55e;font-size:8px">와, 이제 완전히 이해됐어요!<br/>선생님 최고! 🥰</div>
+          </div>
+          <div style="position:relative">
+            <span class="ann" style="left:-8px;top:4px">2</span>
+            <div style="font-size:48px;margin:8px 0">🧒</div>
+          </div>
+          <div style="position:relative">
+            <span class="ann" style="left:4px;top:4px">3</span>
+            <div class="ph-btn" style="font-size:9px">🎁 보상 받기</div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">칭찬 화면 — 축하 이펙트</div>
+    </div>
+
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>칭찬 말풍선</strong>
+            <p class="desc-text">"와, 이제 완전히 이해됐어요! 선생님 최고! 🥰"</p>
+            <p class="desc-detail">말풍선은 진입 시 fade-in + scale-up 애니메이션 적용</p>
+          </li>
+          <li data-num="2">
+            <strong>AI 학생 캐릭터 + 축하 이펙트</strong>
+            <p class="desc-text">캐릭터: 활짝 웃는 표정 + 바운스 애니메이션 (상하 반복)</p>
+            <p class="desc-text">배경: ✨⭐🌟 스파클 5개 — 랜덤 위치에 fade/scale 반복 애니메이션</p>
+          </li>
+          <li data-num="3">
+            <strong>[보상 받기 🎁] 버튼</strong> <span class="tag tag-nav">NAV</span>
+            <p class="desc-text">클릭 시 → <code>5.0 정산 및 즉시 보상</code>으로 전환</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="desc-block">
+        <h4>애니메이션 사양</h4>
+        <table class="state-table">
+          <tr><th>요소</th><th>애니메이션</th><th>속성</th></tr>
+          <tr><td class="condition">캐릭터</td><td class="result">happy-bounce</td><td>translateY 0→-15px, 반복, 0.8s</td></tr>
+          <tr><td class="condition">스파클 5개</td><td class="result">sparkle-float</td><td>scale 0→1→0 + opacity + 위치별 delay</td></tr>
+          <tr><td class="condition">배경</td><td class="result">그라데이션</td><td>warm yellow (#fef3c7 → #fde68a)</td></tr>
+        </table>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Cases</h5>
+        <p>• 이 화면에는 뒤로가기 버튼 없음 — [보상 받기]만 유일한 진행 경로<br/>
+        • 앱 강제 종료 후 재진입 시 → 세션 완료는 이미 기록됨, 홈(State C)으로 직행 (칭찬/보상 재노출 안 함)<br/>
+        • 애니메이션 렌더링 성능 이슈 → 저사양 기기에서 스파클 개수 축소 또는 애니메이션 비활성화 대응</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 5.0  정산 및 즉시 보상                                 -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>5.0 정산 및 즉시 보상</h2>
+    <span class="page-code">SCR-REWARD</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>칭찬 → 보상 받기 → 정산</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>[보상 받기] 클릭</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>4.0 칭찬</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>1.0 홈 (State C)</div>
+  </div>
+  <div class="spec-body">
+    <div class="mockup-side">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-body" style="justify-content:center;align-items:center;text-align:center;background:linear-gradient(180deg,#1e1b4b,#312e81)">
+          <div style="position:relative">
+            <span class="ann" style="left:-8px;top:-4px">1</span>
+            <div style="font-size:10px;margin-bottom:4px">🪙🪙🪙🪙🪙🪙</div>
+            <div style="font-size:10px">🪙🪙🪙🪙🪙🪙</div>
+          </div>
+          <div style="position:relative;margin-top:12px">
+            <span class="ann" style="left:-8px;top:-4px">2</span>
+            <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:12px;margin:4px">
+              <div style="font-size:28px">🪙</div>
+              <div style="color:#fde68a;font-size:16px;font-weight:800">+500c</div>
+              <div style="color:rgba(255,255,255,.7);font-size:8px">과외비 입금!</div>
+              <div style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:4px">
+                <span style="font-size:20px">👩</span>
+                <div class="ph-bubble" style="font-size:6px;border-color:rgba(255,255,255,.3);color:#333">우리 아이를 가르쳐줘서 감사합니다!</div>
+              </div>
+            </div>
+          </div>
+          <div style="position:relative;margin-top:8px">
+            <span class="ann" style="left:-8px;top:0">3</span>
+            <div style="color:#fde68a;font-size:10px;font-weight:700">🎖️ '똑똑한 선생님' 배지 레벨업!</div>
+          </div>
+          <div style="position:relative;margin-top:12px">
+            <span class="ann" style="left:4px;top:2px">4</span>
+            <div class="ph-btn" style="background:#22c55e;font-size:8px">✅ 확인</div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">보상 화면 — 코인 + 배지</div>
+    </div>
+
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>코인 폭발 이펙트</strong>
+            <p class="desc-text">12개 코인(🪙)이 중앙에서 방사형으로 퍼지는 팡파레 애니메이션</p>
+            <ul class="desc-detail">
+              <li>각 코인에 개별 방향 벡터 (CSS custom property <code>--tx</code>, <code>--ty</code>)</li>
+              <li>0.8s 동안 burst 후 fade-out</li>
+              <li>진입 즉시 자동 재생 (1회성)</li>
+            </ul>
+          </li>
+          <li data-num="2">
+            <strong>보상 카드</strong>
+            <p class="desc-text">코인 스핀 아이콘 + "+500c" 카운트업 애니메이션 + "과외비 입금!" 라벨</p>
+            <ul class="desc-detail">
+              <li>카운트업: 0 → 500 (25씩 증가, 30ms 간격, 약 0.6초 소요)</li>
+              <li>학부모 캐릭터 + 감사 말풍선: "우리 아이를 가르쳐줘서 감사합니다!"</li>
+              <li>보상 금액은 서버 응답 기반 (추후 난이도별 차등)</li>
+            </ul>
+          </li>
+          <li data-num="3">
+            <strong>배지 레벨업 팝업</strong>
+            <p class="desc-text">🎖️ "'똑똑한 선생님' 배지 레벨업!" + 회전 글로우 이펙트</p>
+            <p class="desc-detail">레벨업 조건 충족 시에만 노출 (매 세션 노출은 아님)</p>
+          </li>
+          <li data-num="4">
+            <strong>[확인 ✅] 버튼</strong> <span class="tag tag-nav">NAV</span>
+            <p class="desc-text">클릭 시 → <code>1.0 홈</code> (State C)으로 복귀</p>
+            <ul class="desc-detail">
+              <li>복귀 시 갱신: 코인 잔액, 레벨명, 진척도, 말풍선, 수업기록 카드</li>
+              <li>보상 화면 → 홈 전환은 특별 로직 (<code>home-return</code>) 사용</li>
+              <li><code>lessonCompleted = true</code> 플래그 세팅</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Cases</h5>
+        <p>• <code>POST /api/session/complete</code> 실패 시 → "보상 처리 중 오류가 발생했습니다" 토스트 + 재시도 버튼 노출<br/>
+        • 배지 레벨업 조건 미충족 시 → 배지 레벨업 팝업 미노출, 코인 보상만 표시<br/>
+        • [확인] 버튼 중복 클릭 방지 → 클릭 즉시 <code>disabled</code> 처리 (홈 중복 이동 차단)<br/>
+        • 앱 강제 종료 후 재진입 → 보상 미수령 상태라면 보상 화면 재노출 또는 홈 복귀 시 코인 자동 반영</p>
+      </div>
+
+      <div class="desc-block">
+        <h4>API 요구사항</h4>
+        <table class="state-table">
+          <tr><th>항목</th><th>설명</th></tr>
+          <tr><td class="condition">POST /api/session/complete</td><td class="result">세션 완료 기록 + 보상 계산 요청</td></tr>
+          <tr><td class="condition">Response</td><td class="result"><code>{ coins: 500, badge_levelup: true, new_level: "Lv.2", progress: 45 }</code></td></tr>
+          <tr><td class="condition">POST /api/user/reward</td><td class="result">코인 지급 + 배지 레벨업 처리</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 6.0  설정 화면                                        -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>6.0 설정 화면</h2>
+    <span class="page-code">SCR-SETTINGS</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>홈 → ⚙️ 설정</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>홈 상단 ⚙️ 버튼 클릭</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>1.0 홈</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>1.0 홈 (저장 후)</div>
+  </div>
+  <div class="spec-body">
+    <div class="mockup-side">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-body">
+          <div style="font-size:7px;padding:4px;position:relative">
+            <span class="ann" style="left:0;top:-2px">1</span>
+            <span style="margin-left:18px">◀ 홈으로</span>
+          </div>
+          <div class="ph-title">⚙️ 설정</div>
+          <div class="ph-subtitle">단원과 과외 시간을 변경할 수 있어요</div>
+          <div style="position:relative">
+            <span class="ann" style="left:4px;top:0">2</span>
+            <div style="font-size:7px;font-weight:600;padding:0 8px;margin:4px 0">과외 단원</div>
+            <div class="ph-chip-group">
+              <span class="ph-chip">정수와 유리수</span>
+              <span class="ph-chip">일차방정식</span>
+              <span class="ph-chip sel">분수의 계산</span>
+              <span class="ph-chip">도형의 기초</span>
+              <span class="ph-chip">비례와 반비례</span>
+              <span class="ph-chip">통계의 기초</span>
+              <span class="ph-chip">소수의 나눗셈</span>
+              <span class="ph-chip">규칙과 대응</span>
+            </div>
+          </div>
+          <div class="ph-card" style="margin-top:4px;position:relative">
+            <span class="ann" style="left:-4px;top:-4px">3</span>
+            <div style="font-size:7px;font-weight:600;margin-bottom:4px">과외 빈도</div>
+            <div class="ph-toggle">
+              <span>주 2회</span>
+              <span class="active">주 3회</span>
+            </div>
+            <div style="font-size:7px;font-weight:600;margin:6px 0 3px">요일 선택</div>
+            <div class="ph-days">
+              <span>월</span><span class="active">화</span><span>수</span><span class="active">목</span><span>금</span><span class="active">토</span><span>일</span>
+            </div>
+            <div style="font-size:7px;font-weight:600;margin:6px 0 3px">시간 선택</div>
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="font-size:7px;background:white;padding:2px 6px;border:1px solid #ddd;border-radius:4px">오후 5시</span>
+            </div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="position:relative">
+            <span class="ann" style="left:4px;top:2px">4</span>
+            <div class="ph-btn green">✅ 저장하기</div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">설정 화면</div>
+    </div>
+
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>[◀ 홈으로] 뒤로가기 버튼</strong> <span class="tag tag-nav">NAV</span>
+            <p class="desc-text">좌상단 고정. 클릭 시 → <code>1.0 홈</code>으로 복귀</p>
+            <p class="desc-detail">변경사항 미저장 시: "변경사항을 저장하지 않고 나갈까요?" confirm (추후)</p>
+          </li>
+          <li data-num="2">
+            <strong>과외 단원 변경</strong> <span class="tag tag-state">SINGLE SELECT</span>
+            <p class="desc-text">온보딩(0.1)과 동일한 칩 리스트. 현재 선택 단원 하이라이트 상태로 진입.</p>
+            <ul class="desc-detail">
+              <li>단원 변경 시 → 진척도 초기화 여부 confirm 필요</li>
+              <li>"단원을 변경하면 현재 진행 중인 수업이 초기화됩니다. 변경할까요?"</li>
+            </ul>
+          </li>
+          <li data-num="3">
+            <strong>과외 시간표 변경</strong>
+            <p class="desc-text">온보딩(0.2)과 동일한 빈도/요일/시간 선택 UI (푸시알림 발송 스케줄 변경)</p>
+            <p class="desc-detail">현재 설정값이 사전 선택된 상태로 로드. 유효성 검증 규칙도 0.2와 동일</p>
+          </li>
+          <li data-num="4">
+            <strong>[저장하기 ✅] 버튼</strong> <span class="tag tag-action">ACTION</span>
+            <p class="desc-text">클릭 시 → 변경사항 서버 저장 → <code>1.0 홈</code>으로 복귀</p>
+            <ul class="desc-detail">
+              <li>저장 성공: 토스트 "설정이 저장되었습니다" + 홈 이동</li>
+              <li>저장 실패: 토스트 "저장에 실패했습니다. 다시 시도해주세요"</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Cases</h5>
+        <p>• 단원 변경 시 진행 중인 세션이 있는 경우 → 세션 데이터 처리 정책 필요<br/>
+        • 시간표 변경 시 이미 예약된 알림 → 기존 알림 취소 후 새 스케줄로 재등록<br/>
+        • 변경 없이 [저장하기] 클릭 → 불필요한 API 호출 방지 (변경 감지 로직)</p>
+      </div>
+
+      <div class="desc-block">
+        <h4>API 요구사항</h4>
+        <table class="state-table">
+          <tr><th>항목</th><th>설명</th></tr>
+          <tr><td class="condition">GET /api/user/settings</td><td class="result">현재 단원, 빈도, 요일, 시간 조회</td></tr>
+          <tr><td class="condition">PUT /api/user/settings</td><td class="result"><code>{ curriculum_id, frequency, days, time }</code></td></tr>
+          <tr><td class="condition">POST /api/notifications/reschedule</td><td class="result">알림 스케줄 재등록</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  SCREEN 7.0  수업기록                                         -->
+<!-- ============================================================ -->
+<div class="screen-section">
+  <div class="section-header">
+    <h2>7.0 수업기록 화면 (탭 3)</h2>
+    <span class="page-code">SCR-HISTORY</span>
+  </div>
+  <div class="spec-meta">
+    <div class="meta-cell"><span class="meta-label">페이지 경로</span>하단 네비 → 수업기록 탭</div>
+    <div class="meta-cell"><span class="meta-label">진입 조건</span>하단 네비 "수업기록" 탭 클릭</div>
+    <div class="meta-cell"><span class="meta-label">이전 화면</span>1.0 홈</div>
+    <div class="meta-cell"><span class="meta-label">다음 화면</span>1.0 홈 (탭 전환)</div>
+  </div>
+
+  <div class="flow-section">
+    <div class="flow-title">화면 상태 변화 (빈 상태 / 기록 있음)</div>
+    <div class="state-row">
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-title">📋 수업 기록</div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <div style="font-size:32px;opacity:.3">🧒</div>
+              <div style="font-size:8px;color:#999;margin-top:4px">아직 수업 기록이 없어요!</div>
+              <div style="font-size:7px;color:#bbb">첫 과외를 시작해보세요</div>
+            </div>
+            <div class="ph-nav">
+              <div class="ph-nav-item">🏠 홈</div>
+              <div class="ph-nav-item">📖 수업공간</div>
+              <div class="ph-nav-item active">📋 수업기록</div>
+            </div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State A</strong><br/>빈 상태 — 수업 완료 전</div>
+      </div>
+
+      <div class="state-col">
+        <div class="phone-frame small">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="ph-title">📋 수업 기록</div>
+            <div style="padding:4px 8px">
+              <div class="ph-card">
+                <div style="font-size:6px;color:#999">2026.05.28</div>
+                <div style="font-size:7px;font-weight:600">📐 3단원: 분수의 개념</div>
+                <div style="font-size:6px;color:#6c5ce7">🪙 +500c 획득 | 🎖️ 배지 레벨업!</div>
+              </div>
+            </div>
+            <div style="flex:1"></div>
+            <div class="ph-nav">
+              <div class="ph-nav-item">🏠 홈</div>
+              <div class="ph-nav-item">📖 수업공간</div>
+              <div class="ph-nav-item active">📋 수업기록</div>
+            </div>
+          </div>
+        </div>
+        <div class="state-label"><strong>State B</strong><br/>기록 있음 — 세션 완료 후</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="spec-body" style="border-top:1px solid var(--border)">
+    <div class="mockup-side" style="border-right:1px solid var(--border);justify-content:center">
+      <div style="font-size:12px;color:var(--muted);padding:16px;text-align:center">
+        <p style="font-weight:600;color:var(--text);margin-bottom:8px">기록 카드 구조</p>
+        <div style="background:rgba(0,0,0,.3);padding:12px;border-radius:8px;text-align:left;font-size:11px;line-height:1.8">
+          ┌─────────────────────┐<br/>
+          │ 2026.05.28&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br/>
+          │ 📐 3단원: 분수의 개념&nbsp;&nbsp;│<br/>
+          │ 🪙 +500c | 🎖️ 레벨업 │<br/>
+          └─────────────────────┘
+        </div>
+      </div>
+    </div>
+    <div class="desc-side">
+      <div class="desc-block">
+        <h3>Description</h3>
+        <ul class="desc-list">
+          <li data-num="1">
+            <strong>타이틀</strong>
+            <p class="desc-text">"📋 수업 기록" — 상단 고정</p>
+          </li>
+          <li data-num="2">
+            <strong>빈 상태 뷰 (State A)</strong> <span class="tag tag-state">EMPTY</span>
+            <p class="desc-text">수업 기록 없을 때 노출. 반투명 캐릭터 + 안내 문구</p>
+            <ul class="desc-detail">
+              <li>캐릭터 이미지: opacity 0.4</li>
+              <li>"아직 수업 기록이 없어요!" + "첫 과외를 시작해보세요"</li>
+            </ul>
+          </li>
+          <li data-num="3">
+            <strong>수업 기록 카드 리스트 (State B)</strong> <span class="tag tag-state">LIST</span>
+            <p class="desc-text">세션 완료 시마다 카드 1건 추가. 최신순 정렬.</p>
+            <ul class="desc-detail">
+              <li>카드 구성: 날짜 + 단원명 + 획득 코인 + 배지 정보</li>
+              <li>추후: 카드 클릭 → 세션 상세 리뷰 화면 (미구현)</li>
+              <li>페이지네이션 또는 무한 스크롤 (기록 누적 시)</li>
+            </ul>
+          </li>
+          <li data-num="4">
+            <strong>하단 네비게이션 바</strong>
+            <p class="desc-text">탭 3 "수업기록" 활성 상태. 홈/수업공간 탭으로 전환 가능</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="error-box">
+        <h5>⚠️ Edge Cases</h5>
+        <p>• 기록이 많아질 경우 → 무한 스크롤 또는 페이지네이션으로 추가 로딩 (<code>hasMore</code> 플래그 기반)<br/>
+        • 기록 로딩 실패 → "수업 기록을 불러올 수 없습니다" 안내 + 재시도 버튼<br/>
+        • 빈 상태(State A)에서 수업공간 탭 클릭 → 준비 화면(2.0)으로 이동하여 첫 수업 유도</p>
+      </div>
+
+      <div class="desc-block">
+        <h4>API 요구사항</h4>
+        <table class="state-table">
+          <tr><th>항목</th><th>설명</th></tr>
+          <tr><td class="condition">GET /api/sessions/history</td><td class="result">완료된 세션 목록 조회 (페이지네이션)<br/><code>{ sessions: [{ date, topic, coins, badge }], hasMore }</code></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  FULL FLOW DIAGRAM                                            -->
+<!-- ============================================================ -->
+<div class="common-section">
+  <div class="common-header">
+    <h2>🔄 전체 화면 흐름 (Navigation Map)</h2>
+  </div>
+  <div class="common-body">
+    <div class="flow-diagram" style="justify-content:center">
+      <div class="flow-box">0.1 단원 선택</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">0.2 시간표 설정</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box active-flow">1.0 홈</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">2.0 준비</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">3.0 수업</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">3.0 AI반응</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">4.0 칭찬</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">5.0 보상</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box active-flow">1.0 홈 (갱신)</div>
+    </div>
+    <div style="margin-top:24px;display:flex;gap:24px;justify-content:center;flex-wrap:wrap">
+      <div class="flow-diagram" style="flex:none">
+        <div class="flow-box active-flow">1.0 홈</div>
+        <div class="flow-arrow">⚙️→</div>
+        <div class="flow-box">6.0 설정</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box active-flow">1.0 홈</div>
+      </div>
+      <div class="flow-diagram" style="flex:none">
+        <div class="flow-box active-flow">1.0 홈</div>
+        <div class="flow-arrow">탭→</div>
+        <div class="flow-box">7.0 수업기록</div>
+        <div class="flow-arrow">탭→</div>
+        <div class="flow-box active-flow">1.0 홈</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!--  API SUMMARY                                                  -->
+<!-- ============================================================ -->
+<div class="common-section">
+  <div class="common-header">
+    <h2>📡 API 엔드포인트 요약</h2>
+  </div>
+  <div class="common-body">
+    <table class="state-table" style="width:100%">
+      <tr><th style="width:80px">메서드</th><th style="width:260px">엔드포인트</th><th>설명</th><th style="width:100px">사용 화면</th></tr>
+      <tr><td class="condition">GET</td><td><code>/api/curriculum</code></td><td class="result">커리큘럼 칩 목록 조회</td><td>0.1, 6.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/api/user/onboarding</code></td><td class="result">온보딩 단계별 데이터 저장</td><td>0.1</td></tr>
+      <tr><td class="condition">POST</td><td><code>/api/user/schedule</code></td><td class="result">과외 시간표 저장 (푸시알림 스케줄 기반)</td><td>0.2</td></tr>
+      <tr><td class="condition">POST</td><td><code>/api/notifications/register</code></td><td class="result">설정된 요일+시간 기반 푸시알림 스케줄 등록</td><td>0.2</td></tr>
+      <tr><td class="condition">POST</td><td><code>/api/user/onboarding/complete</code></td><td class="result">온보딩 완료 플래그</td><td>0.2</td></tr>
+      <tr><td class="condition">GET</td><td><code>/api/user/profile</code></td><td class="result">레벨, 코인, 단원, 진척도 조회</td><td>1.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/api/session/status</code></td><td class="result">오늘 수업 완료 여부</td><td>1.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/api/session/today</code></td><td class="result">오늘의 수업 주제 조회</td><td>2.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/api/session/start</code></td><td class="result">세션 시작 기록</td><td>2.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/api/session/complete</code></td><td class="result">세션 완료 + 보상 계산</td><td>5.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/api/user/reward</code></td><td class="result">코인 지급 + 배지 처리</td><td>5.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/api/user/settings</code></td><td class="result">현재 설정 조회</td><td>6.0</td></tr>
+      <tr><td class="condition">PUT</td><td><code>/api/user/settings</code></td><td class="result">설정 변경 저장</td><td>6.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/api/notifications/reschedule</code></td><td class="result">알림 스케줄 재등록</td><td>6.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/api/sessions/history</code></td><td class="result">수업 기록 목록 조회</td><td>7.0</td></tr>
+    </table>
+  </div>
+</div>
+
+
+</div><!-- /container -->
+</body>
+</html>
