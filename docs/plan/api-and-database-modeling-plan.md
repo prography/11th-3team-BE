@@ -34,6 +34,7 @@
 | **8~9** | 팀 확인·관련 문서 | |
 | **10~12** | TTS·충돌 이력 | 후순위·결정 |
 | **13** | Figma 변경 가이드 | 유지보수 |
+| **14** | **Open Questions** | **메인 학습 플로우** 기획 확인 (결정 전) |
 
 ### 0.3 범위·정책 (한 줄)
 
@@ -1421,12 +1422,64 @@ notification/
 
 ## 8. 팀 확인 (잔여)
 
+아래는 **이미 합의된 전제**다. **메인 학습 플로우**에서 아직 열린 항목만 [§14](#14-open-questions-메인-학습-플로우) (6건).
+
 | # | 항목 | 채택 |
 | --- | --- | --- |
 | 1 | Auth | JWT + user upsert |
 | 2 | 진행 중 `start` | 재개 우선 / 신규 409 |
 | 3 | `/api` vs `/api/v1` | v1 |
 | 4 | AI/STT | P6+ |
+
+---
+
+## 14. Open Questions (메인 학습 플로우)
+
+**범위:** 홈 진입 → 준비 → 수업(INTRO) → AI 반응(REACTION) → 칭찬 → 보상 → 홈 복귀 ([§2.3](#23-scr-home--10-홈)~[§2.8](#28-scr-reward--50-보상), [§5.1](#51-세션-플로우-전체)).  
+온보딩·설정·푸시·Figma·API 네이밍 등은 **본 절에서 다루지 않는다** (별도 기획/§8 전제).
+
+기획 확인 후 **결정** 열을 채우고 §2·§3·§12를 갱신한다.
+
+```mermaid
+flowchart LR
+  HOME[SCR-HOME] --> PREP[SCR-PREP]
+  PREP --> LESSON[SCR-LESSON INTRO]
+  LESSON --> REACTION[SCR-REACTION]
+  REACTION --> PRAISE[SCR-PRAISE]
+  PRAISE --> REWARD[SCR-REWARD]
+  REWARD --> HOME
+```
+
+### 14.1 핵심 확인 (6건)
+
+| ID | 단계 | 확인할 것 | 명세 vs 계획 (요약) | 결정 (TBD) |
+| --- | --- | --- | --- | --- |
+| **MQ-1** | REACTION → 4.0 → 5.0 | **`POST /session/complete`를 어느 화면에서 호출하는가?** 그 시점에 코인·진척·`COMPLETED`가 확정되는가? | 명세 API 표: **5.0** + `POST /user/reward`. 계획·§12 S2: **REACTION [설명 종료]**에서 `complete`, 5.0은 `GET /reward` + `ack` | |
+| **MQ-2** | 4.0 / 5.0 / APP-ENTRY | **앱 강종·재진입** 시 칭찬·보상·홈 중 어디까지 다시 보여주는가? | 명세 4.0: 완료 기록 후 강종 → **칭찬/보상 재노출 안 함**, 홈 직행. 명세 5.0: 미수령 시 **보상 재노출 또는** 홈에서 코인 자동 반영. 계획: `pendingRewardSessionId` → REWARD | |
+| **MQ-3** | PREP / APP-ENTRY | **`POST /session/start` 시점**과 **재진입 화면** | 계획: 준비 [수업 시작하기]에서 `start`. `activeSession` 있을 때 **PREP / LESSON / REACTION** 중 어디로 보낼지 명세에 없음. §8: 재개 우선 — FE 라우팅 규칙만 미정 | |
+| **MQ-4** | PREP → LESSON → REACTION | **준비 2토픽과 수업 phase 매핑** | `GET /session/today`는 토픽 2건. 계획 가정: seq1→`GET /lesson`(INTRO), seq2→`GET /reaction`. 명세에 **고정 매핑 문구 없음**. 당일 2회차 수업 시 `today` 내용 **동일/변경**도 함께 확정 필요 | |
+| **MQ-5** | HOME → PREP (당일 2회차) | **당일 첫 수업 완료 후** 추가 수업 | 명세: `lessonCompleted` 시 팝업만 숨기고 **수업공간→준비 가능**. 계획: `lessonCompletedToday` + `COMPLETED` 다회. 2회차 `start`는 **신규 UUID**인지, `today`/`topics` 동일인지 | |
+| **MQ-6** | LESSON / REACTION | **`abort` 이후** 같은 날 다시 수업 | 명세: confirm 후 홈. 계획: `ABORTED`만 기록. **진척·코인·`lessonCompletedToday` 불변**인지, PREP에서 새 `start` 허용인지 | |
+
+### 14.2 계획서에 이미 적어 둔 전제 (질문 아님)
+
+구현 시 아래를 **기본값**으로 두고, MQ-1~2에서 기획이 다르게 정하면 이 블록을 §12 결정으로 옮긴다.
+
+| 전제 | 내용 |
+| --- | --- |
+| 음성 | 마이크·OX·힌트노트 펼침은 **클라 only** — 서버 phase는 `INTRO` / `REACTION`만 ([§11](#11-ttsstt-음성-연동-후순위)) |
+| REACTION UI | [설명 종료]는 명세상 **재설명(로컬) 후** 노출 — 서버는 `phase=REACTION`만 검증, 마이크 완료 여부는 검증 안 함 |
+| 보상 금액 | 프로토 **500코인 고정** (`complete` 트랜잭션) |
+| 진척·배지 | `complete` 시 `progressPercent` **+45 cap 100**, 배지는 `completed_session_count` 기준 ([§4.4](#44-tutoring_sessions-상태비즈니스-규칙)) — **2회차·레벨업 팝업 조건**은 MQ-1·5와 함께 확정 |
+| `start` 중복 | 동일 `STARTED` 재호출 → **`resumed: true`** (§8 #2). 409는 **재개 정책이 아닐 때**만 |
+
+### 14.3 결정 기록
+
+| MQ-ID | 결정 요약 | 날짜 | §12 ID |
+| --- | --- | --- | --- |
+| | | | |
+
+> **MQ-1·MQ-2**가 정리되면 명세 HTML의 `complete`/`reward` 화면 번호와 Edge Case(4.0 vs 5.0)를 한 줄기로 맞춘다.
 
 ---
 

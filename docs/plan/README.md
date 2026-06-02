@@ -6,13 +6,14 @@
 
 | 문서 | 경로 | 설명 |
 | --- | --- | --- |
-| API·DB 모델링 계획 | [api-and-database-modeling-plan.md](api-and-database-modeling-plan.md) | §2 화면별 API · §3 계약 · **§4 DB(ERD·테이블·Flyway)** · §13 Figma |
+| API·DB 모델링 계획 | [api-and-database-modeling-plan.md](api-and-database-modeling-plan.md) | §2 화면별 API · §3 계약 · **§4 DB** · §13 Figma · **§14 Open Questions** |
 
 ## 읽는 방법
 
 - **FE:** [§2 화면별 호출](api-and-database-modeling-plan.md#2-화면별-api-호출-명세-구현용) + [§3 API](api-and-database-modeling-plan.md#3-api-카탈로그)
 - **BE:** [§4 DB](api-and-database-modeling-plan.md#4-데이터베이스) + §3 + Flyway `src/main/resources/db/migration/`
 - **Figma 반영 후:** [§13 체크리스트](api-and-database-modeling-plan.md#13-figma-디자인-변경-시-수정-가이드)
+- **학습 플로우 기획 확인:** [§14 Open Questions](api-and-database-modeling-plan.md#14-open-questions-메인-학습-플로우) (6건)
 
 ## 관련 문서
 
