@@ -22,7 +22,10 @@ Prography Samsung Backend 애플리케이션입니다.
 ├── settings.gradle.kts
 ├── docs/
 │   ├── README.md
-│   └── health-check.md
+│   ├── health-check.md
+│   └── reference/
+│       ├── architecture/
+│       └── product/
 └── src/
     ├── main/
     │   ├── kotlin/
