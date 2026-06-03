@@ -7,7 +7,7 @@ build/
 .env
 
 ### AI DOCS ###
-./docs/ai-reference/**
+docs/ai-reference/
 
 ### STS ###
 .apt_generated
