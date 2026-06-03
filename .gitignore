@@ -6,6 +6,9 @@ build/
 !**/src/test/**/build/
 .env
 
+### AI DOCS ###
+./docs/ai-reference/**
+
 ### STS ###
 .apt_generated
 .classpath
