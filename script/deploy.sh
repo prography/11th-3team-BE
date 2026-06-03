@@ -4,7 +4,7 @@ set -euo pipefail
 : "${IMAGE_NAME:?IMAGE_NAME is required}"
 : "${IMAGE_TAG:?IMAGE_TAG is required}"
 
-ENV_FILE="${ENV_FILE:-$HOME/prography/.env}"
+SECRETS_ID="${SECRETS_ID:-}"
 CONTAINER_NAME="${CONTAINER_NAME:-prography-backend}"
 HOST_PORT="${HOST_PORT:-8080}"
 CONTAINER_PORT="${CONTAINER_PORT:-8080}"
@@ -16,16 +16,54 @@ HEALTHCHECK_URL="${HEALTHCHECK_URL:-http://localhost:${HOST_PORT}/actuator/healt
 HEALTHCHECK_TIMEOUT="${HEALTHCHECK_TIMEOUT:-180}"
 HEALTHCHECK_INTERVAL="${HEALTHCHECK_INTERVAL:-5}"
 TARGET_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
+TEMP_ENV=""
+TEMP_SECRET_JSON=""
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "docker is not installed."
   exit 1
 fi
 
-if [ -f "${ENV_FILE}" ]; then
-  echo "[deploy] Use env file: ${ENV_FILE}"
+cleanup_temp_env() {
+  if [ -n "${TEMP_ENV}" ] && [ -f "${TEMP_ENV}" ]; then
+    rm -f "${TEMP_ENV}"
+  fi
+  if [ -n "${TEMP_SECRET_JSON}" ] && [ -f "${TEMP_SECRET_JSON}" ]; then
+    rm -f "${TEMP_SECRET_JSON}"
+  fi
+}
+trap cleanup_temp_env EXIT
+
+if [ -n "${SECRETS_ID}" ]; then
+  if ! command -v aws >/dev/null 2>&1; then
+    echo "[deploy] aws CLI not found, cannot fetch secrets."
+    exit 1
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "[deploy] jq not found, cannot parse secrets."
+    exit 1
+  fi
+  echo "[deploy] Fetching secrets from AWS Secrets Manager: ${SECRETS_ID}"
+  TEMP_ENV="$(mktemp)"
+  TEMP_SECRET_JSON="$(mktemp)"
+  aws secretsmanager get-secret-value \
+    --secret-id "${SECRETS_ID}" \
+    --query "SecretString" \
+    --output text > "${TEMP_SECRET_JSON}"
+  jq -r '
+    to_entries[]
+    | select((.key | test("^(GHCR_USERNAME|GHCR_TOKEN)$")) | not)
+    | "\(.key)=\(.value)"
+  ' "${TEMP_SECRET_JSON}" > "${TEMP_ENV}"
+  if [ -z "${GHCR_USERNAME}" ]; then
+    GHCR_USERNAME="$(jq -r ".GHCR_USERNAME // empty" "${TEMP_SECRET_JSON}")"
+  fi
+  if [ -z "${GHCR_TOKEN}" ]; then
+    GHCR_TOKEN="$(jq -r ".GHCR_TOKEN // empty" "${TEMP_SECRET_JSON}")"
+  fi
+  echo "[deploy] Secrets loaded."
 else
-  echo "[deploy] Env file not found, proceeding without --env-file: ${ENV_FILE}"
+  echo "[deploy] SECRETS_ID not set, proceeding without secrets."
 fi
 
 get_current_image() {
@@ -52,8 +90,8 @@ run_container() {
     -e "SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}"
   )
 
-  if [ -f "${ENV_FILE}" ]; then
-    docker_run_args+=(--env-file "${ENV_FILE}")
+  if [ -n "${TEMP_ENV}" ] && [ -f "${TEMP_ENV}" ]; then
+    docker_run_args+=(--env-file "${TEMP_ENV}")
   fi
 
   if [ -n "${DOCKER_NETWORK}" ]; then
@@ -63,6 +101,8 @@ run_container() {
   docker_run_args+=("${image_ref}")
 
   echo "[deploy] Run container ${CONTAINER_NAME} from ${image_ref}"
+  # docker run -d returns 0 even if the container crashes immediately.
+  # Actual startup failure is caught by wait_for_health below.
   sudo docker "${docker_run_args[@]}"
 }
 
@@ -77,26 +117,20 @@ wait_for_health() {
     return 0
   fi
 
-  echo "[deploy] Waiting for health check: ${HEALTHCHECK_URL}"
-  local start_ts
-  start_ts="$(date +%s)"
+  local max_tries=$(( HEALTHCHECK_TIMEOUT / HEALTHCHECK_INTERVAL ))
+  echo "[deploy] Waiting for health check: ${HEALTHCHECK_URL} (max ${max_tries} tries)"
 
-  while true; do
-    if curl -fsS "${HEALTHCHECK_URL}" >/dev/null; then
+  for i in $(seq 1 "${max_tries}"); do
+    if curl -fsS "${HEALTHCHECK_URL}" >/dev/null 2>&1; then
       echo "[deploy] Health check passed."
       return 0
     fi
-
-    local now_ts elapsed
-    now_ts="$(date +%s)"
-    elapsed=$((now_ts - start_ts))
-    if [ "${elapsed}" -ge "${HEALTHCHECK_TIMEOUT}" ]; then
-      echo "[deploy] Health check timed out after ${HEALTHCHECK_TIMEOUT}s."
-      return 1
-    fi
-
+    echo "[deploy] [$i/${max_tries}] Waiting..."
     sleep "${HEALTHCHECK_INTERVAL}"
   done
+
+  echo "[deploy] Health check timed out after ${HEALTHCHECK_TIMEOUT}s."
+  return 1
 }
 
 rollback() {
@@ -110,6 +144,13 @@ rollback() {
   echo "[deploy] Rolling back to ${rollback_image}"
   remove_container_if_exists
   run_container "${rollback_image}"
+
+  if ! wait_for_health; then
+    echo "[deploy] Rollback health check also failed."
+    return 1
+  fi
+
+  echo "[deploy] Rollback succeeded."
 }
 
 if [ -n "${GHCR_USERNAME}" ] && [ -n "${GHCR_TOKEN}" ]; then
@@ -144,7 +185,10 @@ if ! wait_for_health; then
   exit 1
 fi
 
-echo "[deploy] Cleanup dangling images"
+echo "[deploy] Cleanup previous image"
+if [ -n "${PREV_IMAGE}" ] && [ "${PREV_IMAGE}" != "${TARGET_IMAGE}" ]; then
+  sudo docker rmi "${PREV_IMAGE}" >/dev/null 2>&1 || true
+fi
 sudo docker image prune -f >/dev/null 2>&1 || true
 
 echo "[deploy] Done"
