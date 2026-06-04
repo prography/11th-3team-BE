@@ -9,14 +9,10 @@ data class ApiResponse<T>(
     @field:JsonProperty("data") @field:JsonInclude(JsonInclude.Include.NON_NULL) val data: T? = null,
 ) {
     companion object {
-        fun <T> onSuccess(successCode: SuccessCode, data: T): ApiResponse<T> =
+        fun <T> onSuccess(successCode: SuccessCode, data: T? = null): ApiResponse<T> =
             ApiResponse(successCode.code, successCode.message, data)
 
-        fun <T> onSuccess(successCode: SuccessCode): ApiResponse<T> = ApiResponse(successCode.code, successCode.message)
-
-        fun <T> onFailure(errorCode: ApiCode): ApiResponse<T> = ApiResponse(errorCode.code, errorCode.message)
-
-        fun <T> onFailure(errorCode: ApiCode, message: String?): ApiResponse<T> =
+        fun <T> onFailure(errorCode: ApiCode, message: String? = null): ApiResponse<T> =
             ApiResponse(errorCode.code, message?.takeIf { it.isNotBlank() } ?: errorCode.message)
     }
 }
