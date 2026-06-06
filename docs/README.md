@@ -7,6 +7,7 @@ Backend 프로젝트 문서 인덱스입니다.
 | 문서 | 설명 |
 | --- | --- |
 | [Reference Docs](reference/README.md) | 제품·아키텍처 기준 문서 (시스템 설계, 개발 기능 명세) |
+| [Plan Docs](plan/README.md) | API·DB 모델링 등 구현 계획 문서 |
 | [Health Check](health-check.md) | Spring Boot Actuator 기반 헬스체크 엔드포인트, 로컬 확인 방법, 테스트 내용을 설명합니다. |
 
 ## 문서 작성 규칙
