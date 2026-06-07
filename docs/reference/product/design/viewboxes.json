@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "updated": "2026-06-07",
+  "frame": { "w": 390, "h": 801 },
+  "sources": {
+    "prototype": "ut-prototype.svg",
+    "components": "components.svg"
+  },
+  "canvas": {
+    "prototype": [6972, 4555],
+    "components": [6972, 4555]
+  },
+  "usage": "단독 export SVG는 file 필드 경로를 직접 참조. 스프라이트(ut-prototype.svg) 임베드 시 viewBox=\"{x} {y} {w} {h}\". w/h 생략 시 frame 기본값(390×801).",
+  "screens": {
+    "SCR-SPLASH": {
+      "status": "ready",
+      "source": "export",
+      "file": "SCR-SPLASH.svg",
+      "label": "앱 스플래시"
+    },
+    "SCR-OB01": {
+      "status": "partial",
+      "label": "0.1 단원 선택",
+      "note": "전체 화면 프레임 없음. components.svg 칩·CTA 영역만 참조",
+      "fallbackComponents": ["curriculum-chips-cta"]
+    },
+    "SCR-OB02": {
+      "status": "ready",
+      "source": "prototype",
+      "x": 1039,
+      "y": 2875,
+      "label": "0.2 과외 스케줄"
+    },
+    "SCR-HOME": {
+      "status": "ready",
+      "source": "export",
+      "label": "1.0 홈",
+      "variants": {
+        "default": { "file": "SCR-HOME.default.svg", "x": 1453, "y": 2875, "label": "기본 (인사 말풍선)" },
+        "lesson-popup": { "x": 1877, "y": 2875, "label": "과외 요청 팝업", "note": "단독 export 미제공 — ut-prototype viewBox 사용" }
+      },
+      "defaultVariant": "default"
+    },
+    "SCR-PREP": {
+      "status": "ready",
+      "source": "export",
+      "label": "2.0 준비",
+      "variants": {
+        "countdown": { "file": "SCR-PREP.countdown.svg", "label": "5초 전 (CTA disabled)" },
+        "ready": { "file": "SCR-PREP.ready.svg", "label": "수업 시작하기 활성" }
+      },
+      "defaultVariant": "ready",
+      "prototype": { "x": 2291, "y": 2875 }
+    },
+    "SCR-LESSON": {
+      "status": "ready",
+      "source": "export",
+      "label": "3.0 수업 시작",
+      "variants": {
+        "default": { "file": "SCR-LESSON.default.svg", "x": 2760, "y": 2875, "label": "기본 (힌트노트 접힘)" },
+        "listening": { "file": "SCR-LESSON.listening.svg", "label": "마이크/청취 상태" },
+        "hint-open": { "file": "SCR-LESSON.hint-open.svg", "x": 2760, "y": 1977, "label": "힌트노트 펼침" }
+      },
+      "defaultVariant": "default"
+    },
+    "SCR-REACTION": {
+      "status": "ready",
+      "source": "export",
+      "label": "3.0 AI 반응",
+      "variants": {
+        "default": { "file": "SCR-REACTION.default.svg", "x": 3184, "y": 2875, "label": "OX 선택" },
+        "wrong-answer": { "file": "SCR-REACTION.wrong-answer.svg", "x": 3692, "y": 2875, "label": "오답 유도" },
+        "hint-open": { "file": "SCR-REACTION.hint-open.svg", "x": 3692, "y": 1176, "label": "힌트노트 펼침" }
+      },
+      "defaultVariant": "default"
+    },
+    "SCR-PRAISE": {
+      "status": "ready",
+      "source": "prototype",
+      "x": 4249,
+      "y": 2875,
+      "label": "4.0 칭찬"
+    },
+    "SCR-REWARD": {
+      "status": "ready",
+      "source": "prototype",
+      "x": 4715,
+      "y": 2875,
+      "label": "5.0 보상"
+    },
+    "SCR-SETTINGS": {
+      "status": "partial",
+      "label": "6.0 설정",
+      "note": "전체 화면 프레임 없음. OB02 스케줄 UI + 컴포넌트 시트 칩 조합",
+      "fallbackPrototype": { "schedule": "SCR-OB02", "chips": "curriculum-chips-cta" }
+    },
+    "SCR-HISTORY": {
+      "status": "partial",
+      "label": "7.0 수업기록",
+      "note": "목록은 UT 변형 프레임. 빈 상태는 Figma 재확인 필요",
+      "variants": {
+        "list": { "x": 3692, "y": 2004, "label": "기록 목록 (UT 변형)", "status": "ready" },
+        "empty": { "status": "tbd", "label": "빈 상태", "note": "현재 developer-feature-spec은 3692 1176(반응 힌트) 임시 사용 — 교체 예정" }
+      },
+      "defaultVariant": "list"
+    },
+    "APP-ENTRY": {
+      "status": "n/a",
+      "label": "앱 진입 라우팅",
+      "note": "UI 프레임 없음. SCR-SPLASH → API 라우팅만"
+    }
+  },
+  "components": {
+    "sheet-overview": {
+      "source": "components",
+      "x": 120,
+      "y": 2960,
+      "w": 780,
+      "h": 520,
+      "label": "컴포넌트 시트 전체"
+    },
+    "curriculum-chips-cta": {
+      "source": "components",
+      "x": 120,
+      "y": 3050,
+      "w": 520,
+      "h": 360,
+      "label": "커리큘럼 칩·CTA (OB01/SETTINGS)"
+    },
+    "cta-disabled": {
+      "source": "components",
+      "x": 164,
+      "y": 3377,
+      "w": 358,
+      "h": 70,
+      "label": "Disabled CTA (PREP 카운트다운)"
+    },
+    "confirm-leave": {
+      "source": "components",
+      "x": 168,
+      "y": 3518,
+      "w": 310,
+      "h": 112,
+      "label": "이탈 confirm (LESSON/REACTION)"
+    }
+  },
+  "legacyIds": {
+    "SCR-HOME-A": "SCR-HOME.variants.default",
+    "SCR-HOME-B": "SCR-HOME.variants.lesson-popup",
+    "SCR-LESSON-HINT": "SCR-LESSON.variants.hint-open",
+    "SCR-REACTION-ALT": "SCR-REACTION.variants.wrong-answer",
+    "SCR-REACTION-HINT": "SCR-REACTION.variants.hint-open",
+    "SCR-HISTORY-LIST": "SCR-HISTORY.variants.list"
+  },
+  "legacyFilenames": {
+    "시작 화면.svg": "SCR-SPLASH.svg",
+    "홈 화면.svg": "SCR-HOME.default.svg",
+    "수업 시작 5초전.svg": "SCR-PREP.countdown.svg",
+    "수업 시작 활성화.svg": "SCR-PREP.ready.svg",
+    "설명 시작.svg": "SCR-LESSON.default.svg",
+    "설명 시작-1.svg": "SCR-LESSON.listening.svg",
+    "힌트노트 펼치기.svg": "SCR-LESSON.hint-open.svg",
+    "설명 종료.svg": "SCR-REACTION.default.svg",
+    "설명 종료-1.svg": "SCR-REACTION.hint-open.svg",
+    "설명 종료-2.svg": "SCR-REACTION.wrong-answer.svg"
+  }
+}
