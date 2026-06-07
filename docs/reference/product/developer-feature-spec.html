@@ -610,8 +610,8 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
         <h4>API 요구사항</h4>
         <table class="state-table">
           <tr><th>항목</th><th>설명</th></tr>
-          <tr><td class="condition">GET /api/curriculum</td><td class="result">커리큘럼 칩 목록 조회 (추후 단원 추가 시 동적 로딩)</td></tr>
-          <tr><td class="condition">POST /api/user/onboarding</td><td class="result">선택 단원 저장 <code>{ curriculum_id, step: 1 }</code></td></tr>
+          <tr><td class="condition">GET /curriculum</td><td class="result">커리큘럼 칩 목록 조회 (추후 단원 추가 시 동적 로딩)</td></tr>
+          <tr><td class="condition">POST /user/onboarding</td><td class="result">선택 단원 저장 <code>{ curriculumId, step: 1 }</code></td></tr>
         </table>
       </div>
     </div>
@@ -700,9 +700,9 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
         <h4>API 요구사항</h4>
         <table class="state-table">
           <tr><th>항목</th><th>설명</th></tr>
-          <tr><td class="condition">POST /api/user/schedule</td><td class="result"><code>{ frequency: 3, days: ["tue","thu","sat"], time: "17:00" }</code></td></tr>
-          <tr><td class="condition">POST /api/notifications/register</td><td class="result">설정된 요일 + 시간 기반 푸시알림 스케줄 등록</td></tr>
-          <tr><td class="condition">POST /api/user/onboarding/complete</td><td class="result">온보딩 완료 플래그 세팅. 이후 앱 진입 시 홈으로 직행</td></tr>
+          <tr><td class="condition">POST /user/schedule</td><td class="result"><code>{ frequency: 3, days: ["tue","thu","sat"], time: "17:00" }</code></td></tr>
+          <tr><td class="condition">POST /notifications/register</td><td class="result">설정된 요일 + 시간 기반 푸시알림 스케줄 등록</td></tr>
+          <tr><td class="condition">POST /user/onboarding/complete</td><td class="result">온보딩 완료 플래그 세팅. 이후 앱 진입 시 홈으로 직행</td></tr>
         </table>
       </div>
     </div>
@@ -802,7 +802,7 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
             <p class="desc-text">좌측: 배지 아이콘 🎖️ + 레벨명 (예: "Lv.1 새내기 선생님")</p>
             <p class="desc-text">우측: 코인 잔액 🪙 "Nc" + 설정 버튼 ⚙️</p>
             <ul class="desc-detail">
-              <li>레벨명은 <code>GET /api/user/profile</code> 응답의 level 기반</li>
+              <li>레벨명은 <code>GET /user/profile</code> 응답의 level 기반</li>
               <li>코인 잔액은 실시간 갱신 (보상 후 복귀 시 반영)</li>
               <li>⚙️ 클릭 → <code>6.0 설정 화면</code>으로 이동</li>
             </ul>
@@ -860,15 +860,15 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
         <p>• 홈 진입 시 네트워크 오류 → 마지막 캐싱된 프로필 표시 + "연결 상태를 확인해주세요" 토스트<br/>
         • 과외 요청 팝업 2초 자동 타이머 중 캐릭터 터치 → 타이머 취소 + 팝업 즉시 노출<br/>
         • 수업 완료 상태(State C)에서 수업공간 탭 클릭 → 준비 화면(2.0)으로 이동 (다음 세션 시작 가능)<br/>
-        • 앱 백그라운드 → 포그라운드 복귀 시 → <code>GET /api/session/status</code> 재호출하여 상태 갱신</p>
+        • 앱 백그라운드 → 포그라운드 복귀 시 → <code>GET /session/status</code> 재호출하여 상태 갱신</p>
       </div>
 
       <div class="desc-block">
         <h4>API 요구사항</h4>
         <table class="state-table">
           <tr><th>항목</th><th>설명</th></tr>
-          <tr><td class="condition">GET /api/user/profile</td><td class="result">레벨, 코인 잔액, 선택 단원, 진척도 조회</td></tr>
-          <tr><td class="condition">GET /api/session/status</td><td class="result">오늘의 수업 완료 여부 → 팝업 노출 조건 결정</td></tr>
+          <tr><td class="condition">GET /user/profile</td><td class="result">레벨, 코인 잔액, 선택 단원, 진척도 조회</td></tr>
+          <tr><td class="condition">GET /session/status</td><td class="result">오늘의 수업 완료 여부 → 팝업 노출 조건 결정</td></tr>
         </table>
       </div>
     </div>
@@ -961,16 +961,16 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
         <h5>⚠️ Edge Cases</h5>
         <p>• 카운트다운 5초 중 [◀ 돌아가기] 클릭 → 타이머 취소 + 홈으로 즉시 복귀 (confirm 없음)<br/>
         • 카운트다운 중 앱 백그라운드 진입 → 포그라운드 복귀 시 남은 시간 이어서 카운트<br/>
-        • <code>GET /api/session/today</code> 응답 지연/실패 → 로딩 스피너 표시, 5초 타임아웃 후 "수업 준비에 실패했습니다" 토스트 + 홈 복귀<br/>
-        • 동일 세션 중복 시작 방지 — 버튼 클릭 즉시 <code>disabled</code> 처리하여 중복 <code>POST /api/session/start</code> 차단</p>
+        • <code>GET /session/today</code> 응답 지연/실패 → 로딩 스피너 표시, 5초 타임아웃 후 "수업 준비에 실패했습니다" 토스트 + 홈 복귀<br/>
+        • 동일 세션 중복 시작 방지 — 버튼 클릭 즉시 <code>disabled</code> 처리하여 중복 <code>POST /session/start</code> 차단</p>
       </div>
 
       <div class="desc-block">
         <h4>API 요구사항</h4>
         <table class="state-table">
           <tr><th>항목</th><th>설명</th></tr>
-          <tr><td class="condition">GET /api/session/today</td><td class="result">오늘의 수업 주제 2건 조회 <code>{ topics: [{title, type}] }</code></td></tr>
-          <tr><td class="condition">POST /api/session/start</td><td class="result">세션 시작 기록 (시작 시각, 단원 ID)</td></tr>
+          <tr><td class="condition">GET /session/today</td><td class="result">오늘의 수업 주제 2건 조회 <code>{ topics: [{title, type}] }</code></td></tr>
+          <tr><td class="condition">POST /session/start</td><td class="result">세션 시작 기록 (시작 시각, 단원 ID)</td></tr>
         </table>
       </div>
     </div>
@@ -1055,7 +1055,7 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
           <li data-num="1">
             <strong>GNB 상단 바</strong> <span class="tag tag-state">내 수업공간</span>
             <p class="desc-text">좌: ◀ 뒤로가기 / 중앙: <code>내 수업공간</code> / 우: ⚙️ (디자인 핸드오프)</p>
-            <p class="desc-detail">◀ 클릭 시 → confirm 팝업 → 확인 시 <code>POST /api/session/{sessionId}/abort</code> + SCR-HOME / 취소 → 수업 유지</p>
+            <p class="desc-detail">◀ 클릭 시 → confirm 팝업 → 확인 시 <code>POST /session/{sessionId}/abort</code> + SCR-HOME / 취소 → 수업 유지</p>
           </li>
           <li data-num="2">
             <strong>AI 학생 캐릭터 + 질문 말풍선</strong>
@@ -1096,9 +1096,9 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
         <h4>API 요구사항</h4>
         <table class="state-table">
           <tr><th>항목</th><th>설명</th></tr>
-          <tr><td class="condition">GET /api/session/{sessionId}/lesson</td><td class="result">mount — 질문·힌트 JSON. GNB: <code>내 수업공간</code></td></tr>
-          <tr><td class="condition">POST /api/session/{sessionId}/advance-phase</td><td class="result">[설명완료] 클릭 → SCR-REACTION</td></tr>
-          <tr><td class="condition">POST /api/session/{sessionId}/abort</td><td class="result">GNB ◀ confirm 후 수업 중단</td></tr>
+          <tr><td class="condition">GET /session/{sessionId}/lesson</td><td class="result">mount — 질문·힌트 JSON. GNB: <code>내 수업공간</code></td></tr>
+          <tr><td class="condition">POST /session/{sessionId}/advance-phase</td><td class="result">[설명완료] 클릭 → SCR-REACTION</td></tr>
+          <tr><td class="condition">POST /session/{sessionId}/abort</td><td class="result">GNB ◀ confirm 후 수업 중단</td></tr>
         </table>
       </div>
 
@@ -1257,8 +1257,8 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
         <h4>API 요구사항</h4>
         <table class="state-table">
           <tr><th>항목</th><th>설명</th></tr>
-          <tr><td class="condition">GET /api/session/{sessionId}/reaction</td><td class="result">mount — OX: 틀렸어!/맞았어!</td></tr>
-          <tr><td class="condition">POST /api/session/complete</td><td class="result">[설명 종료] — SCR-PRAISE 전 정산</td></tr>
+          <tr><td class="condition">GET /session/{sessionId}/reaction</td><td class="result">mount — OX: 틀렸어!/맞았어!</td></tr>
+          <tr><td class="condition">POST /session/complete</td><td class="result">[설명 종료] — SCR-PRAISE 전 정산</td></tr>
         </table>
       </div>
 
@@ -1401,7 +1401,7 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
 
       <div class="error-box">
         <h5>⚠️ Edge Cases</h5>
-        <p>• <code>GET /api/session/{sessionId}/reward</code> 실패 시 → 토스트 + 재시도<br/>
+        <p>• <code>GET /session/{sessionId}/reward</code> 실패 시 → 토스트 + 재시도<br/>
         • 배지 레벨업 조건 미충족 시 → 배지 팝업 미노출, 코인만 표시<br/>
         • [확인] 중복 클릭 방지 → 즉시 <code>disabled</code> 후 <code>POST /reward/ack</code><br/>
         • 앱 재진입: <code>pendingRewardSessionId</code> 있으면 SCR-REWARD mount 시 <code>GET /reward</code>만 호출<br/>
@@ -1412,8 +1412,8 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
         <h4>API 요구사항</h4>
         <table class="state-table">
           <tr><th>항목</th><th>설명</th></tr>
-          <tr><td class="condition">GET /api/session/{sessionId}/reward</td><td class="result">mount — <code>{ coins, badgeLevelup, newLevel, progress }</code></td></tr>
-          <tr><td class="condition">POST /api/session/{sessionId}/reward/ack</td><td class="result">[확인] 클릭 → SCR-HOME (State C)</td></tr>
+          <tr><td class="condition">GET /session/{sessionId}/reward</td><td class="result">mount — <code>{ coins, badgeLevelUp, newLevel, progress }</code></td></tr>
+          <tr><td class="condition">POST /session/{sessionId}/reward/ack</td><td class="result">[확인] 클릭 → SCR-HOME (State C)</td></tr>
         </table>
       </div>
     </div>
@@ -1496,9 +1496,9 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
         <h4>API 요구사항</h4>
         <table class="state-table">
           <tr><th>항목</th><th>설명</th></tr>
-          <tr><td class="condition">GET /api/user/settings</td><td class="result">현재 단원, 빈도, 요일, 시간 조회</td></tr>
-          <tr><td class="condition">PUT /api/user/settings</td><td class="result"><code>{ curriculum_id, frequency, days, time }</code></td></tr>
-          <tr><td class="condition">POST /api/notifications/reschedule</td><td class="result">알림 스케줄 재등록</td></tr>
+          <tr><td class="condition">GET /user/settings</td><td class="result">현재 단원, 빈도, 요일, 시간 조회</td></tr>
+          <tr><td class="condition">PUT /user/settings</td><td class="result"><code>{ curriculumId, frequency, days, time }</code></td></tr>
+          <tr><td class="condition">POST /notifications/reschedule</td><td class="result">알림 스케줄 재등록</td></tr>
         </table>
       </div>
     </div>
@@ -1613,7 +1613,7 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
         <h4>API 요구사항</h4>
         <table class="state-table">
           <tr><th>항목</th><th>설명</th></tr>
-          <tr><td class="condition">GET /api/sessions/history</td><td class="result">완료된 세션 목록 조회 (페이지네이션)<br/><code>{ sessions: [{ date, topic, coins, badge }], hasMore }</code></td></tr>
+          <tr><td class="condition">GET /sessions/history</td><td class="result">완료된 세션 목록 조회 (페이지네이션)<br/><code>{ sessions: [{ date, topic, coins, badge }], hasMore }</code></td></tr>
         </table>
       </div>
     </div>
@@ -1674,32 +1674,32 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
 <div class="common-section">
   <div class="common-header">
     <h2>📡 API 엔드포인트 요약</h2>
-    <p style="padding:0 32px 8px;color:var(--muted);font-size:13px">Base path <code>/api/v1</code>. 상세: <code>api-and-database-modeling-plan.md</code></p>
+    <p style="padding:0 32px 8px;color:var(--muted);font-size:13px">URL prefix·버저닝 없음 (루트 경로). Request/Response JSON 필드명 <strong>camelCase</strong>. 상세: <code>api-and-database-modeling-plan.md</code></p>
   </div>
   <div class="common-body">
     <table class="state-table" style="width:100%">
       <tr><th style="width:80px">메서드</th><th style="width:260px">엔드포인트</th><th>설명</th><th style="width:100px">사용 화면</th></tr>
-      <tr><td class="condition">GET</td><td><code>/api/curriculum</code></td><td class="result">커리큘럼 칩 목록 조회</td><td>0.1, 6.0</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/user/onboarding</code></td><td class="result">온보딩 단계별 데이터 저장</td><td>0.1</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/user/schedule</code></td><td class="result">과외 시간표 저장 (푸시알림 스케줄 기반)</td><td>0.2</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/notifications/register</code></td><td class="result">설정된 요일+시간 기반 푸시알림 스케줄 등록</td><td>0.2</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/user/onboarding/complete</code></td><td class="result">온보딩 완료 플래그</td><td>0.2</td></tr>
-      <tr><td class="condition">GET</td><td><code>/api/user/profile</code></td><td class="result">레벨, 코인, 단원, 진척도 조회</td><td>1.0</td></tr>
-      <tr><td class="condition">GET</td><td><code>/api/session/status</code></td><td class="result">오늘 수업 완료 여부</td><td>1.0</td></tr>
-      <tr><td class="condition">GET</td><td><code>/api/session/today</code></td><td class="result">오늘의 수업 주제 조회</td><td>2.0</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/session/start</code></td><td class="result">세션 시작 기록</td><td>2.0</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/session/complete</code></td><td class="result">[설명 종료] 세션 정산</td><td>3.0 반응</td></tr>
-      <tr><td class="condition">GET</td><td><code>/api/session/{id}/reward</code></td><td class="result">보상 조회 (mount)</td><td>5.0</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/session/{id}/reward/ack</code></td><td class="result">[확인] 후 홈</td><td>5.0</td></tr>
-      <tr><td class="condition">GET</td><td><code>/api/session/{id}/lesson</code></td><td class="result">수업 질문·힌트</td><td>3.0</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/session/{id}/advance-phase</code></td><td class="result">[설명완료]</td><td>3.0</td></tr>
-      <tr><td class="condition">GET</td><td><code>/api/session/{id}/reaction</code></td><td class="result">AI 반응</td><td>3.0</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/session/{id}/abort</code></td><td class="result">수업 중단</td><td>3.0</td></tr>
-      <tr><td class="condition">GET</td><td><code>/api/user/onboarding/status</code></td><td class="result">APP-ENTRY 라우팅</td><td>SPLASH</td></tr>
-      <tr><td class="condition">GET</td><td><code>/api/user/settings</code></td><td class="result">현재 설정 조회</td><td>6.0</td></tr>
-      <tr><td class="condition">PUT</td><td><code>/api/user/settings</code></td><td class="result">설정 변경 저장</td><td>6.0</td></tr>
-      <tr><td class="condition">POST</td><td><code>/api/notifications/reschedule</code></td><td class="result">알림 스케줄 재등록</td><td>6.0</td></tr>
-      <tr><td class="condition">GET</td><td><code>/api/sessions/history</code></td><td class="result">수업 기록 목록 조회</td><td>7.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/curriculum</code></td><td class="result">커리큘럼 칩 목록 조회</td><td>0.1, 6.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/user/onboarding</code></td><td class="result">온보딩 단계별 데이터 저장</td><td>0.1</td></tr>
+      <tr><td class="condition">POST</td><td><code>/user/schedule</code></td><td class="result">과외 시간표 저장 (푸시알림 스케줄 기반)</td><td>0.2</td></tr>
+      <tr><td class="condition">POST</td><td><code>/notifications/register</code></td><td class="result">설정된 요일+시간 기반 푸시알림 스케줄 등록</td><td>0.2</td></tr>
+      <tr><td class="condition">POST</td><td><code>/user/onboarding/complete</code></td><td class="result">온보딩 완료 플래그</td><td>0.2</td></tr>
+      <tr><td class="condition">GET</td><td><code>/user/profile</code></td><td class="result">레벨, 코인, 단원, 진척도 조회</td><td>1.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/session/status</code></td><td class="result">오늘 수업 완료 여부</td><td>1.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/session/today</code></td><td class="result">오늘의 수업 주제 조회</td><td>2.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/session/start</code></td><td class="result">세션 시작 기록</td><td>2.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/session/complete</code></td><td class="result">[설명 종료] 세션 정산</td><td>3.0 반응</td></tr>
+      <tr><td class="condition">GET</td><td><code>/session/{id}/reward</code></td><td class="result">보상 조회 (mount)</td><td>5.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/session/{id}/reward/ack</code></td><td class="result">[확인] 후 홈</td><td>5.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/session/{id}/lesson</code></td><td class="result">수업 질문·힌트</td><td>3.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/session/{id}/advance-phase</code></td><td class="result">[설명완료]</td><td>3.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/session/{id}/reaction</code></td><td class="result">AI 반응</td><td>3.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/session/{id}/abort</code></td><td class="result">수업 중단</td><td>3.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/user/onboarding/status</code></td><td class="result">APP-ENTRY 라우팅</td><td>SPLASH</td></tr>
+      <tr><td class="condition">GET</td><td><code>/user/settings</code></td><td class="result">현재 설정 조회</td><td>6.0</td></tr>
+      <tr><td class="condition">PUT</td><td><code>/user/settings</code></td><td class="result">설정 변경 저장</td><td>6.0</td></tr>
+      <tr><td class="condition">POST</td><td><code>/notifications/reschedule</code></td><td class="result">알림 스케줄 재등록</td><td>6.0</td></tr>
+      <tr><td class="condition">GET</td><td><code>/sessions/history</code></td><td class="result">수업 기록 목록 조회</td><td>7.0</td></tr>
     </table>
   </div>
 </div>

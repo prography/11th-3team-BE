@@ -7,7 +7,7 @@
 | 기준 문서 | [개발자 기능 명세서](../reference/product/developer-feature-spec.html) (디자인 핸드오프 반영, 2026-06-06) |
 | 디자인 참조 | UT 프로토타입·컴포넌트 시트 — [디자인 vs 명세 차이](../reference/product/design-vs-feature-spec-diff.md) |
 | 스택 | Kotlin, Spring Boot 3.5, JPA, Flyway, PostgreSQL |
-| Base path | `/api/v1` (명세는 `/api` — [§12](#12-명세-충돌-및-검토-이력) 참고) |
+| URL 경로 | 루트 경로 — `/api` prefix·버저닝 없음 |
 | 구현 원칙 | **UI** = 디자인 핸드오프 · **로직·API·DB** = 명세 + 본 문서 |
 
 ---
@@ -105,7 +105,7 @@
 | 열 | 의미 |
 | --- | --- |
 | **시점** | `mount` = 화면 진입, `click` = 사용자 액션, `local` = API 없음 |
-| **API** | 비우면 호출 없음. 경로는 `/api/v1` 생략 |
+| **API** | 비우면 호출 없음. 경로는 §3.1 Path 그대로 (prefix 없음) |
 | **상세** | Request/Response 필드·타입·JSON 예시 → [§3](#3-api-카탈로그). 성공·실패 모두 **`ApiResponse` envelope** (`code`, `message`, `data`) |
 
 ### 2.0 `SCR-SPLASH` — 앱 스플래시
@@ -325,6 +325,8 @@ flowchart TD
 ---
 
 ## 3. API 카탈로그
+
+§3.1 Path가 **전체 URL 경로**이다 (`/api` prefix·버저닝 없음). 예: `GET /curriculum`.
 
 요청·응답은 **필드명(camelCase)·타입·필수 여부(R/O)**·예시 JSON**으로 고정한다. 구현 시 DTO는 본 절을 그대로 따른다.
 
@@ -1230,7 +1232,7 @@ sequenceDiagram
 
 | 명세 | 본 계획 |
 | --- | --- |
-| `POST /api/user/reward` | `complete`에 통합 |
+| `POST /user/reward` | `complete`에 통합 |
 | 15개 경로 | §3.1 + §2.11 |
 | 응답 `gnbTitle` (구 와이어프레임) | `topicLabel` — GNB UI는 디자인 고정 `내 수업공간` ([§0.4](#04-디자인ui-vs-api-ssot)) |
 | 명세·와이어프레임의 flat JSON | `ApiResponse` envelope (`code`, `message`, `data`) — [§3.0](#30-공통) |
@@ -1703,7 +1705,7 @@ notification/
 | --- | --- | --- |
 | 1 | Auth (P0) | `Authorization: Bearer {deviceUserId}` — 기기 UUID + user upsert. 추후 JWT 동일 헤더 |
 | 2 | 진행 중 `start` | 재개 우선 / 신규 409 |
-| 3 | `/api` vs `/api/v1` | v1 |
+| 3 | URL 경로 | 루트 경로 — `/api` prefix·버저닝 없음 |
 | 4 | AI/STT | P6+ |
 
 ---
@@ -1799,6 +1801,7 @@ P0~P5: §2.5~2.6의 `local`만 구현하면 E2E 완료.
 | S13 | `SCR-SPLASH` 추가 — API 없음, APP-ENTRY 전 표시 |
 | S14 | 응답 envelope `ApiResponse` (`code`, `message`, `data`) — `ErrorBaseCode` 정수 코드, DTO는 `data`에 래핑 |
 | S15 | P0 인증: `Authorization: Bearer {deviceUserId}` — FE 기기 UUID, BE `users.external_id` upsert. 추후 JWT 동일 헤더 |
+| S16 | URL `/api` prefix·버저닝 없음 (루트 경로). Request/Response JSON **camelCase** (DB snake_case 분리) |
 
 ---
 
