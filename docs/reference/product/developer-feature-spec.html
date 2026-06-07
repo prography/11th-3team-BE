@@ -183,6 +183,16 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
 
 .mockup-label { font-size:11px; color:var(--muted); font-weight:500; text-align:center; }
 
+.design-ref-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.design-ref {
+  width:220px; aspect-ratio:390/801; border:3px solid #555; border-radius:24px;
+  background:var(--phone-bg); display:block; overflow:hidden; flex-shrink:0; object-fit:contain;
+}
+.design-ref.small { width:180px; border-radius:20px; }
+.design-ref-tag { display:block; font-size:9px; color:var(--green); margin-top:2px; }
+.design-source-note { font-size:11px; color:var(--muted); text-align:center; max-width:240px; line-height:1.5; }
+.state-row .design-ref-wrap { margin:0; }
+
 /* Multi-state row */
 .state-row {
   display:flex; gap:16px; flex-wrap:wrap;
@@ -355,7 +365,7 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
     <div class="meta-item"><strong>PO</strong> 김민채</div>
     <div class="meta-item"><strong>버전</strong> 1차 프로토타입 (디자인 핸드오프 반영)</div>
     <div class="meta-item"><strong>작성일</strong> 2026.06.06</div>
-    <div class="meta-item"><strong>디자인 기준</strong> 1차 UT 프로토타입·컴포넌트 시트</div>
+    <div class="meta-item"><strong>디자인 기준</strong> <a href="design/viewboxes.json" style="color:var(--accent)">SCR-* SVG</a> + UT 스프라이트 fallback</div>
     <div class="meta-item"><strong>대상</strong> 백엔드/프론트엔드 개발자</div>
   </div>
 </div>
@@ -625,46 +635,12 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
   </div>
   <div class="spec-body">
     <div class="mockup-side">
-      <div class="phone-frame">
-        <div class="phone-notch"></div>
-        <div class="phone-body">
-          <div style="text-align:center;margin:8px 0">
-            <div class="ph-step">2단계: 과외 스케줄</div>
-          </div>
-          <div class="ph-title" style="font-size:9px">AI 학생과 만날<br/>과외 시간을 정해주세요!</div>
-          <div class="ph-subtitle">정해진 시간에 알림을 보내드릴게요</div>
-          <div class="ph-card">
-            <div style="position:relative">
-              <span class="ann" style="left:-4px;top:-4px">1</span>
-              <div style="font-size:7px;font-weight:600;margin-bottom:4px">과외 빈도</div>
-              <div class="ph-toggle">
-                <span>주 2회</span>
-                <span class="active">주 3회</span>
-              </div>
-            </div>
-            <div style="margin-top:8px;position:relative">
-              <span class="ann" style="left:-4px;top:-4px">2</span>
-              <div style="font-size:7px;font-weight:600;margin-bottom:4px">요일 선택</div>
-              <div class="ph-days">
-                <span>월</span><span class="active">화</span><span>수</span><span class="active">목</span><span>금</span><span class="active">토</span><span>일</span>
-              </div>
-            </div>
-            <div style="margin-top:8px;position:relative">
-              <span class="ann" style="left:-4px;top:-4px">3</span>
-              <div style="font-size:7px;font-weight:600;margin-bottom:4px">시간 선택</div>
-              <div style="display:flex;align-items:center;gap:4px">
-                <span style="font-size:7px;background:white;padding:2px 6px;border:1px solid #ddd;border-radius:4px">오후 5시</span>
-              </div>
-            </div>
-          </div>
-          <div style="flex:1"></div>
-          <div style="position:relative">
-            <span class="ann" style="left:4px;top:2px">4</span>
-            <div class="ph-btn">설정 완료 및 홈으로 가기</div>
-          </div>
-        </div>
-      </div>
-      <div class="mockup-label">온보딩 2단계 — 시간표 설정</div>
+      <figure class="design-ref-wrap">
+        <svg class="design-ref" viewBox="1039 2875 390 801" role="img" aria-label="온보딩 2단계 — 과외 스케줄">
+          <image href="design/ut-prototype.svg" width="6972" height="4555"/>
+        </svg>
+        <figcaption class="mockup-label">온보딩 2단계 — 과외 스케줄<span class="design-ref-tag">ut-prototype viewBox</span></figcaption>
+      </figure>
     </div>
 
     <div class="desc-side">
@@ -754,61 +730,22 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
     <div class="flow-title">화면 상태 변화 (3가지 상태)</div>
     <div class="state-row">
 
-      <!-- State A: 초기 -->
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div class="ph-header">
-              <span>🎖️ <span style="font-size:6px">Lv.1 새내기 선생님</span></span>
-              <span>🪙 0c ⚙️</span>
-            </div>
-            <div style="font-size:7px;padding:0 4px">
-              <div>3단원 분수</div>
-              <div class="ph-progress"><div class="ph-progress-fill" style="width:0%"></div></div>
-              <div style="font-size:6px;color:#999">0% 완료</div>
-            </div>
-            <div class="ph-character">[AI학생]</div>
-            <div class="ph-bubble">안녕 선생님! 오늘도 만나서 반가워요 😊</div>
-            <div style="flex:1"></div>
-            <div class="ph-nav">
-              <div class="ph-nav-item active">🏠 홈</div>
-              <div class="ph-nav-item">📖 수업공간</div>
-              <div class="ph-nav-item">📋 수업기록</div>
-            </div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State A</strong><br/>홈 진입 직후 (말풍선 표시)</div>
+        <figure class="design-ref-wrap">
+          <img src="design/SCR-HOME.default.svg" class="design-ref small" alt="State A — 홈 기본" width="390" height="801"/>
+          <figcaption class="mockup-label">State A — 홈 기본<span class="design-ref-tag">SCR-HOME.default.svg</span></figcaption>
+        </figure>
       </div>
 
-      <!-- State B: 과외 요청 팝업 -->
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div class="ph-header">
-              <span>🎖️ <span style="font-size:6px">Lv.1 새내기 선생님</span></span>
-              <span>🪙 0c ⚙️</span>
-            </div>
-            <div style="font-size:7px;padding:0 4px">
-              <div>3단원 분수</div>
-              <div class="ph-progress"><div class="ph-progress-fill" style="width:0%"></div></div>
-            </div>
-            <div class="ph-character">[AI학생]</div>
-            <div class="ph-bubble" style="border-color:#e17055">쌤 오늘 학교에서 분수 배웠는데 하나도 모르겠어요 ㅠㅠ</div>
-            <div class="ph-btn" style="font-size:7px">과외하러가기</div>
-            <div style="flex:1"></div>
-            <div class="ph-nav">
-              <div class="ph-nav-item active">🏠 홈</div>
-              <div class="ph-nav-item">📖 수업공간</div>
-              <div class="ph-nav-item">📋 수업기록</div>
-            </div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State B</strong><br/>2초 후 과외 요청 팝업 자동 노출</div>
+        <figure class="design-ref-wrap">
+          <svg class="design-ref small" viewBox="1877 2875 390 801" role="img" aria-label="State B — 과외 요청">
+            <image href="design/ut-prototype.svg" width="6972" height="4555"/>
+          </svg>
+          <figcaption class="mockup-label">State B — 과외 요청<span class="design-ref-tag">ut-prototype viewBox</span></figcaption>
+        </figure>
       </div>
 
-      <!-- State C: 수업 후 복귀 -->
       <div class="state-col">
         <div class="phone-frame small">
           <div class="phone-notch"></div>
@@ -959,44 +896,17 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
     <div class="state-row">
 
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div style="font-size:7px;padding:4px">◀ 돌아가기</div>
-            <div style="padding:8px;text-align:center">
-              <div style="font-size:6px;background:#FFF4E8;display:inline-block;padding:2px 6px;border-radius:4px;color:#1A3A5C">오늘의 수업</div>
-              <div class="ph-title">📐 분수의 세계</div>
-              <div class="ph-card" style="text-align:left;font-size:7px">
-                <div>① 분수란? (개념이해)</div>
-                <div>② 분수의 덧셈과 뺄셈 (계산과정)</div>
-              </div>
-              <div style="font-size:7px;color:#999;margin-top:6px">💡 설명할 내용을 머릿속으로 정리해 보세요! (약 5초)</div>
-            </div>
-            <div style="flex:1"></div>
-            <div class="ph-btn disabled">수업 시작하기 (5)</div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State A</strong><br/>진입 직후 — 컨텐츠 바로 노출 + 버튼 비활성 + 5초 대기</div>
+        <figure class="design-ref-wrap">
+          <img src="design/SCR-PREP.countdown.svg" class="design-ref small" alt="준비 화면 — 5초 전" width="390" height="801"/>
+          <figcaption class="mockup-label">State A — 5초 전 (CTA disabled)<span class="design-ref-tag">SCR-PREP.countdown.svg</span></figcaption>
+        </figure>
       </div>
 
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div style="font-size:7px;padding:4px">◀ 돌아가기</div>
-            <div style="padding:8px;text-align:center">
-              <div style="font-size:6px;background:#FFF4E8;display:inline-block;padding:2px 6px;border-radius:4px;color:#1A3A5C">오늘의 수업</div>
-              <div class="ph-title">📐 분수의 세계</div>
-              <div class="ph-card" style="text-align:left;font-size:7px">
-                <div>① 분수란? (개념이해)</div>
-                <div>② 분수의 덧셈과 뺄셈 (계산과정)</div>
-              </div>
-            </div>
-            <div style="flex:1"></div>
-            <div class="ph-btn" style="animation:none">수업 시작하기</div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State B</strong><br/>5초 경과 — 버튼 활성 + 바운스 애니메이션</div>
+        <figure class="design-ref-wrap">
+          <img src="design/SCR-PREP.ready.svg" class="design-ref small" alt="준비 화면 — 버튼 활성" width="390" height="801"/>
+          <figcaption class="mockup-label">State B — 수업 시작하기 활성<span class="design-ref-tag">SCR-PREP.ready.svg</span></figcaption>
+        </figure>
       </div>
 
     </div>
@@ -1088,38 +998,17 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
     <div class="state-row">
 
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div class="ph-gnb"><span class="back">◀</span><span style="flex:1;text-align:center">내 수업공간</span><span>⚙️</span></div>
-            <div class="ph-bubble">선생님, 분수는 그냥 숫자랑 어떻게 달라요?</div>
-            <div class="ph-character" style="font-size:32px">[AI학생]</div>
-            <div class="ph-mic">🎙️</div>
-            <div style="text-align:center;font-size:6px;color:#999">마이크를 눌러 설명을 시작하세요</div>
-            <div style="flex:1"></div>
-            <div class="ph-questbook">힌트노트</div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State A</strong><br/>AI 학생 초기 질문 + 마이크 대기</div>
+        <figure class="design-ref-wrap">
+          <img src="design/SCR-LESSON.default.svg" class="design-ref small" alt="수업 시작 — 기본" width="390" height="801"/>
+          <figcaption class="mockup-label">State A — 기본 (힌트노트 접힘)<span class="design-ref-tag">SCR-LESSON.default.svg</span></figcaption>
+        </figure>
       </div>
 
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div class="ph-gnb"><span class="back">◀</span><span style="flex:1;text-align:center">내 수업공간</span><span>⚙️</span></div>
-            <div class="ph-bubble">선생님, 분수는 그냥 숫자랑 어떻게 달라요?</div>
-            <div class="ph-character" style="font-size:32px">[AI학생]</div>
-            <div class="ph-mic" style="color:#e17055">🎙️</div>
-            <div class="ph-wave">
-              <span style="height:4px"></span><span style="height:8px"></span><span style="height:12px"></span><span style="height:6px"></span><span style="height:10px"></span><span style="height:8px"></span><span style="height:4px"></span>
-            </div>
-            <div style="text-align:center;font-size:6px;color:#e17055">설명 중... (마이크를 다시 눌러 종료)</div>
-            <div style="flex:1"></div>
-            <div style="text-align:center;font-size:6px;background:#ff9f43;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600;box-shadow:0 0 6px #ff9f43">📖 힌트 노트 펼치기</div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State B</strong><br/>녹음 중 — Waveform 활성 + 힌트노트 글로우</div>
+        <figure class="design-ref-wrap">
+          <img src="design/SCR-LESSON.listening.svg" class="design-ref small" alt="수업 시작 — 녹음 중" width="390" height="801"/>
+          <figcaption class="mockup-label">State B — 마이크/청취 상태<span class="design-ref-tag">SCR-LESSON.listening.svg</span></figcaption>
+        </figure>
       </div>
 
       <div class="state-col">
@@ -1247,53 +1136,24 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
     <div class="state-row">
 
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 덧셈과 뺄셈</div>
-            <div class="ph-bubble">아하! 그럼 2/5 더하기 1/5는 <strong>3/10</strong>이죠?</div>
-            <div class="ph-character" style="font-size:28px">[AI학생]</div>
-            <div class="ph-ox">
-              <button class="correct">맞았어!</button>
-              <button class="wrong">틀렸어!</button>
-            </div>
-            <div style="flex:1"></div>
-            <div class="ph-questbook">힌트노트</div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State A</strong><br/>AI 오답 제시 + OX 버튼 노출</div>
+        <figure class="design-ref-wrap">
+          <img src="design/SCR-REACTION.default.svg" class="design-ref small" alt="State A — OX 선택" width="390" height="801"/>
+          <figcaption class="mockup-label"><strong>State A</strong><br/>AI 오답 + OX<span class="design-ref-tag">SCR-REACTION.default.svg</span></figcaption>
+        </figure>
       </div>
 
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 덧셈과 뺄셈</div>
-            <div class="ph-bubble" style="border-color:#e17055;font-size:6px">어라? 왜요? 분모도 사이좋게 더해야 하는 거 아니에요...? 😢</div>
-            <div class="ph-character" style="font-size:28px">[AI학생]</div>
-            <div class="ph-mic" style="color:#e17055;font-size:20px">🎙️</div>
-            <div style="text-align:center;font-size:6px;color:#e17055">다시 설명해주세요!</div>
-            <div style="flex:1"></div>
-            <div style="text-align:center;font-size:6px;background:#ff9f43;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600;box-shadow:0 0 6px #ff9f43">📖 힌트 노트 펼치기</div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State B-1</strong><br/>[틀렸어!❌] 선택 → 추가 반응 + 재설명 마이크</div>
+        <figure class="design-ref-wrap">
+          <img src="design/SCR-REACTION.wrong-answer.svg" class="design-ref small" alt="State B-1 — 오답 유도" width="390" height="801"/>
+          <figcaption class="mockup-label"><strong>State B-1</strong><br/>[틀렸어!] 선택<span class="design-ref-tag">SCR-REACTION.wrong-answer.svg</span></figcaption>
+        </figure>
       </div>
 
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div class="ph-gnb"><span class="back">◀</span> 📘 3. 분수의 덧셈과 뺄셈</div>
-            <div class="ph-bubble" style="border-color:#e17055;font-size:6px">어...? 그게 아닌가요? 다시 알려주세요! 🤔</div>
-            <div class="ph-character" style="font-size:28px">[AI학생]</div>
-            <div class="ph-mic" style="color:#e17055;font-size:20px">🎙️</div>
-            <div style="text-align:center;font-size:6px;color:#e17055">다시 설명해주세요!</div>
-            <div style="flex:1"></div>
-            <div style="text-align:center;font-size:6px;background:#ff9f43;color:white;padding:3px 6px;border-radius:4px 4px 0 0;margin:0 8px;font-weight:600;box-shadow:0 0 6px #ff9f43">📖 힌트 노트 펼치기</div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State B-2</strong><br/>[맞았어!] 선택 차단 → 힌트노트 자동 오픈 + 재설명 유도</div>
+        <figure class="design-ref-wrap">
+          <img src="design/SCR-REACTION.hint-open.svg" class="design-ref small" alt="State B-2 — 힌트노트 펼침" width="390" height="801"/>
+          <figcaption class="mockup-label"><strong>State B-2</strong><br/>힌트노트 펼침<span class="design-ref-tag">SCR-REACTION.hint-open.svg</span></figcaption>
+        </figure>
       </div>
 
       <div class="state-col">
@@ -1431,28 +1291,10 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
   </div>
   <div class="spec-body">
     <div class="mockup-side">
-      <div class="phone-frame">
-        <div class="phone-notch"></div>
-        <div class="phone-body ph-praise-bg" style="justify-content:center;align-items:center;text-align:center;">
-          <div style="font-size:12px;position:absolute;top:40px;left:20px">✨</div>
-          <div style="font-size:14px;position:absolute;top:60px;right:30px">⭐</div>
-          <div style="font-size:10px;position:absolute;top:100px;left:40px">🌟</div>
-          <div style="font-size:16px;position:absolute;bottom:120px;right:20px">✨</div>
-          <div style="position:relative">
-            <span class="ann" style="left:-8px;top:-4px">1</span>
-            <div class="ph-bubble" style="border-color:#22c55e;font-size:8px">와, 이제 완전히 이해됐어요!<br/>선생님 최고! 🥰</div>
-          </div>
-          <div style="position:relative">
-            <span class="ann" style="left:-8px;top:4px">2</span>
-            <div style="font-size:48px;margin:8px 0">[AI학생]</div>
-          </div>
-          <div style="position:relative">
-            <span class="ann" style="left:4px;top:4px">3</span>
-            <div class="ph-btn" style="font-size:9px">보상 받기</div>
-          </div>
-        </div>
-      </div>
-      <div class="mockup-label">칭찬 화면 — 축하 이펙트</div>
+      <figure class="design-ref-wrap">
+        <img src="design/Container.svg" class="design-ref" alt="4.0 칭찬" width="390" height="801"/>
+        <figcaption class="mockup-label">4.0 칭찬<span class="design-ref-tag">Container.svg</span></figcaption>
+      </figure>
     </div>
 
     <div class="desc-side">
@@ -1513,37 +1355,10 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
   </div>
   <div class="spec-body">
     <div class="mockup-side">
-      <div class="phone-frame">
-        <div class="phone-notch"></div>
-        <div class="phone-body ph-reward-bg" style="justify-content:center;align-items:center;text-align:center;">
-          <div style="position:relative">
-            <span class="ann" style="left:-8px;top:-4px">1</span>
-            <div style="font-size:10px;margin-bottom:4px">🪙🪙🪙🪙🪙🪙</div>
-            <div style="font-size:10px">🪙🪙🪙🪙🪙🪙</div>
-          </div>
-          <div style="position:relative;margin-top:12px">
-            <span class="ann" style="left:-8px;top:-4px">2</span>
-            <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:12px;margin:4px">
-              <div style="font-size:28px">🪙</div>
-              <div style="color:#fde68a;font-size:16px;font-weight:800">+500c</div>
-              <div style="color:rgba(255,255,255,.7);font-size:8px">과외비 입금!</div>
-              <div style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:4px">
-                <span style="font-size:20px">👩</span>
-                <div class="ph-bubble" style="font-size:6px;border-color:rgba(255,255,255,.3);color:#333">우리 아이를 가르쳐줘서 감사합니다!</div>
-              </div>
-            </div>
-          </div>
-          <div style="position:relative;margin-top:8px">
-            <span class="ann" style="left:-8px;top:0">3</span>
-            <div style="color:#fde68a;font-size:10px;font-weight:700">🎖️ '똑똑한 선생님' 배지 레벨업!</div>
-          </div>
-          <div style="position:relative;margin-top:12px">
-            <span class="ann" style="left:4px;top:2px">4</span>
-            <div class="ph-btn" style="background:#22c55e;font-size:8px">확인</div>
-          </div>
-        </div>
-      </div>
-      <div class="mockup-label">보상 화면 — 코인 + 배지</div>
+      <figure class="design-ref-wrap">
+        <img src="design/Container-1.svg" class="design-ref" alt="5.0 보상" width="390" height="801"/>
+        <figcaption class="mockup-label">5.0 보상<span class="design-ref-tag">Container-1.svg</span></figcaption>
+      </figure>
     </div>
 
     <div class="desc-side">
@@ -1622,53 +1437,19 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
   </div>
   <div class="spec-body">
     <div class="mockup-side">
-      <div class="phone-frame">
-        <div class="phone-notch"></div>
-        <div class="phone-body">
-          <div style="font-size:7px;padding:4px;position:relative">
-            <span class="ann" style="left:0;top:-2px">1</span>
-            <span style="margin-left:18px">◀ 홈으로</span>
-          </div>
-          <div class="ph-title">설정</div>
-          <div class="ph-subtitle">단원과 과외 시간을 변경할 수 있어요</div>
-          <div style="position:relative">
-            <span class="ann" style="left:4px;top:0">2</span>
-            <div style="font-size:7px;font-weight:600;padding:0 8px;margin:4px 0">과외 단원</div>
-            <div class="ph-chip-group">
-              <span class="ph-chip">정수와 유리수</span>
-              <span class="ph-chip">일차방정식</span>
-              <span class="ph-chip sel">분수의 계산</span>
-              <span class="ph-chip">도형의 기초</span>
-              <span class="ph-chip">비례와 반비례</span>
-              <span class="ph-chip">통계의 기초</span>
-              <span class="ph-chip">소수의 나눗셈</span>
-              <span class="ph-chip">규칙과 대응</span>
-            </div>
-          </div>
-          <div class="ph-card" style="margin-top:4px;position:relative">
-            <span class="ann" style="left:-4px;top:-4px">3</span>
-            <div style="font-size:7px;font-weight:600;margin-bottom:4px">과외 빈도</div>
-            <div class="ph-toggle">
-              <span>주 2회</span>
-              <span class="active">주 3회</span>
-            </div>
-            <div style="font-size:7px;font-weight:600;margin:6px 0 3px">요일 선택</div>
-            <div class="ph-days">
-              <span>월</span><span class="active">화</span><span>수</span><span class="active">목</span><span>금</span><span class="active">토</span><span>일</span>
-            </div>
-            <div style="font-size:7px;font-weight:600;margin:6px 0 3px">시간 선택</div>
-            <div style="display:flex;align-items:center;gap:4px">
-              <span style="font-size:7px;background:white;padding:2px 6px;border:1px solid #ddd;border-radius:4px">오후 5시</span>
-            </div>
-          </div>
-          <div style="flex:1"></div>
-          <div style="position:relative">
-            <span class="ann" style="left:4px;top:2px">4</span>
-            <div class="ph-btn green">설정 저장</div>
-          </div>
-        </div>
-      </div>
-      <div class="mockup-label">설정 화면</div>
+      <figure class="design-ref-wrap">
+        <svg class="design-ref" viewBox="1039 2875 390 801" role="img" aria-label="설정 — 스케줄 영역">
+          <image href="design/ut-prototype.svg" width="6972" height="4555"/>
+        </svg>
+        <figcaption class="mockup-label">스케줄·빈도 UI<span class="design-ref-tag">ut-prototype viewBox (SCR-OB02)</span></figcaption>
+      </figure>
+      <figure class="design-ref-wrap" style="margin-top:12px">
+        <svg class="design-ref" viewBox="120 3050 520 360" role="img" aria-label="설정 — 단원 칩">
+          <image href="design/components.svg" width="6972" height="4555"/>
+        </svg>
+        <figcaption class="mockup-label">단원 칩<span class="design-ref-tag">components.svg crop</span></figcaption>
+      </figure>
+      <p class="design-source-note">설정 전체 화면 단독 export 없음. 스케줄·칩은 위 조합 참고.</p>
     </div>
 
     <div class="desc-side">
@@ -1765,26 +1546,12 @@ body { font-family:'Pretendard',system-ui,sans-serif; background:var(--bg); colo
       </div>
 
       <div class="state-col">
-        <div class="phone-frame small">
-          <div class="phone-notch"></div>
-          <div class="phone-body">
-            <div class="ph-title">수업 기록</div>
-            <div style="padding:4px 8px">
-              <div class="ph-card">
-                <div style="font-size:6px;color:#999">2026.05.28</div>
-                <div style="font-size:7px;font-weight:600">📐 3단원: 분수의 개념</div>
-                <div style="font-size:6px;color:#1A3A5C">🪙 +500c 획득 | 🎖️ 배지 레벨업!</div>
-              </div>
-            </div>
-            <div style="flex:1"></div>
-            <div class="ph-nav">
-              <div class="ph-nav-item">🏠 홈</div>
-              <div class="ph-nav-item">📖 수업공간</div>
-              <div class="ph-nav-item active">📋 수업기록</div>
-            </div>
-          </div>
-        </div>
-        <div class="state-label"><strong>State B</strong><br/>기록 있음 — 세션 완료 후</div>
+        <figure class="design-ref-wrap">
+          <svg class="design-ref small" viewBox="3692 2004 390 801" role="img" aria-label="수업기록 목록">
+            <image href="design/ut-prototype.svg" width="6972" height="4555"/>
+          </svg>
+          <figcaption class="mockup-label"><strong>State B</strong><br/>기록 있음<span class="design-ref-tag">ut-prototype viewBox</span></figcaption>
+        </figure>
       </div>
 
     </div>
