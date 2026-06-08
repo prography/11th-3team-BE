@@ -14,9 +14,7 @@ interface SessionTopicSnapshotRepository : JpaRepository<SessionTopicSnapshot, L
         ORDER BY s.sequence ASC
         """,
     )
-    fun findAllBySessionIdOrderBySequenceAsc(
-        @Param("sessionId") sessionId: String,
-    ): List<SessionTopicSnapshot>
+    fun findAllBySessionIdOrderBySequenceAsc(@Param("sessionId") sessionId: String): List<SessionTopicSnapshot>
 
     @EntityGraph(attributePaths = ["lessonTopic"])
     @Query(
