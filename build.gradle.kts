@@ -33,6 +33,7 @@ dependencies {
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
     runtimeOnly("com.h2database:h2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
     runtimeOnly("org.postgresql:postgresql")
     testRuntimeOnly("com.h2database:h2")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
