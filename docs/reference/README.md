@@ -7,7 +7,8 @@
 | 문서 | 경로 | 설명 |
 | --- | --- | --- |
 | AI 대화 루프 시스템 설계서 | [architecture/ai-conversation-loop-system-design.pdf](architecture/ai-conversation-loop-system-design.pdf) | AI 대화 루프의 시스템 설계 및 아키텍처 의사결정 |
-| 개발자 기능 명세서 | [product/developer-feature-spec.html](product/developer-feature-spec.html) | 동갑내기 과외하기 화면·기능 개발 명세 (브라우저에서 열기) |
+| 개발자 기능 명세서 | [product/developer-feature-spec.html](product/developer-feature-spec.html) | 동갑내기 과외하기 화면·기능·API 개발 명세 (디자인 핸드오프 반영) |
+| 디자인 vs 명세 차이 (이력) | [product/design-vs-feature-spec-diff.md](product/design-vs-feature-spec-diff.md) | UT 프로토타입 대비 변경 전 차이점 정리 |
 
 ## 디렉터리 구분
 
