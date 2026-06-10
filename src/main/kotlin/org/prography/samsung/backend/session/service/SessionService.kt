@@ -1,6 +1,5 @@
 package org.prography.samsung.backend.session.service
 
-import org.prography.samsung.backend.common.domain.RewardStatus
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.dto.ActiveSessionResponse
@@ -165,7 +164,7 @@ class SessionService(
         if (session.currentPhase != SessionPhase.INTRO) {
             throw CustomException(DomainErrorCode.SESSION_NOT_IN_INTRO)
         }
-        session.currentPhase = SessionPhase.REACTION
+        session.advancePhase(SessionPhase.REACTION)
         tutoringSessionRepository.save(session)
         return SessionPhaseResponse(sessionId = session.id, currentPhase = SessionPhase.REACTION)
     }
@@ -193,8 +192,7 @@ class SessionService(
             throw CustomException(DomainErrorCode.SESSION_NOT_COMPLETED)
         }
         val now = Instant.now()
-        session.rewardStatus = RewardStatus.ACKNOWLEDGED
-        session.rewardAcknowledgedAt = now
+        session.acknowledgeReward(now)
         tutoringSessionRepository.save(session)
         return RewardAckResponse(
             sessionId = session.id,
@@ -206,8 +204,7 @@ class SessionService(
     @Transactional
     fun abort(userId: Long, sessionId: String): SessionAbortResponse {
         val session = getStartedSession(userId, sessionId)
-        session.status = SessionStatus.ABORTED
-        session.currentPhase = null
+        session.abort()
         tutoringSessionRepository.save(session)
         return SessionAbortResponse(sessionId = session.id, status = SessionStatus.ABORTED)
     }

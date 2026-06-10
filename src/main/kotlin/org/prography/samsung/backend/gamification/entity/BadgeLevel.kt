@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.prography.samsung.backend.common.entity.BaseEntity
 
 @Entity
 @Table(name = "badge_levels")
@@ -13,10 +14,13 @@ class BadgeLevel(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
+
     @Column(nullable = false, unique = true)
     val level: Int,
+
     @Column(nullable = false, length = 50)
     val name: String,
+
     @Column(name = "required_completed_sessions", nullable = false)
     val requiredCompletedSessions: Int,
-)
+) : BaseEntity()

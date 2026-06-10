@@ -1,13 +1,13 @@
 package org.prography.samsung.backend.session.service
 
 import org.prography.samsung.backend.common.domain.CoinLedgerType
-import org.prography.samsung.backend.common.domain.RewardStatus
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.dto.LevelResponse
 import org.prography.samsung.backend.common.dto.RewardResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.common.response.ErrorBaseCode
+import org.prography.samsung.backend.gamification.entity.BadgeLevel
 import org.prography.samsung.backend.gamification.repository.BadgeLevelRepository
 import org.prography.samsung.backend.session.SessionConstants
 import org.prography.samsung.backend.session.entity.CoinLedgerEntry
@@ -15,6 +15,7 @@ import org.prography.samsung.backend.session.entity.TutoringSession
 import org.prography.samsung.backend.session.repository.CoinLedgerEntryRepository
 import org.prography.samsung.backend.session.repository.SessionTopicSnapshotRepository
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
+import org.prography.samsung.backend.user.entity.UserProfile
 import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserProfileRepository
 import org.springframework.stereotype.Service
@@ -62,30 +63,24 @@ class SessionCompletionService(
         val newProgress = min(100, userCurriculum.progressPercent + SessionConstants.PROGRESS_INCREMENT)
         val coinsAwarded = SessionConstants.COINS_PER_SESSION
 
-        profile.completedSessionCount += 1
-        profile.totalCoins += coinsAwarded
         val nextBadge =
             badgeLevelRepository.findTopByRequiredCompletedSessionsLessThanEqualOrderByLevelDesc(
-                profile.completedSessionCount,
+                profile.completedSessionCount + 1,
             ) ?: profile.badgeLevel
         val badgeLevelUp = nextBadge.level > previousLevel
-        profile.badgeLevel = nextBadge
-        profile.updatedAt = Instant.now()
+        profile.applySessionReward(coinsAwarded, nextBadge)
         userProfileRepository.save(profile)
 
-        userCurriculum.progressPercent = newProgress
-        userCurriculum.updatedAt = Instant.now()
+        userCurriculum.updateProgress(newProgress)
         userCurriculumRepository.save(userCurriculum)
 
-        val now = Instant.now()
-        session.status = SessionStatus.COMPLETED
-        session.currentPhase = null
-        session.completedAt = now
-        session.primaryTopicTitle = primaryTopic.title
-        session.coinsAwarded = coinsAwarded
-        session.badgeLevelUp = badgeLevelUp
-        session.progressAfter = newProgress
-        session.rewardStatus = RewardStatus.GRANTED
+        session.complete(
+            completedAt = Instant.now(),
+            primaryTopicTitle = primaryTopic.title,
+            coinsAwarded = coinsAwarded,
+            badgeLevelUp = badgeLevelUp,
+            progressAfter = newProgress,
+        )
         tutoringSessionRepository.save(session)
 
         if (!coinLedgerEntryRepository.existsBySessionId(sessionId)) {
@@ -104,9 +99,9 @@ class SessionCompletionService(
 
     fun toRewardResponse(
         session: TutoringSession,
-        profile: org.prography.samsung.backend.user.entity.UserProfile,
+        profile: UserProfile,
         badgeLevelUp: Boolean = session.badgeLevelUp ?: false,
-        newBadge: org.prography.samsung.backend.gamification.entity.BadgeLevel = profile.badgeLevel,
+        newBadge: BadgeLevel = profile.badgeLevel,
     ): RewardResponse = RewardResponse(
         sessionId = session.id,
         coinsAwarded = session.coinsAwarded ?: SessionConstants.COINS_PER_SESSION,

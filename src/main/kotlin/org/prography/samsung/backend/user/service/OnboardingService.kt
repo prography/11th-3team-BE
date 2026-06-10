@@ -20,7 +20,6 @@ import org.prography.samsung.backend.user.repository.UserRepository
 import org.prography.samsung.backend.user.repository.UserScheduleRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Instant
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -59,12 +58,10 @@ class OnboardingService(
             userCurriculumRepository.findById(userId).orElse(null)
                 ?: UserCurriculum(user = user, curriculum = curriculum)
 
-        userCurriculum.curriculum = curriculum
-        userCurriculum.updatedAt = Instant.now()
+        userCurriculum.changeCurriculum(curriculum)
         userCurriculumRepository.save(userCurriculum)
 
-        profile.onboardingStep = maxOf(profile.onboardingStep, 1)
-        profile.updatedAt = Instant.now()
+        profile.advanceOnboardingStep(1)
         userProfileRepository.save(profile)
 
         return OnboardingResponse(curriculumId = curriculum.id, step = 1)
@@ -84,27 +81,22 @@ class OnboardingService(
             userScheduleRepository.findWithDaysByUserId(userId)
                 ?: UserSchedule(user = user, frequencyPerWeek = request.frequency, lessonTime = lessonTime)
 
-        schedule.frequencyPerWeek = request.frequency
-        schedule.lessonTime = lessonTime
-        schedule.updatedAt = Instant.now()
-        schedule.days.clear()
-        days.forEachIndexed { index, day ->
-            schedule.days.add(
+        val newDays =
+            days.mapIndexed { index, day ->
                 UserScheduleDay(
                     userSchedule = schedule,
                     dayOfWeek = day,
                     selectedOrder = index + 1,
-                ),
-            )
-        }
+                )
+            }
+        schedule.update(request.frequency, lessonTime, newDays)
         userScheduleRepository.save(schedule)
 
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
                 CustomException(DomainErrorCode.INVALID_DEVICE_USER_ID)
             }
-        profile.onboardingStep = maxOf(profile.onboardingStep, 2)
-        profile.updatedAt = Instant.now()
+        profile.advanceOnboardingStep(2)
         userProfileRepository.save(profile)
 
         return toScheduleResponse(schedule)
@@ -120,9 +112,7 @@ class OnboardingService(
             throw CustomException(DomainErrorCode.SCHEDULE_NOT_CONFIGURED)
         }
 
-        profile.onboardingCompleted = true
-        profile.onboardingStep = 2
-        profile.updatedAt = Instant.now()
+        profile.completeOnboarding()
         userProfileRepository.save(profile)
 
         return OnboardingCompleteResponse(onboardingCompleted = true)
