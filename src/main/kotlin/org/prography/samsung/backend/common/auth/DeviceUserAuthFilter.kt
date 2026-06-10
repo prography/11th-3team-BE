@@ -20,7 +20,9 @@ class DeviceUserAuthFilter(private val userUpsertService: UserUpsertService, pri
     OncePerRequestFilter() {
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path = request.requestURI
-        return path.startsWith("/actuator")
+        return path.startsWith("/actuator") ||
+            path.startsWith("/swagger-ui") ||
+            path.startsWith("/api-docs")
     }
 
     override fun doFilterInternal(
