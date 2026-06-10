@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.prography.samsung.backend.common.domain.SessionPhase
+import org.prography.samsung.backend.common.entity.BaseEntity
 
 @Entity
 @Table(name = "hint_notes")
@@ -19,12 +20,15 @@ class HintNote(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lesson_topic_id", nullable = false)
     val lessonTopic: LessonTopic,
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     val phase: SessionPhase,
+
     @Column(name = "content_json", nullable = false, columnDefinition = "TEXT")
     val contentJson: String,
-)
+) : BaseEntity()
