@@ -10,7 +10,7 @@ import jakarta.persistence.MapsId
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
-import java.time.Instant
+import org.prography.samsung.backend.common.entity.BaseEntity
 import java.time.LocalTime
 
 @Entity
@@ -18,16 +18,26 @@ import java.time.LocalTime
 class UserSchedule(
     @Id
     val userId: Long = 0,
+
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "user_id")
     val user: User,
+
     @Column(name = "frequency_per_week", nullable = false)
     var frequencyPerWeek: Int,
+
     @Column(name = "lesson_time", nullable = false)
     var lessonTime: LocalTime,
-    @Column(name = "updated_at", nullable = false)
-    var updatedAt: Instant = Instant.now(),
+
     @OneToMany(mappedBy = "userSchedule", cascade = [CascadeType.ALL], orphanRemoval = true)
     val days: MutableList<UserScheduleDay> = mutableListOf(),
-)
+) : BaseEntity() {
+
+    fun update(frequency: Int, time: LocalTime, newDays: List<UserScheduleDay>) {
+        frequencyPerWeek = frequency
+        lessonTime = time
+        days.clear()
+        days.addAll(newDays)
+    }
+}

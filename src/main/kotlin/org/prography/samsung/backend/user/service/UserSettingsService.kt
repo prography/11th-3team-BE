@@ -8,6 +8,7 @@ import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.prography.samsung.backend.curriculum.service.CurriculumService
 import org.prography.samsung.backend.notification.service.NotificationService
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
+import org.prography.samsung.backend.user.dto.UserScheduleRequest
 import org.prography.samsung.backend.user.dto.UserSettingsRequest
 import org.prography.samsung.backend.user.dto.UserSettingsResponse
 import org.prography.samsung.backend.user.entity.UserCurriculum
@@ -16,7 +17,6 @@ import org.prography.samsung.backend.user.repository.UserRepository
 import org.prography.samsung.backend.user.repository.UserScheduleRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Instant
 
 @Service
 class UserSettingsService(
@@ -65,11 +65,10 @@ class UserSettingsService(
                 userCurriculumRepository.findById(userId).orElse(
                     UserCurriculum(user = user, curriculum = curriculum),
                 )
-            userCurriculum.curriculum = curriculum
+            userCurriculum.changeCurriculum(curriculum)
             if (request.resetProgress) {
-                userCurriculum.progressPercent = 0
+                userCurriculum.resetProgress()
             }
-            userCurriculum.updatedAt = Instant.now()
             userCurriculumRepository.save(userCurriculum)
             changed = true
         }
@@ -83,7 +82,7 @@ class UserSettingsService(
         if (scheduleChanged) {
             onboardingService.saveSchedule(
                 userId,
-                org.prography.samsung.backend.user.dto.UserScheduleRequest(
+                UserScheduleRequest(
                     frequency = frequency,
                     days = days,
                     time = time,

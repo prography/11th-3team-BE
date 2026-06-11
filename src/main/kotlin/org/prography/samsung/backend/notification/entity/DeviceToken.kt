@@ -12,8 +12,8 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.prography.samsung.backend.common.domain.DevicePlatform
+import org.prography.samsung.backend.common.entity.BaseEntity
 import org.prography.samsung.backend.user.entity.User
-import java.time.Instant
 
 @Entity
 @Table(name = "device_tokens")
@@ -21,16 +21,24 @@ class DeviceToken(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
+
     @Column(nullable = false, length = 512)
     var token: String,
+
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     var platform: DevicePlatform? = null,
+
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
-    @Column(name = "updated_at", nullable = false)
-    var updatedAt: Instant = Instant.now(),
-)
+) : BaseEntity() {
+
+    fun reactivate(newPlatform: DevicePlatform?) {
+        platform = newPlatform
+        isActive = true
+    }
+}

@@ -10,11 +10,11 @@ import org.prography.samsung.backend.notification.entity.DeviceToken
 import org.prography.samsung.backend.notification.entity.NotificationSchedule
 import org.prography.samsung.backend.notification.repository.DeviceTokenRepository
 import org.prography.samsung.backend.notification.repository.NotificationScheduleRepository
+import org.prography.samsung.backend.user.entity.UserSchedule
 import org.prography.samsung.backend.user.repository.UserRepository
 import org.prography.samsung.backend.user.repository.UserScheduleRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Instant
 
 @Service
 class NotificationService(
@@ -33,9 +33,7 @@ class NotificationService(
             val user = userRepository.findById(userId).orElseThrow { CustomException(ErrorBaseCode.NOT_FOUND_ENTITY) }
             val existing = deviceTokenRepository.findByUserIdAndToken(userId, request.deviceToken)
             if (existing != null) {
-                existing.platform = request.platform
-                existing.isActive = true
-                existing.updatedAt = Instant.now()
+                existing.reactivate(request.platform)
                 deviceTokenRepository.save(existing)
             } else {
                 deviceTokenRepository.save(
@@ -69,10 +67,7 @@ class NotificationService(
         rebuildNotificationSchedules(userId, schedule)
     }
 
-    private fun rebuildNotificationSchedules(
-        userId: Long,
-        schedule: org.prography.samsung.backend.user.entity.UserSchedule,
-    ) {
+    private fun rebuildNotificationSchedules(userId: Long, schedule: UserSchedule) {
         val user = userRepository.findById(userId).orElseThrow { CustomException(ErrorBaseCode.NOT_FOUND_ENTITY) }
         notificationScheduleRepository.deleteAllByUserId(userId)
         schedule.days.forEach { day ->
