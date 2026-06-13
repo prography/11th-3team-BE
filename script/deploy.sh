@@ -82,8 +82,49 @@ remove_container_if_exists() {
   fi
 }
 
-run_container() {
+print_container_diagnostics() {
+  if ! sudo docker container inspect "${CONTAINER_NAME}" >/dev/null 2>&1; then
+    echo "[deploy] Container ${CONTAINER_NAME} does not exist."
+    return 0
+  fi
+
+  local status exit_code log_driver
+  status="$(sudo docker inspect -f '{{.State.Status}}' "${CONTAINER_NAME}" 2>/dev/null || echo unknown)"
+  exit_code="$(sudo docker inspect -f '{{.State.ExitCode}}' "${CONTAINER_NAME}" 2>/dev/null || echo unknown)"
+  log_driver="$(sudo docker inspect -f '{{.HostConfig.LogConfig.Type}}' "${CONTAINER_NAME}" 2>/dev/null || echo unknown)"
+
+  echo "[deploy] Container status=${status}, exit_code=${exit_code}, log_driver=${log_driver}"
+
+  if [ "${log_driver}" = "awslogs" ]; then
+    echo "[deploy] awslogs driver in use — app logs are in CloudWatch (${AWSLOGS_GROUP}), not docker logs."
+    echo "[deploy] If the container exited immediately, check EC2 IAM role for logs:CreateLogGroup/logs:PutLogEvents on ${AWSLOGS_GROUP}."
+  else
+    sudo docker logs --tail 100 "${CONTAINER_NAME}" 2>/dev/null || true
+  fi
+}
+
+wait_for_container_running() {
+  local max_tries=6
+  local status=""
+
+  for i in $(seq 1 "${max_tries}"); do
+    status="$(sudo docker inspect -f '{{.State.Status}}' "${CONTAINER_NAME}" 2>/dev/null || echo missing)"
+    if [ "${status}" = "running" ]; then
+      return 0
+    fi
+    if [ "${status}" = "exited" ] || [ "${status}" = "dead" ]; then
+      return 1
+    fi
+    sleep 1
+  done
+
+  echo "[deploy] Container did not reach running state (last status=${status})."
+  return 1
+}
+
+run_container_once() {
   local image_ref="$1"
+  local use_awslogs="$2"
   local -a docker_run_args
 
   docker_run_args=(
@@ -103,7 +144,7 @@ run_container() {
     docker_run_args+=(--network "${DOCKER_NETWORK}")
   fi
 
-  if [ "${AWSLOGS_ENABLED}" = "true" ]; then
+  if [ "${use_awslogs}" = "true" ]; then
     docker_run_args+=(
       --log-driver awslogs
       --log-opt "awslogs-region=${AWSLOGS_REGION}"
@@ -111,17 +152,36 @@ run_container() {
       --log-opt "awslogs-stream-prefix=${AWSLOGS_STREAM_PREFIX}"
       --log-opt "awslogs-create-group=${AWSLOGS_CREATE_GROUP}"
     )
+    echo "[deploy] CloudWatch Logs: ${AWSLOGS_GROUP} (${AWSLOGS_REGION})"
   fi
 
   docker_run_args+=("${image_ref}")
 
-  if [ "${AWSLOGS_ENABLED}" = "true" ]; then
-    echo "[deploy] CloudWatch Logs: ${AWSLOGS_GROUP} (${AWSLOGS_REGION})"
-  fi
   echo "[deploy] Run container ${CONTAINER_NAME} from ${image_ref}"
-  # docker run -d returns 0 even if the container crashes immediately.
-  # Actual startup failure is caught by wait_for_health below.
   sudo docker "${docker_run_args[@]}"
+}
+
+run_container() {
+  local image_ref="$1"
+
+  if [ "${AWSLOGS_ENABLED}" = "true" ]; then
+    if run_container_once "${image_ref}" "true" && wait_for_container_running; then
+      return 0
+    fi
+
+    echo "[deploy] Container failed to stay running with awslogs driver."
+    print_container_diagnostics
+    remove_container_if_exists
+
+    echo "[deploy] Retrying without awslogs driver to avoid blocking deployment."
+    echo "[deploy] Add CloudWatch Logs IAM permissions to the EC2 instance role, then redeploy."
+    run_container_once "${image_ref}" "false"
+    wait_for_container_running
+    return $?
+  fi
+
+  run_container_once "${image_ref}" "false"
+  wait_for_container_running
 }
 
 wait_for_health() {
@@ -198,7 +258,7 @@ fi
 
 if ! wait_for_health; then
   echo "[deploy] Health check failed."
-  sudo docker logs --tail 100 "${CONTAINER_NAME}" || true
+  print_container_diagnostics
   rollback "${PREV_IMAGE}" || true
   exit 1
 fi
