@@ -9,8 +9,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.prography.samsung.backend.common.entity.BaseEntity
 import org.prography.samsung.backend.session.entity.TutoringSession
-import java.time.Instant
 
 @Entity
 @Table(name = "conversation_turns")
@@ -31,7 +31,4 @@ class ConversationTurn(
 
     @Column(name = "ai_response_json", nullable = false, columnDefinition = "TEXT")
     val aiResponseJson: String,
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    val createdAt: Instant = Instant.now(),
-)
+) : BaseEntity()
