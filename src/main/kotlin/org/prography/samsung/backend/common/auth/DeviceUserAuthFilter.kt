@@ -8,6 +8,7 @@ import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.ApiResponse
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.common.response.ErrorBaseCode
+import org.slf4j.MDC
 import org.springframework.core.annotation.Order
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
@@ -45,6 +46,8 @@ class DeviceUserAuthFilter(private val userUpsertService: UserUpsertService, pri
 
             val currentUser = userUpsertService.upsertByExternalId(token)
             request.setAttribute(CurrentUserHolder.REQUEST_ATTRIBUTE, currentUser)
+            MDC.put(USER_ID_KEY, currentUser.userId.toString())
+            MDC.put(EXTERNAL_USER_ID_KEY, currentUser.externalId)
             filterChain.doFilter(request, response)
         } catch (ex: CustomException) {
             writeError(response, ex)
@@ -52,6 +55,11 @@ class DeviceUserAuthFilter(private val userUpsertService: UserUpsertService, pri
     }
 
     private fun isValidUuid(value: String): Boolean = runCatching { UUID.fromString(value) }.isSuccess
+
+    companion object {
+        private const val USER_ID_KEY = "userId"
+        private const val EXTERNAL_USER_ID_KEY = "externalUserId"
+    }
 
     private fun writeError(response: HttpServletResponse, ex: CustomException) {
         response.status = ex.errorCode.httpStatus.value()
