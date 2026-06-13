@@ -15,6 +15,11 @@ GHCR_TOKEN="${GHCR_TOKEN:-}"
 HEALTHCHECK_URL="${HEALTHCHECK_URL:-http://localhost:${HOST_PORT}/actuator/health}"
 HEALTHCHECK_TIMEOUT="${HEALTHCHECK_TIMEOUT:-180}"
 HEALTHCHECK_INTERVAL="${HEALTHCHECK_INTERVAL:-5}"
+AWSLOGS_ENABLED="${AWSLOGS_ENABLED:-true}"
+AWSLOGS_REGION="${AWSLOGS_REGION:-ap-northeast-2}"
+AWSLOGS_GROUP="${AWSLOGS_GROUP:-/prography/backend}"
+AWSLOGS_STREAM_PREFIX="${AWSLOGS_STREAM_PREFIX:-prography-backend}"
+AWSLOGS_CREATE_GROUP="${AWSLOGS_CREATE_GROUP:-true}"
 TARGET_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
 TEMP_ENV=""
 TEMP_SECRET_JSON=""
@@ -98,8 +103,21 @@ run_container() {
     docker_run_args+=(--network "${DOCKER_NETWORK}")
   fi
 
+  if [ "${AWSLOGS_ENABLED}" = "true" ]; then
+    docker_run_args+=(
+      --log-driver awslogs
+      --log-opt "awslogs-region=${AWSLOGS_REGION}"
+      --log-opt "awslogs-group=${AWSLOGS_GROUP}"
+      --log-opt "awslogs-stream-prefix=${AWSLOGS_STREAM_PREFIX}"
+      --log-opt "awslogs-create-group=${AWSLOGS_CREATE_GROUP}"
+    )
+  fi
+
   docker_run_args+=("${image_ref}")
 
+  if [ "${AWSLOGS_ENABLED}" = "true" ]; then
+    echo "[deploy] CloudWatch Logs: ${AWSLOGS_GROUP} (${AWSLOGS_REGION})"
+  fi
   echo "[deploy] Run container ${CONTAINER_NAME} from ${image_ref}"
   # docker run -d returns 0 even if the container crashes immediately.
   # Actual startup failure is caught by wait_for_health below.
