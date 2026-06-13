@@ -1,6 +1,7 @@
 package org.prography.samsung.backend.curriculum.entity
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -11,6 +12,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.prography.samsung.backend.common.domain.AiEmotion
+import org.prography.samsung.backend.common.domain.AiEmotionConverter
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.entity.BaseEntity
 
@@ -34,4 +37,8 @@ class LessonQuestion(
 
     @Column(name = "wrong_answer_html", columnDefinition = "TEXT")
     val wrongAnswerHtml: String? = null,
+
+    @Convert(converter = AiEmotionConverter::class)
+    @Column(nullable = false, length = 20)
+    val emotion: AiEmotion = AiEmotion.CURIOUS,
 ) : BaseEntity()

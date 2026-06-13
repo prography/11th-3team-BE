@@ -1,6 +1,7 @@
 package org.prography.samsung.backend.common.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import org.prography.samsung.backend.common.domain.AiEmotion
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.domain.TopicType
@@ -36,6 +37,8 @@ data class HintNoteResponse(val header: HintNoteHeaderResponse, val sections: Li
 
 data class LessonQuestionResponse(
     val bubbleText: String,
+    val speak: String,
+    val emotion: AiEmotion,
     @field:JsonInclude(JsonInclude.Include.NON_NULL)
     val displayAnswerHtml: String? = null,
 )

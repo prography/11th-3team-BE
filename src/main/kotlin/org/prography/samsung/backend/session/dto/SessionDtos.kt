@@ -2,13 +2,14 @@ package org.prography.samsung.backend.session.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import jakarta.validation.constraints.NotBlank
+import org.prography.samsung.backend.common.domain.ConversationMode
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.dto.ActiveSessionResponse
 import org.prography.samsung.backend.common.dto.HintNoteResponse
 import org.prography.samsung.backend.common.dto.LessonQuestionResponse
 import org.prography.samsung.backend.common.dto.TodayTopicResponse
 
-data class SessionStartRequest(val curriculumId: Long? = null)
+data class SessionStartRequest(val curriculumId: Long? = null, val conversationMode: ConversationMode? = null)
 
 data class SessionStartResponse(val sessionId: String, val startedAt: String, val resumed: Boolean)
 
@@ -22,6 +23,7 @@ data class SessionTodayResponse(
 
 data class SessionLessonResponse(
     val sessionId: String,
+    val conversationMode: ConversationMode,
     val currentPhase: SessionPhase,
     val topicLabel: String,
     val question: LessonQuestionResponse,

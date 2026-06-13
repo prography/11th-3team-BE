@@ -22,6 +22,7 @@ import org.prography.samsung.backend.curriculum.repository.HintNoteRepository
 import org.prography.samsung.backend.curriculum.repository.LessonQuestionRepository
 import org.prography.samsung.backend.curriculum.repository.LessonTopicRepository
 import org.prography.samsung.backend.curriculum.service.HintNoteMapper
+import org.prography.samsung.backend.session.dto.SessionStartRequest
 import org.prography.samsung.backend.session.repository.SessionTopicSnapshotRepository
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
 import org.prography.samsung.backend.support.TestFixtures
@@ -68,7 +69,7 @@ class SessionServiceTest {
         whenever(tutoringSessionRepository.findByUserIdAndStatus(TestFixtures.USER_ID, SessionStatus.STARTED))
             .thenReturn(existing)
 
-        val result = sut.start(TestFixtures.USER_ID, TestFixtures.CURRICULUM_ID)
+        val result = sut.start(TestFixtures.USER_ID, SessionStartRequest(curriculumId = TestFixtures.CURRICULUM_ID))
 
         assertEquals(TestFixtures.SESSION_ID, result.sessionId)
         assertTrue(result.resumed)
@@ -86,7 +87,7 @@ class SessionServiceTest {
 
         val exception =
             assertThrows(CustomException::class.java) {
-                sut.start(TestFixtures.USER_ID, 99L)
+                sut.start(TestFixtures.USER_ID, SessionStartRequest(curriculumId = 99L))
             }
 
         assertEquals(ErrorBaseCode.BAD_REQUEST, exception.errorCode)
