@@ -1,5 +1,6 @@
 package org.prography.samsung.backend.session.service
 
+import org.prography.samsung.backend.common.domain.ConversationMode
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.dto.ActiveSessionResponse
@@ -95,7 +96,11 @@ class SessionService(
     }
 
     @Transactional
-    fun start(userId: Long, curriculumId: Long?): SessionStartResponse {
+    fun start(
+        userId: Long,
+        request: org.prography.samsung.backend.session.dto.SessionStartRequest?,
+    ): SessionStartResponse {
+        val curriculumId = request?.curriculumId
         val existing = tutoringSessionRepository.findByUserIdAndStatus(userId, SessionStatus.STARTED)
         if (existing != null) {
             return SessionStartResponse(
@@ -117,6 +122,7 @@ class SessionService(
 
         val topics = lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(targetCurriculumId)
         val now = Instant.now()
+        val conversationMode = request?.conversationMode ?: ConversationMode.STATIC
         val session =
             tutoringSessionRepository.save(
                 TutoringSession(
@@ -125,6 +131,7 @@ class SessionService(
                     curriculum = userCurriculum.curriculum,
                     status = SessionStatus.STARTED,
                     currentPhase = SessionPhase.INTRO,
+                    conversationMode = conversationMode,
                     sessionDate = KstDateTimeUtils.todayKst(),
                     startedAt = now,
                 ),
@@ -232,11 +239,14 @@ class SessionService(
 
         return SessionLessonResponse(
             sessionId = session.id,
+            conversationMode = session.conversationMode,
             currentPhase = expectedPhase,
             topicLabel = snapshot.lessonTopic.gnbTitle,
             question =
             LessonQuestionResponse(
                 bubbleText = question.bubbleText,
+                speak = question.bubbleText,
+                emotion = question.emotion,
                 displayAnswerHtml = question.wrongAnswerHtml,
             ),
             hintNote = hintNoteMapper.toResponse(hintNote.contentJson),

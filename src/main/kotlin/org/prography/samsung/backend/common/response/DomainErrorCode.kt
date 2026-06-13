@@ -23,4 +23,7 @@ enum class DomainErrorCode(override val httpStatus: HttpStatus, override val cod
     SESSION_NOT_COMPLETED(ErrorBaseCode.CONFLICT.httpStatus, ErrorBaseCode.CONFLICT.code, "아직 완료되지 않은 수업입니다."),
     CURRICULUM_NOT_SELECTED(ErrorBaseCode.BAD_REQUEST.httpStatus, ErrorBaseCode.BAD_REQUEST.code, "단원을 먼저 선택해주세요."),
     ACTIVE_SESSION_EXISTS(ErrorBaseCode.CONFLICT.httpStatus, ErrorBaseCode.CONFLICT.code, "진행 중인 수업이 있어 변경할 수 없습니다."),
+    TEACH_EMPTY_USER_TEXT(ErrorBaseCode.BAD_REQUEST.httpStatus, 40030, "유저 발화가 비어 있습니다."),
+    TEACH_TURN_LIMIT_EXCEEDED(ErrorBaseCode.CONFLICT.httpStatus, 40920, "대화 턴 한도를 초과했습니다."),
+    TEACH_SESSION_NOT_AI_LOOP(ErrorBaseCode.FORBIDDEN.httpStatus, 40310, "AI 대화 모드 세션이 아닙니다."),
 }

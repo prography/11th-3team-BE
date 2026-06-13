@@ -51,7 +51,7 @@ class SessionController(
     @PostMapping("/session/start")
     fun start(@RequestBody(required = false) request: SessionStartRequest?) = ApiResponseFactory.success(
         SuccessCode.CREATED,
-        sessionService.start(CurrentUserHolder.get().userId, request?.curriculumId),
+        sessionService.start(CurrentUserHolder.get().userId, request),
     )
 
     @Operation(

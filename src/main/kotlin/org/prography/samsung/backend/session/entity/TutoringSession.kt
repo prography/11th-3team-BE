@@ -1,6 +1,9 @@
 package org.prography.samsung.backend.session.entity
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -10,6 +13,8 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.Version
+import org.prography.samsung.backend.common.domain.ConversationMode
+import org.prography.samsung.backend.common.domain.ConversationModeConverter
 import org.prography.samsung.backend.common.domain.RewardStatus
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
@@ -41,6 +46,16 @@ class TutoringSession(
     @Enumerated(EnumType.STRING)
     @Column(name = "current_phase", length = 20)
     var currentPhase: SessionPhase? = null,
+
+    @Convert(converter = ConversationModeConverter::class)
+    @Column(name = "conversation_mode", nullable = false, length = 20)
+    var conversationMode: ConversationMode = ConversationMode.STATIC,
+
+    @Column(name = "turn_count", nullable = false)
+    var turnCount: Int = 0,
+
+    @Column(name = "covered_concepts", nullable = false, columnDefinition = "TEXT")
+    var coveredConceptsJson: String = "[]",
 
     @Column(name = "session_date", nullable = false)
     val sessionDate: LocalDate,
@@ -104,5 +119,13 @@ class TutoringSession(
     fun acknowledgeReward(acknowledgedAt: Instant) {
         rewardStatus = RewardStatus.ACKNOWLEDGED
         rewardAcknowledgedAt = acknowledgedAt
+    }
+
+    fun getCoveredConceptList(objectMapper: ObjectMapper): List<String> =
+        runCatching { objectMapper.readValue<List<String>>(coveredConceptsJson) }.getOrDefault(emptyList())
+
+    fun recordTurn(covered: List<String>, objectMapper: ObjectMapper) {
+        turnCount += 1
+        coveredConceptsJson = objectMapper.writeValueAsString(covered.distinct())
     }
 }

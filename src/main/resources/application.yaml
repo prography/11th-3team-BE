@@ -35,6 +35,25 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 
+conversation:
+  llm:
+    provider: deepseek
+    model: deepseek-v4-flash
+    timeout-ms: 30000
+    max-turns-per-session: 10
+    max-llm-calls-per-session: 15
+    context-turns: 5
+
+ai:
+  koog:
+    deepseek:
+      enabled: true
+      api-key: ${DEEPSEEK_API_KEY:}
+      base-url: https://api.deepseek.com
+    ollama:
+      enabled: false
+      base-url: http://127.0.0.1:11434
+
 management:
   endpoints:
     web:
