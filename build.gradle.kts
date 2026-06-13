@@ -72,6 +72,10 @@ ktlint {
     version.set("1.5.0")
 }
 
+tasks.named<Jar>("jar") {
+    enabled = false
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }
