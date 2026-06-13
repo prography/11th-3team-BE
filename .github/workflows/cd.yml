@@ -96,7 +96,7 @@ jobs:
           EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
           AWSLOGS_REGION: ap-northeast-2
           AWSLOGS_GROUP: /prography/backend
-          AWSLOGS_STREAM_PREFIX: prography-backend
+          AWSLOGS_STREAM: prography-backend
         run: |
           set -euo pipefail
 
@@ -112,7 +112,7 @@ jobs:
             --arg healthcheck_url "http://localhost:8080/actuator/health" \
             --arg awslogs_region "$AWSLOGS_REGION" \
             --arg awslogs_group "$AWSLOGS_GROUP" \
-            --arg awslogs_stream_prefix "$AWSLOGS_STREAM_PREFIX" \
+            --arg awslogs_stream "$AWSLOGS_STREAM" \
             '{
               commands: [
                 "mkdir -p \($deploy_dir)",
@@ -126,7 +126,7 @@ jobs:
                   + " HEALTHCHECK_URL=" + ($healthcheck_url | @sh)
                   + " AWSLOGS_REGION=" + ($awslogs_region | @sh)
                   + " AWSLOGS_GROUP=" + ($awslogs_group | @sh)
-                  + " AWSLOGS_STREAM_PREFIX=" + ($awslogs_stream_prefix | @sh)
+                  + " AWSLOGS_STREAM=" + ($awslogs_stream | @sh)
                   + " \($deploy_dir)/deploy.sh"
               ]
             }' > ssm-commands.json

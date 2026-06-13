@@ -18,7 +18,7 @@ HEALTHCHECK_INTERVAL="${HEALTHCHECK_INTERVAL:-5}"
 AWSLOGS_ENABLED="${AWSLOGS_ENABLED:-true}"
 AWSLOGS_REGION="${AWSLOGS_REGION:-ap-northeast-2}"
 AWSLOGS_GROUP="${AWSLOGS_GROUP:-/prography/backend}"
-AWSLOGS_STREAM_PREFIX="${AWSLOGS_STREAM_PREFIX:-prography-backend}"
+AWSLOGS_STREAM="${AWSLOGS_STREAM:-${CONTAINER_NAME}}"
 AWSLOGS_CREATE_GROUP="${AWSLOGS_CREATE_GROUP:-true}"
 TARGET_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
 TEMP_ENV=""
@@ -149,10 +149,10 @@ run_container_once() {
       --log-driver awslogs
       --log-opt "awslogs-region=${AWSLOGS_REGION}"
       --log-opt "awslogs-group=${AWSLOGS_GROUP}"
-      --log-opt "awslogs-stream-prefix=${AWSLOGS_STREAM_PREFIX}"
+      --log-opt "awslogs-stream=${AWSLOGS_STREAM}"
       --log-opt "awslogs-create-group=${AWSLOGS_CREATE_GROUP}"
     )
-    echo "[deploy] CloudWatch Logs: ${AWSLOGS_GROUP} (${AWSLOGS_REGION})"
+    echo "[deploy] CloudWatch Logs: ${AWSLOGS_GROUP}/${AWSLOGS_STREAM} (${AWSLOGS_REGION})"
   fi
 
   docker_run_args+=("${image_ref}")
@@ -174,7 +174,7 @@ run_container() {
     remove_container_if_exists
 
     echo "[deploy] Retrying without awslogs driver to avoid blocking deployment."
-    echo "[deploy] Add CloudWatch Logs IAM permissions to the EC2 instance role, then redeploy."
+    echo "[deploy] Check awslogs driver options and EC2 IAM role for CloudWatch Logs, then redeploy."
     run_container_once "${image_ref}" "false"
     wait_for_container_running
     return $?
