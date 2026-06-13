@@ -18,7 +18,7 @@ class OpenApiConfig {
                     "bearerAuth",
                     SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
-                        .scheme("bearer")
+                        .scheme("Bearer")
                         .bearerFormat("UUID")
                         .description("디바이스 사용자 UUID를 입력하세요"),
                 ),
