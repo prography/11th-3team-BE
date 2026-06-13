@@ -7,3 +7,6 @@ logging:
     root: INFO
     org.prography: INFO
     org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
+    org.springframework.web.servlet.PageNotFound: WARN
+    org.springframework.dao: ERROR
