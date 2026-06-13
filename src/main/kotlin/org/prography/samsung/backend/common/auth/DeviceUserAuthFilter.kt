@@ -55,7 +55,7 @@ class DeviceUserAuthFilter(private val userUpsertService: UserUpsertService, pri
 
     private fun writeError(response: HttpServletResponse, ex: CustomException) {
         response.status = ex.errorCode.httpStatus.value()
-        response.contentType = MediaType.APPLICATION_JSON_VALUE
+        response.contentType = "${MediaType.APPLICATION_JSON_VALUE};charset=UTF-8"
         response.writer.write(
             objectMapper.writeValueAsString(
                 ApiResponse.onFailure<Nothing>(ex.errorCode, ex.message),
