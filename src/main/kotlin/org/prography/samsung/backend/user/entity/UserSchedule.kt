@@ -34,10 +34,13 @@ class UserSchedule(
     val days: MutableList<UserScheduleDay> = mutableListOf(),
 ) : BaseEntity() {
 
+    fun clearDays() {
+        days.clear()
+    }
+
     fun update(frequency: Int, time: LocalTime, newDays: List<UserScheduleDay>) {
         frequencyPerWeek = frequency
         lessonTime = time
-        days.clear()
         days.addAll(newDays)
     }
 }

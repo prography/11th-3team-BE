@@ -89,6 +89,8 @@ class OnboardingService(
                     selectedOrder = index + 1,
                 )
             }
+        schedule.clearDays()
+        userScheduleRepository.saveAndFlush(schedule)
         schedule.update(request.frequency, lessonTime, newDays)
         userScheduleRepository.save(schedule)
 
