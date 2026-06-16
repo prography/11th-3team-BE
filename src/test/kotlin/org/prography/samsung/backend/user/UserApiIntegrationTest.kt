@@ -59,6 +59,26 @@ class UserApiIntegrationTest : IntegrationTestSupport() {
     }
 
     @Test
+    @DisplayName("시간표를 같은 요일로 재저장해도 500 없이 200을 반환한다")
+    fun shouldUpdateScheduleWithOverlappingDaysWithoutError() {
+        val deviceId = newDeviceId()
+        completeOnboarding(deviceId)
+
+        expectApiSuccess(
+            put(
+                "/user/settings",
+                deviceId,
+                mapOf(
+                    "frequency" to 3,
+                    "days" to listOf("TUE", "THU", "SAT"),
+                    "time" to "18:00",
+                ),
+            ),
+        ).andExpect(MockMvcResultMatchers.jsonPath("$.data.schedule.time").value("18:00"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.schedule.days.length()").value(3))
+    }
+
+    @Test
     @DisplayName("진행 중 세션이 있으면 단원 변경 시 409를 반환한다")
     fun shouldReturnConflictWhenChangingCurriculumWithActiveSession() {
         val deviceId = newDeviceId()

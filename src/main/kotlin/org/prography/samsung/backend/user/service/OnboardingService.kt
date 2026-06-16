@@ -1,5 +1,6 @@
 package org.prography.samsung.backend.user.service
 
+import jakarta.persistence.EntityManager
 import org.prography.samsung.backend.common.dto.UserScheduleResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
@@ -30,6 +31,7 @@ class OnboardingService(
     private val userCurriculumRepository: UserCurriculumRepository,
     private val userScheduleRepository: UserScheduleRepository,
     private val curriculumService: CurriculumService,
+    private val entityManager: EntityManager,
 ) {
     @Transactional(readOnly = true)
     fun getStatus(userId: Long): OnboardingStatusResponse {
@@ -89,6 +91,9 @@ class OnboardingService(
                     selectedOrder = index + 1,
                 )
             }
+        schedule.clearDays()
+        userScheduleRepository.save(schedule)
+        entityManager.flush()
         schedule.update(request.frequency, lessonTime, newDays)
         userScheduleRepository.save(schedule)
 
