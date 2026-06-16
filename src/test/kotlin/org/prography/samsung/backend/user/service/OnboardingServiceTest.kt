@@ -1,6 +1,5 @@
 package org.prography.samsung.backend.user.service
 
-import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -33,7 +32,6 @@ class OnboardingServiceTest {
     private val userCurriculumRepository: UserCurriculumRepository = mock()
     private val userScheduleRepository: UserScheduleRepository = mock()
     private val curriculumService: CurriculumService = mock()
-    private val entityManager: EntityManager = mock()
     private lateinit var sut: OnboardingService
 
     @BeforeEach
@@ -45,7 +43,6 @@ class OnboardingServiceTest {
                 userCurriculumRepository,
                 userScheduleRepository,
                 curriculumService,
-                entityManager,
             )
     }
 
