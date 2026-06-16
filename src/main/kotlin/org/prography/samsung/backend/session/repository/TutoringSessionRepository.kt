@@ -56,15 +56,25 @@ interface TutoringSessionRepository : JpaRepository<TutoringSession, String> {
         SELECT s FROM TutoringSession s
         WHERE s.user.id = :userId
           AND s.status = org.prography.samsung.backend.common.domain.SessionStatus.COMPLETED
-          AND (:cursorCompletedAt IS NULL OR s.completedAt < :cursorCompletedAt
+        ORDER BY s.completedAt DESC, s.id DESC
+        """,
+    )
+    fun findCompletedHistoryFirst(@Param("userId") userId: Long, pageable: Pageable): List<TutoringSession>
+
+    @Query(
+        """
+        SELECT s FROM TutoringSession s
+        WHERE s.user.id = :userId
+          AND s.status = org.prography.samsung.backend.common.domain.SessionStatus.COMPLETED
+          AND (s.completedAt < :cursorCompletedAt
                OR (s.completedAt = :cursorCompletedAt AND s.id < :cursorSessionId))
         ORDER BY s.completedAt DESC, s.id DESC
         """,
     )
     fun findCompletedHistory(
         @Param("userId") userId: Long,
-        @Param("cursorCompletedAt") cursorCompletedAt: Instant?,
-        @Param("cursorSessionId") cursorSessionId: String?,
+        @Param("cursorCompletedAt") cursorCompletedAt: Instant,
+        @Param("cursorSessionId") cursorSessionId: String,
         pageable: Pageable,
     ): List<TutoringSession>
 }
