@@ -22,13 +22,18 @@ This file is a short map for agents working in the Prography Samsung Backend. Do
 - DB migrations: Flyway — `src/main/resources/db/migration/`.
 - Packaging: `./gradlew clean bootJar` or Docker image pushed to GHCR.
 - API actuator: `/actuator/health`, `/actuator/health/liveness`, `/actuator/health/readiness`.
+- Swagger UI: `/swagger-ui/index.html`, OpenAPI JSON: `/v3/api-docs`.
 
 ## Architecture Rules
 - Keep packages domain-oriented under `org.prography.samsung.backend`.
 - Keep controllers thin. Put business rules in `service` or `usecase`.
 - Keep DTO naming explicit: `*Request` inbound, `*Response` outbound, `*Command` service-layer transfer.
 - Prefer constructor injection and follow existing Spring/Lombok/Kotlin patterns.
-- Use `CustomException` + domain-specific `*ErrorCode` — never raw `RuntimeException`.
+- Use `CustomException` + domain-specific `DomainErrorCode` or `ErrorBaseCode` — never raw `RuntimeException`.
+- All entity state changes go through entity methods (e.g. `session.complete(...)`, `session.abort()`, `profile.applySessionReward(...)`) — never set fields directly from a service.
+- All `@Entity` classes must extend `BaseEntity` (provides `createdAt`, `updatedAt`).
+- Auth: controllers use `@CurrentUser` to get `userId: Long` injected by `DeviceUserAuthFilter` + `CurrentUserHolder`. Never read `Authorization` header in controllers.
+- New domain error codes go in `DomainErrorCode`. New base HTTP-level errors go in `ErrorBaseCode`.
 
 ## Working Rules
 - Make the smallest coherent change that solves the task.
@@ -38,6 +43,22 @@ This file is a short map for agents working in the Prography Samsung Backend. Do
 - Use `./gradlew test` for verification when the change touches runtime logic.
 - Run `./gradlew ktlintCheck` before committing — ktlint is enforced.
 - Update `AGENTS.md` when repo-wide working rules, workflows, or agent expectations change.
+
+## Completion Gate
+A task is not done until all three pass:
+1. `./gradlew test` — tests green
+2. `./gradlew ktlintCheck` — lint clean
+3. Docs sync: update `AGENTS.md` or `docs/ai-reference/` if behavior or architecture changed.
+
+> If any gate fails, fix it before reporting completion. See `docs/ai-reference/PLANS.md` for full gate details.
+
+## Automation Patterns (Skill & Hook)
+When a workflow repeats, promote it rather than re-explaining each session:
+- **Skill** — repeated multi-step workflows (e.g., PR creation, DB migration, session flow testing) → `.claude/skills/{name}/SKILL.md`
+- **Hook (Stop)** — enforce completion gate deterministically (tests, lint, docs) → `.claude/settings.json` Stop hook
+- **Hook (PreToolUse)** — block dangerous commands before execution
+
+Rule: if you've explained the same procedure twice in a session, make it a skill. If a check is mechanical (pass/fail), make it a hook.
 
 ## Git & Branch Convention
 - Commit format: `type: message` — types: `feat`, `fix`, `chore`, `build`, `style`, `refactor`, `docs`, `test`, `ci`.

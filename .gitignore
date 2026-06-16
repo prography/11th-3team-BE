@@ -20,6 +20,7 @@ docs/ai-reference/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+.claude/**
 
 ### IntelliJ IDEA ###
 .idea
