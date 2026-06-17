@@ -18,12 +18,19 @@ class SessionHistoryService(private val tutoringSessionRepository: TutoringSessi
         val (cursorCompletedAt, cursorSessionId) = decodeCursor(cursor)
 
         val sessions =
-            tutoringSessionRepository.findCompletedHistory(
-                userId = userId,
-                cursorCompletedAt = cursorCompletedAt,
-                cursorSessionId = cursorSessionId,
-                pageable = PageRequest.of(0, pageSize + 1),
-            )
+            if (cursorCompletedAt == null || cursorSessionId == null) {
+                tutoringSessionRepository.findCompletedHistoryFirst(
+                    userId = userId,
+                    pageable = PageRequest.of(0, pageSize + 1),
+                )
+            } else {
+                tutoringSessionRepository.findCompletedHistory(
+                    userId = userId,
+                    cursorCompletedAt = cursorCompletedAt,
+                    cursorSessionId = cursorSessionId,
+                    pageable = PageRequest.of(0, pageSize + 1),
+                )
+            }
 
         val hasMore = sessions.size > pageSize
         val page = if (hasMore) sessions.take(pageSize) else sessions

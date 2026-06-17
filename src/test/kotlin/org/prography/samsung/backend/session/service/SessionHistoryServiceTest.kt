@@ -12,8 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
-import org.mockito.kotlin.isNull
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
@@ -48,10 +49,8 @@ class SessionHistoryServiceTest {
                 primaryTopicTitle = "분수란?"
             }
         whenever(
-            tutoringSessionRepository.findCompletedHistory(
+            tutoringSessionRepository.findCompletedHistoryFirst(
                 userId = eq(TestFixtures.USER_ID),
-                cursorCompletedAt = isNull(),
-                cursorSessionId = isNull(),
                 pageable = any<Pageable>(),
             ),
         ).thenReturn(listOf(session))
@@ -82,10 +81,8 @@ class SessionHistoryServiceTest {
                 }
             }
         whenever(
-            tutoringSessionRepository.findCompletedHistory(
+            tutoringSessionRepository.findCompletedHistoryFirst(
                 userId = eq(TestFixtures.USER_ID),
-                cursorCompletedAt = isNull(),
-                cursorSessionId = isNull(),
                 pageable = any<Pageable>(),
             ),
         ).thenReturn(sessions)
@@ -95,6 +92,30 @@ class SessionHistoryServiceTest {
         assertEquals(2, result.sessions.size)
         assertTrue(result.hasMore)
         assertNotNull(result.nextCursor)
+    }
+
+    @Test
+    @DisplayName("cursor가 null이면 findCompletedHistoryFirst를 호출하고 findCompletedHistory는 호출하지 않는다")
+    fun shouldCallFindCompletedHistoryFirstWhenCursorIsNull() {
+        whenever(
+            tutoringSessionRepository.findCompletedHistoryFirst(
+                userId = eq(TestFixtures.USER_ID),
+                pageable = any<Pageable>(),
+            ),
+        ).thenReturn(emptyList())
+
+        sut.getHistory(TestFixtures.USER_ID, cursor = null, size = 20)
+
+        verify(tutoringSessionRepository).findCompletedHistoryFirst(
+            userId = eq(TestFixtures.USER_ID),
+            pageable = any<Pageable>(),
+        )
+        verify(tutoringSessionRepository, never()).findCompletedHistory(
+            userId = any(),
+            cursorCompletedAt = any(),
+            cursorSessionId = any(),
+            pageable = any(),
+        )
     }
 
     @Test
