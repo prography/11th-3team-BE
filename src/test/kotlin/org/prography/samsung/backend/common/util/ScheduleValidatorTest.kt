@@ -9,7 +9,6 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.prography.samsung.backend.common.domain.DayOfWeekCode
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 
 @DisplayName("ScheduleValidator 단위 테스트")
 class ScheduleValidatorTest {
@@ -48,7 +47,7 @@ class ScheduleValidatorTest {
     }
 
     @Test
-    @DisplayName("중복 요일이면 BAD_REQUEST를 던진다")
+    @DisplayName("중복 요일이면 SCHEDULE_DUPLICATE_DAY를 던진다")
     fun shouldThrowWhenDuplicateDays() {
         val exception =
             assertThrows(CustomException::class.java) {
@@ -59,7 +58,7 @@ class ScheduleValidatorTest {
                 )
             }
 
-        assertEquals(ErrorBaseCode.BAD_REQUEST, exception.errorCode)
+        assertEquals(DomainErrorCode.SCHEDULE_DUPLICATE_DAY, exception.errorCode)
     }
 
     @ParameterizedTest

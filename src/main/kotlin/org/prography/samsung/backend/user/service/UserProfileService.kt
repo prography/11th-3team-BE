@@ -4,7 +4,6 @@ import org.prography.samsung.backend.common.dto.CurriculumSummaryResponse
 import org.prography.samsung.backend.common.dto.LevelResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.prography.samsung.backend.session.service.SessionService
 import org.prography.samsung.backend.user.dto.UserHomeResponse
 import org.prography.samsung.backend.user.dto.UserProfileResponse
@@ -23,7 +22,7 @@ class UserProfileService(
     fun getProfile(userId: Long): UserProfileResponse {
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
-                CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                CustomException(DomainErrorCode.USER_NOT_FOUND)
             }
         val userCurriculum =
             userCurriculumRepository.findById(userId).orElseThrow {

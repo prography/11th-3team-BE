@@ -12,7 +12,7 @@ class SessionApiIntegrationTest : IntegrationTestSupport() {
     fun shouldReturnBadRequestWhenTodayRequestedBeforeCurriculumSelected() {
         val deviceId = newDeviceId()
 
-        expectApiFailure(get("/session/today", deviceId), httpStatus = 400, businessCode = 40000)
+        expectApiFailure(get("/session/today", deviceId), httpStatus = 400, businessCode = 40080)
     }
 
     @Test
@@ -124,7 +124,7 @@ class SessionApiIntegrationTest : IntegrationTestSupport() {
         expectApiFailure(
             get("/session/$sessionId/reaction", deviceId),
             httpStatus = 403,
-            businessCode = 40300,
+            businessCode = 40310,
         )
     }
 
@@ -152,7 +152,7 @@ class SessionApiIntegrationTest : IntegrationTestSupport() {
         expectApiFailure(
             get("/session/$sessionId/reward", deviceId),
             httpStatus = 409,
-            businessCode = 40900,
+            businessCode = 40950,
         )
     }
 }

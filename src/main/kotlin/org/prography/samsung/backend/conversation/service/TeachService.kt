@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.prography.samsung.backend.common.domain.ConversationMode
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.prography.samsung.backend.conversation.config.ConversationLlmProperties
 import org.prography.samsung.backend.conversation.dto.TeachProgressResponse
 import org.prography.samsung.backend.conversation.dto.TeachRequest
@@ -44,7 +43,7 @@ class TeachService(
 
         val unit =
             curriculumUnitRepository.findFirstByCurriculumIdOrderByIdAsc(session.curriculum.id)
-                ?: throw CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
 
         val previousTurns = conversationTurnRepository.findAllBySessionIdOrderByTurnNumberAsc(sessionId)
         val accumulatedCovered = session.getCoveredConceptList(objectMapper)
@@ -89,7 +88,7 @@ class TeachService(
         val session = getAiLoopSession(userId, sessionId)
         val unit =
             curriculumUnitRepository.findFirstByCurriculumIdOrderByIdAsc(session.curriculum.id)
-                ?: throw CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
         val lastTurn = conversationTurnRepository.findTopBySessionIdOrderByTurnNumberDesc(sessionId)
         val covered = session.getCoveredConceptList(objectMapper)
         val total = aiResponseValidator.totalConcepts(unit.unitJson)
@@ -106,7 +105,7 @@ class TeachService(
     private fun getAiLoopSession(userId: Long, sessionId: String): TutoringSession {
         val session =
             tutoringSessionRepository.findByUserIdAndId(userId, sessionId)
-                ?: throw CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                ?: throw CustomException(DomainErrorCode.SESSION_NOT_FOUND)
         if (session.conversationMode != ConversationMode.AI_LOOP) {
             throw CustomException(DomainErrorCode.TEACH_SESSION_NOT_AI_LOOP)
         }

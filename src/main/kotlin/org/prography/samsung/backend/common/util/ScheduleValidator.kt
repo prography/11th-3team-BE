@@ -3,7 +3,6 @@ package org.prography.samsung.backend.common.util
 import org.prography.samsung.backend.common.domain.DayOfWeekCode
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -22,7 +21,7 @@ object ScheduleValidator {
             throw CustomException(DomainErrorCode.SCHEDULE_DAY_COUNT_MISMATCH)
         }
         if (days.distinct().size != days.size) {
-            throw CustomException(ErrorBaseCode.BAD_REQUEST)
+            throw CustomException(DomainErrorCode.SCHEDULE_DUPLICATE_DAY)
         }
 
         val parsedTime =

@@ -44,7 +44,7 @@ class OnboardingApiIntegrationTest : IntegrationTestSupport() {
                 ),
             ),
             httpStatus = 400,
-            businessCode = 40010,
+            businessCode = 40050,
         )
     }
 
@@ -65,7 +65,7 @@ class OnboardingApiIntegrationTest : IntegrationTestSupport() {
                 ),
             ),
             httpStatus = 400,
-            businessCode = 40000,
+            businessCode = 40060,
         )
     }
 
@@ -78,7 +78,7 @@ class OnboardingApiIntegrationTest : IntegrationTestSupport() {
         expectApiFailure(
             post("/user/onboarding/complete", deviceId),
             httpStatus = 400,
-            businessCode = 40000,
+            businessCode = 40070,
         )
     }
 

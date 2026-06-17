@@ -2,7 +2,6 @@ package org.prography.samsung.backend.notification.service
 
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.prography.samsung.backend.notification.dto.NotificationRegisterRequest
 import org.prography.samsung.backend.notification.dto.NotificationRegisterResponse
 import org.prography.samsung.backend.notification.dto.NotificationRescheduleResponse
@@ -30,7 +29,7 @@ class NotificationService(
                 ?: throw CustomException(DomainErrorCode.SCHEDULE_NOT_CONFIGURED)
 
         if (!request.deviceToken.isNullOrBlank()) {
-            val user = userRepository.findById(userId).orElseThrow { CustomException(ErrorBaseCode.NOT_FOUND_ENTITY) }
+            val user = userRepository.findById(userId).orElseThrow { CustomException(DomainErrorCode.USER_NOT_FOUND) }
             val existing = deviceTokenRepository.findByUserIdAndToken(userId, request.deviceToken)
             if (existing != null) {
                 existing.reactivate(request.platform)
@@ -68,7 +67,7 @@ class NotificationService(
     }
 
     private fun rebuildNotificationSchedules(userId: Long, schedule: UserSchedule) {
-        val user = userRepository.findById(userId).orElseThrow { CustomException(ErrorBaseCode.NOT_FOUND_ENTITY) }
+        val user = userRepository.findById(userId).orElseThrow { CustomException(DomainErrorCode.USER_NOT_FOUND) }
         notificationScheduleRepository.deleteAllByUserId(userId)
         schedule.days.forEach { day ->
             notificationScheduleRepository.save(

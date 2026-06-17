@@ -9,7 +9,6 @@ import org.prography.samsung.backend.common.dto.RewardResponse
 import org.prography.samsung.backend.common.dto.TodayTopicResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.prography.samsung.backend.common.util.KstDateTimeUtils
 import org.prography.samsung.backend.curriculum.repository.HintNoteRepository
 import org.prography.samsung.backend.curriculum.repository.LessonQuestionRepository
@@ -110,14 +109,14 @@ class SessionService(
             )
         }
 
-        val user = userRepository.findById(userId).orElseThrow { CustomException(ErrorBaseCode.NOT_FOUND_ENTITY) }
+        val user = userRepository.findById(userId).orElseThrow { CustomException(DomainErrorCode.USER_NOT_FOUND) }
         val userCurriculum =
             userCurriculumRepository.findById(userId).orElseThrow {
                 CustomException(DomainErrorCode.CURRICULUM_NOT_SELECTED)
             }
         val targetCurriculumId = curriculumId ?: userCurriculum.curriculum.id
         if (userCurriculum.curriculum.id != targetCurriculumId) {
-            throw CustomException(ErrorBaseCode.BAD_REQUEST)
+            throw CustomException(DomainErrorCode.CURRICULUM_MISMATCH)
         }
 
         val topics = lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(targetCurriculumId)
@@ -187,7 +186,7 @@ class SessionService(
         }
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
-                CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                CustomException(DomainErrorCode.USER_NOT_FOUND)
             }
         return sessionCompletionService.toRewardResponse(session, profile)
     }
@@ -229,13 +228,13 @@ class SessionService(
 
         val snapshot =
             sessionTopicSnapshotRepository.findBySessionIdAndSequence(sessionId, topicSequence)
-                ?: throw CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
         val question =
             lessonQuestionRepository.findByLessonTopicIdAndPhase(snapshot.lessonTopic.id, expectedPhase)
-                ?: throw CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
         val hintNote =
             hintNoteRepository.findByLessonTopicIdAndPhase(snapshot.lessonTopic.id, expectedPhase)
-                ?: throw CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
 
         return SessionLessonResponse(
             sessionId = session.id,
@@ -255,7 +254,7 @@ class SessionService(
 
     private fun getOwnedSession(userId: Long, sessionId: String): TutoringSession =
         tutoringSessionRepository.findByUserIdAndId(userId, sessionId)
-            ?: throw CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+            ?: throw CustomException(DomainErrorCode.SESSION_NOT_FOUND)
 
     private fun getStartedSession(userId: Long, sessionId: String): TutoringSession {
         val session = getOwnedSession(userId, sessionId)
