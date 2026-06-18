@@ -51,7 +51,7 @@ class TeachApiIntegrationTest : IntegrationTestSupport() {
                 mapOf("userText" to "분수 설명"),
             ),
             httpStatus = 403,
-            businessCode = 40310,
+            businessCode = 40320,
         )
     }
 
@@ -69,7 +69,7 @@ class TeachApiIntegrationTest : IntegrationTestSupport() {
                 mapOf("userText" to "   "),
             ),
             httpStatus = 400,
-            businessCode = 40030,
+            businessCode = 40090,
         )
     }
 

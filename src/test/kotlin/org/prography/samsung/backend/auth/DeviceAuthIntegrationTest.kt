@@ -33,7 +33,7 @@ class DeviceAuthIntegrationTest : IntegrationTestSupport() {
         expectApiFailure(
             get("/curriculum", "not-a-valid-uuid"),
             httpStatus = 400,
-            businessCode = 40000,
+            businessCode = 40040,
         )
     }
 

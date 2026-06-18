@@ -19,7 +19,7 @@ class NotificationApiIntegrationTest : IntegrationTestSupport() {
                 mapOf("deviceToken" to "fcm-token", "platform" to "ANDROID"),
             ),
             httpStatus = 400,
-            businessCode = 40000,
+            businessCode = 40070,
         )
     }
 

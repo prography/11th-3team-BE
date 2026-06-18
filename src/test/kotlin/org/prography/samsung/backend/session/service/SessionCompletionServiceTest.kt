@@ -17,7 +17,6 @@ import org.mockito.kotlin.whenever
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.prography.samsung.backend.gamification.repository.BadgeLevelRepository
 import org.prography.samsung.backend.session.SessionConstants
 import org.prography.samsung.backend.session.repository.CoinLedgerEntryRepository
@@ -135,7 +134,7 @@ class SessionCompletionServiceTest {
                 sut.complete(TestFixtures.USER_ID, TestFixtures.SESSION_ID)
             }
 
-        assertEquals(ErrorBaseCode.NOT_FOUND_ENTITY, exception.errorCode)
+        assertEquals(DomainErrorCode.SESSION_NOT_FOUND, exception.errorCode)
     }
 
     @Test

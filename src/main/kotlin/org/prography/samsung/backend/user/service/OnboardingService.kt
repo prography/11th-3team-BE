@@ -35,7 +35,7 @@ class OnboardingService(
     fun getStatus(userId: Long): OnboardingStatusResponse {
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
-                CustomException(DomainErrorCode.INVALID_DEVICE_USER_ID)
+                CustomException(DomainErrorCode.USER_NOT_FOUND)
             }
         return OnboardingStatusResponse(
             completed = profile.onboardingCompleted,
@@ -46,12 +46,12 @@ class OnboardingService(
     @Transactional
     fun saveCurriculum(userId: Long, request: OnboardingRequest): OnboardingResponse {
         val user = userRepository.findById(userId).orElseThrow {
-            CustomException(DomainErrorCode.INVALID_DEVICE_USER_ID)
+            CustomException(DomainErrorCode.USER_NOT_FOUND)
         }
         val curriculum = curriculumService.getActiveCurriculumOrThrow(request.curriculumId)
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
-                CustomException(DomainErrorCode.INVALID_DEVICE_USER_ID)
+                CustomException(DomainErrorCode.USER_NOT_FOUND)
             }
 
         val userCurriculum =
@@ -73,7 +73,7 @@ class OnboardingService(
         ScheduleValidator.validateSchedule(request.frequency, days, request.time)
 
         val user = userRepository.findById(userId).orElseThrow {
-            CustomException(DomainErrorCode.INVALID_DEVICE_USER_ID)
+            CustomException(DomainErrorCode.USER_NOT_FOUND)
         }
         val lessonTime = LocalTime.parse(request.time, DateTimeFormatter.ofPattern("HH:mm"))
 
@@ -96,7 +96,7 @@ class OnboardingService(
 
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
-                CustomException(DomainErrorCode.INVALID_DEVICE_USER_ID)
+                CustomException(DomainErrorCode.USER_NOT_FOUND)
             }
         profile.advanceOnboardingStep(2)
         userProfileRepository.save(profile)
@@ -108,7 +108,7 @@ class OnboardingService(
     fun completeOnboarding(userId: Long): OnboardingCompleteResponse {
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
-                CustomException(DomainErrorCode.INVALID_DEVICE_USER_ID)
+                CustomException(DomainErrorCode.USER_NOT_FOUND)
             }
         if (userScheduleRepository.findById(userId).isEmpty) {
             throw CustomException(DomainErrorCode.SCHEDULE_NOT_CONFIGURED)

@@ -92,7 +92,7 @@ class UserApiIntegrationTest : IntegrationTestSupport() {
                 mapOf("curriculumId" to 1, "resetProgress" to true),
             ),
             httpStatus = 409,
-            businessCode = 40900,
+            businessCode = 40960,
         )
     }
 

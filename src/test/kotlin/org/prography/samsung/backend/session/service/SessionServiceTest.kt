@@ -17,7 +17,6 @@ import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.prography.samsung.backend.curriculum.repository.HintNoteRepository
 import org.prography.samsung.backend.curriculum.repository.LessonQuestionRepository
 import org.prography.samsung.backend.curriculum.repository.LessonTopicRepository
@@ -90,7 +89,7 @@ class SessionServiceTest {
                 sut.start(TestFixtures.USER_ID, SessionStartRequest(curriculumId = 99L))
             }
 
-        assertEquals(ErrorBaseCode.BAD_REQUEST, exception.errorCode)
+        assertEquals(DomainErrorCode.CURRICULUM_MISMATCH, exception.errorCode)
     }
 
     @Test

@@ -6,7 +6,6 @@ import org.prography.samsung.backend.common.dto.LevelResponse
 import org.prography.samsung.backend.common.dto.RewardResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.prography.samsung.backend.gamification.entity.BadgeLevel
 import org.prography.samsung.backend.gamification.repository.BadgeLevelRepository
 import org.prography.samsung.backend.session.SessionConstants
@@ -36,7 +35,7 @@ class SessionCompletionService(
     fun complete(userId: Long, sessionId: String): RewardResponse {
         val session =
             tutoringSessionRepository.findByUserIdAndId(userId, sessionId)
-                ?: throw CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                ?: throw CustomException(DomainErrorCode.SESSION_NOT_FOUND)
 
         if (session.status == SessionStatus.COMPLETED) {
             return toRewardResponse(session, userProfileRepository.findById(userId).orElseThrow())
@@ -48,7 +47,7 @@ class SessionCompletionService(
 
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
-                CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                CustomException(DomainErrorCode.USER_NOT_FOUND)
             }
         val userCurriculum =
             userCurriculumRepository.findById(userId).orElseThrow {
@@ -57,7 +56,7 @@ class SessionCompletionService(
 
         val primaryTopic =
             sessionTopicSnapshotRepository.findBySessionIdAndSequence(sessionId, 1)
-                ?: throw CustomException(ErrorBaseCode.NOT_FOUND_ENTITY)
+                ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
 
         val previousLevel = profile.badgeLevel.level
         val newProgress = min(100, userCurriculum.progressPercent + SessionConstants.PROGRESS_INCREMENT)

@@ -10,7 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.prography.samsung.backend.common.exception.CustomException
-import org.prography.samsung.backend.common.response.ErrorBaseCode
+import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.curriculum.repository.CurriculumRepository
 import org.prography.samsung.backend.support.TestFixtures
 
@@ -40,7 +40,7 @@ class CurriculumServiceTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 커리큘럼이면 NOT_FOUND_ENTITY를 던진다")
+    @DisplayName("존재하지 않는 커리큘럼이면 CURRICULUM_NOT_FOUND를 던진다")
     fun shouldThrowWhenCurriculumNotFound() {
         whenever(curriculumRepository.findByIdAndIsActiveTrue(99L)).thenReturn(null)
 
@@ -49,6 +49,6 @@ class CurriculumServiceTest {
                 sut.getActiveCurriculumOrThrow(99L)
             }
 
-        assertEquals(ErrorBaseCode.NOT_FOUND_ENTITY, exception.errorCode)
+        assertEquals(DomainErrorCode.CURRICULUM_NOT_FOUND, exception.errorCode)
     }
 }

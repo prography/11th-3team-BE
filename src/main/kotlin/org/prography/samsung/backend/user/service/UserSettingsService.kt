@@ -4,7 +4,6 @@ import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.dto.CurriculumChipResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.prography.samsung.backend.curriculum.service.CurriculumService
 import org.prography.samsung.backend.notification.service.NotificationService
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
@@ -60,7 +59,7 @@ class UserSettingsService(
                 throw CustomException(DomainErrorCode.ACTIVE_SESSION_EXISTS)
             }
             val curriculum = curriculumService.getActiveCurriculumOrThrow(request.curriculumId)
-            val user = userRepository.findById(userId).orElseThrow { CustomException(ErrorBaseCode.NOT_FOUND_ENTITY) }
+            val user = userRepository.findById(userId).orElseThrow { CustomException(DomainErrorCode.USER_NOT_FOUND) }
             val userCurriculum =
                 userCurriculumRepository.findById(userId).orElse(
                     UserCurriculum(user = user, curriculum = curriculum),

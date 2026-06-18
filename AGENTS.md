@@ -12,6 +12,7 @@ This file is a short map for agents working in the Prography Samsung Backend. Do
    - `docs/ai-reference/SECURITY.md` when touching auth, secrets, or exposed endpoints
    - `docs/ai-reference/QUALITY_SCORE.md` for current codebase quality snapshot
    - `docs/ai-reference/PLANS.md` for documentation completion gate rules
+   - `docs/ai-reference/ERROR_CODES.md` when adding or modifying error codes
 
 ## Repo Facts
 - Stack: Kotlin, JDK 25, Spring Boot 3.5, Gradle wrapper, ktlint.
@@ -29,11 +30,12 @@ This file is a short map for agents working in the Prography Samsung Backend. Do
 - Keep controllers thin. Put business rules in `service` or `usecase`.
 - Keep DTO naming explicit: `*Request` inbound, `*Response` outbound, `*Command` service-layer transfer.
 - Prefer constructor injection and follow existing Spring/Lombok/Kotlin patterns.
-- Use `CustomException` + domain-specific `DomainErrorCode` or `ErrorBaseCode` — never raw `RuntimeException`.
+- Use `CustomException` + `DomainErrorCode` in service layer — never raw `RuntimeException`, and never throw `ErrorBaseCode` directly from services.
 - All entity state changes go through entity methods (e.g. `session.complete(...)`, `session.abort()`, `profile.applySessionReward(...)`) — never set fields directly from a service.
 - All `@Entity` classes must extend `BaseEntity` (provides `createdAt`, `updatedAt`).
 - Auth: controllers use `@CurrentUser` to get `userId: Long` injected by `DeviceUserAuthFilter` + `CurrentUserHolder`. Never read `Authorization` header in controllers.
-- New domain error codes go in `DomainErrorCode`. New base HTTP-level errors go in `ErrorBaseCode`.
+- New domain error codes go in `DomainErrorCode` with a unique code per entry
+- `ErrorBaseCode` is reserved for infra/framework-level errors handled in `GlobalExceptionHandler` or auth filters only.
 
 ## Working Rules
 - Make the smallest coherent change that solves the task.
