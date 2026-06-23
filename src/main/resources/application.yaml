@@ -64,3 +64,8 @@ management:
       probes:
         enabled: true
       show-details: never
+
+alert:
+  discord:
+    # Set DISCORD_ERROR_WEBHOOK_URL env var (or override here)
+    webhook-url: ${DISCORD_ERROR_WEBHOOK_URL:}
