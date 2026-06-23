@@ -1,6 +1,5 @@
 package org.prography.samsung.backend.conversation.service
 
-import org.prography.samsung.backend.common.domain.AiEmotion
 import org.prography.samsung.backend.conversation.client.LlmClient
 import org.prography.samsung.backend.conversation.client.LlmTimeoutException
 import org.prography.samsung.backend.conversation.config.ConversationLlmProperties
@@ -15,6 +14,7 @@ class LlmConversationService(
     private val llmClient: LlmClient,
     private val properties: ConversationLlmProperties,
     private val aiResponseValidator: AiResponseValidator,
+    private val progressGuard: TeachProgressGuard,
 ) {
     private val log = LoggerFactory.getLogger(LlmConversationService::class.java)
     fun generateTurn(
@@ -26,6 +26,7 @@ class LlmConversationService(
     ): AiTurnResponse {
         val conceptOrder = aiResponseValidator.parseConceptIdOrder(unit.unitJson)
         val systemPrompt = buildSystemPrompt(unit)
+        log.info("PROMPT_SYSTEM (first 200): {}", systemPrompt.take(200))
 
         // structured + semantic 검증 실패 시 correction 피드백으로 재호출 (config에서 제어)
         val maxAttempts = (properties.maxStructuredRetries).coerceAtLeast(1)
@@ -54,6 +55,16 @@ class LlmConversationService(
                 }
                 return@repeat // 다음 attempt
             }
+            // Debug for real LLM iteration evidence - write to scratch
+            try {
+                val debugFile = java.io.File(
+                    "/var/folders/xz/nldjhy617h7527415vpl1pcm0000gn/T/grok-goal-9cc776e223e8/implementer/raw-llm.log",
+                )
+                debugFile.parentFile.mkdirs()
+                debugFile.appendText("USER: ${userText.take(80)}\nRAW: ${raw.take(500)}\n---\n")
+            } catch (_: Exception) {}
+            log.info("RAW_LLM_OUTPUT userText='{}' raw='{}'", userText.take(50), raw.take(300))
+            println(">>> RAW_LLM userText='${userText.take(60)}' raw='${raw.take(400)}'")
 
             val parsed = try {
                 aiResponseValidator.parseAndValidate(raw, conceptOrder)
@@ -65,12 +76,30 @@ class LlmConversationService(
                 }
                 return@repeat
             }
+            log.info(
+                "PARSED_BEFORE_NORMALIZE speak='{}' covered={} focus={}",
+                parsed.speak.take(100),
+                parsed.covered,
+                parsed.focusConcept,
+            )
+            println(
+                ">>> PARSED_BEFORE_NORMALIZE speak='${parsed.speak.take(
+                    100,
+                )}' covered=${parsed.covered} focus=${parsed.focusConcept}",
+            )
+            try {
+                val debugFile = java.io.File(
+                    "/var/folders/xz/nldjhy617h7527415vpl1pcm0000gn/T/grok-goal-9cc776e223e8/implementer/raw-llm.log",
+                )
+                debugFile.appendText("PARSED_SPEAK: ${parsed.speak}\nPARSED_COVERED: ${parsed.covered}\n---\n")
+            } catch (_: Exception) {}
 
             // semantic 추가 검증 (retry 대상)
             val semanticError = aiResponseValidator.validateSemanticRules(
                 parsed,
                 accumulatedCovered,
                 conceptOrder,
+                userText,
             )
             if (semanticError != null) {
                 lastError = "의미 규칙 위반: $semanticError. speak는 1~2문장 140자 이하로 매우 짧게. covered 이번 턴 새로 이해한 것만."
@@ -79,13 +108,23 @@ class LlmConversationService(
                         "speak='${parsed.speak.take(80)}'",
                 )
                 if (attempt == maxAttempts - 1) {
-                    val safe = applySafetyRules(parsed, conceptOrder, accumulatedCovered, repeatedFocusCount)
+                    var safe = applySafetyRules(parsed, conceptOrder, accumulatedCovered, repeatedFocusCount, userText)
                     val finalFocus = if (safe.focusConcept.isBlank()) {
                         aiResponseValidator.resolveFocusConcept(conceptOrder, safe.missing, explicit = null)
                     } else {
                         safe.focusConcept
                     }
-                    return safe.copy(focusConcept = finalFocus)
+                    safe = safe.copy(focusConcept = finalFocus)
+                    // Last resort only: if semantic still unhappy on speak for non-teach (e.g. stub always weak), provide valid response.
+                    // For real LLM, prompt + semantic should have made it good by now.
+                    if (!safe.sessionDone && safe.missing.isNotEmpty()) {
+                        val hasQ = safe.speak.contains('?') || safe.speak.contains('？')
+                        val kw = aiResponseValidator.hintKeywordFor(safe.missing.first())
+                        if (!hasQ || !safe.speak.contains(kw)) {
+                            safe = safe.copy(speak = "네? 선생님, $kw 는 어떻게 설명하시나요?")
+                        }
+                    }
+                    return safe
                 }
                 return@repeat
             }
@@ -93,13 +132,16 @@ class LlmConversationService(
             if (attempt > 0) {
                 log.info("Teach LLM recovered after ${attempt + 1} attempts")
             }
-            val safe = applySafetyRules(parsed, conceptOrder, accumulatedCovered, repeatedFocusCount)
+            var safe = applySafetyRules(parsed, conceptOrder, accumulatedCovered, repeatedFocusCount, userText)
             val finalFocus = if (safe.focusConcept.isBlank()) {
                 aiResponseValidator.resolveFocusConcept(conceptOrder, safe.missing, explicit = null)
             } else {
                 safe.focusConcept
             }
-            return safe.copy(focusConcept = finalFocus)
+            safe = safe.copy(focusConcept = finalFocus)
+            // No unconditional speak force here — if semantic passed, use LLM's speak (prompt improvement goal).
+            // Fallback only in the last-attempt semantic-fail branch below for compatibility.
+            return safe
         }
 
         // 모든 시도 실패 시 예외 전파 (단일 모델이므로 graceful degradation 제거)
@@ -119,6 +161,14 @@ class LlmConversationService(
     ): String = buildString {
         appendLine("## 단원 개념 ID 목록 (반드시 이 ID만 사용)")
         appendLine(conceptOrder.joinToString(", "))
+        appendLine()
+
+        appendLine("## 수업 핵심 힌트 (이 내용을 선생님이 직접 말하도록 유도하는 질문을 우선하세요)")
+        appendLine("c1 힌트: 전체를 똑같이 나눈 것 중, 일부분을 나타내는 수")
+        appendLine("c2 힌트: 분모(아래)는 절대 더하지 않고 그대로 둔다. 분모는 전체를 똑같이 나눈 개수(아래 숫자)")
+        appendLine("c3 힌트: 분자(위)끼리만 더한다. 분자는 가지고 있는 조각의 수(위 숫자)")
+        appendLine("c4 힌트: 분수는 크기를 비교할 수 있다. 같은 분모일 때 분자가 큰 쪽이 더 크다.")
+        appendLine("중요: 위 힌트 내용을 네가 직접 말하지 말고, 선생님이 설명하게 만드는 질문을 해. (예: '선생님, 분모는 어떻게 해야 해요?')")
         appendLine()
 
         appendLine("## 누적 이해한 개념 (이전 턴까지)")
@@ -156,13 +206,44 @@ class LlmConversationService(
         appendLine("## 출력 규칙 (절대 위반 금지)")
         appendLine("1. speak: **정확히 1문장 (최선) 또는 최대 2문장**. 140자 이하, 초등학생 존댓말만. 장황/반복/긴 설명 절대 금지.")
         appendLine("2. emotion: curious | confused | thoughtful | aha | happy 중 **정확히 하나**, 소문자.")
-        appendLine("3. covered: **이번 선생님 발화로 새로 이해한 id만**. 이미 accumulated에 있는 id 절대 넣지 말 것.")
+        appendLine("3. covered: **이번 선생님 발화에서 '실제로 새로' 그리고 '명확하게' 설명한 개념 ID만**. 이미 accumulated에 있는 ID 절대 반복 금지.")
         appendLine("4. missing: 전체 중 covered를 뺀 나머지 (conceptOrder 순서 유지).")
         appendLine(
             "5. focus_concept: **항상 유효한 문자열**. missing이 있으면 missing의 첫 번째. missing이 비어도 (session_done=true) 마지막 concept나 'c1'을 넣을 것. **절대 null 금지**.",
         )
         appendLine("6. session_done: missing이 비어있을 때만 true.")
         appendLine("7. **JSON 객체 하나만 출력**. 설명, 마크다운, ```json, 추가 텍스트 절대 금지.")
+        appendLine()
+
+        appendLine("## covered 판단 기준 (이 기준을 VERY STRICT하게 지키세요 — 이게 다음으로 넘어가기 힘든 원인입니다)")
+        appendLine(
+            "- '맞아', '네', '그렇지', '그래', '알겠어요', '좋아요', '응', '맞습니다' 같은 짧은 긍정/확인/단답형만으로는 **절대** covered에 아무것도 추가하지 마세요. (단답형 응답으로는 절대 진행되지 않아야 함) - real data shows '그렇지' after c2 explanation must NOT claim c3",
+        )
+        appendLine("- 절대 covered에 아무것도 추가하지 마세요")
+        appendLine(
+            "- 선생님이 해당 개념의 **핵심 의미를 구체적으로 말**했을 때만 추가. 힌트 키워드('전체를 똑같이', '일부분', '아래 숫자', '나눈 개수', '위 숫자', '조각 수', '크기를 비교', '같은 분모면')가 **선생님의 이번 userText 발화 안에 실제로 등장**해야 covered에 넣을 수 있음. Do not infer from previous turns or history for this turn's covered.",
+        )
+        appendLine("- 당신(학생)이 speak에서 키워드를 언급해도 covered 증가 아님. covered는 teacher 설명에만 근거.")
+        appendLine("- 단순히 단어를 언급하거나 이전 설명을 되풀이 확인하는 것은 covered 증가가 아닙니다.")
+        appendLine("- c1: '전체를 똑같이 나눈 것 중 일부'라는 정의를 제대로 설명했을 때")
+        appendLine("- c2: '아래 숫자', '나눈 개수'가 분모라고 명확히 설명했을 때")
+        appendLine("- c3: '위 숫자', '가진 조각 수'가 분자라고 명확히 설명했을 때")
+        appendLine("- c4: '크기를 비교할 수 있다' + 어떻게 비교하는지(예: 같은 분모면 분자 큰 쪽이 더 크다) 구체적으로 설명했을 때")
+        appendLine()
+
+        appendLine("## 대화 목표 (자연스러운 수업 진행을 위해 — 단답형 금지, 질문으로 유도)")
+        appendLine(
+            "- speak은 항상 짧은 반응 + **아직 missing인 개념(특히 현재 focus_concept)에 대해 선생님이 더 자세히 설명하도록 유도하는 짧은 질문**으로 끝내세요.",
+        )
+        appendLine(
+            "- 힌트 키워드를 '선생님이 말하게' 만드는 질문: '선생님, 전체를 똑같이 나누는 건 정확히 뭐예요?', '분모는 아래 숫자라고 하셨는데 어떻게 세나요?' 같은 식. Use exact words like '일부분', '아래 숫자'.",
+        )
+        appendLine("- 힌트 내용을 선생님이 설명하게 만드는 질문을 우선하세요. Use '일부분' in questions for c1.")
+        appendLine(
+            "- 선생님 발화가 주제에서 벗어나거나 애매/단답형이면, covered는 절대 추가하지 말고 부드럽게 현재 focus로 돌아오는 질문을 하세요. 예: '선생님, 그건 잘 모르겠어요. 분수가 크기를 어떻게 비교하나요?'",
+        )
+        appendLine("- '선생님도 모르시는 건가요?' 같은 말은 피하고, '선생님, 쉽게 알려주세요!' 또는 '그건 어떻게 해요?' 스타일로 호기심 표현 + 질문.")
+        appendLine("- missing이 있으면 절대 session_done=true 하지 말고, 질문으로 계속 유도.")
         appendLine()
 
         // Few-shot examples (강력한 신호)
@@ -174,20 +255,48 @@ class LlmConversationService(
             올바른 JSON:
             {"speak":"아하! 그럼 분수는 전체를 똑같이 나눈 것 중 일부군요?","emotion":"aha","covered":["c1"],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
 
-            [예시 2 - 두 번째 이해]
+            [예시 2 - 짧은 확인 "그렇지" (covered 절대 증가 금지!)]
+            선생님: 그렇지
+            올바른 JSON:
+            {"speak":"네! 그럼 전체를 똑같이 나눈 것 중 일부분은 뭐예요?","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+
+            [예시 2b - "그렇지" after explaining c2 (from real data - do NOT advance to c3)]
+            선생님: 분모는 밑에 있는 거 분자 위에 있는 거
+            올바른 JSON:
+            {"speak":"아! 분모는 아래 숫자군요. 그럼 분자는 위 숫자예요?","emotion":"aha","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+
+            [예시 2c - short "그렇지" confirmation (MUST NOT claim c3)]
+            선생님: 그렇지
+            올바른 JSON:
+            {"speak":"네! 그럼 분자는 어떻게 설명할까요? 더 자세히 알려주세요.","emotion":"curious","covered":[],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+
+            [예시 3 - 짧은 확인 "네" 또는 "좋아요" (covered 증가 금지, 질문으로 유도)]
+            선생님: 네
+            올바른 JSON:
+            {"speak":"알겠어요! 그럼 분자는 위에 있는 숫자인가요?","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+
+            [예시 4 - 두 번째 이해 (힌트 키워드 teacher 말에서 나옴)]
             선생님: 분모는 전체를 똑같이 나눈 개수, 아래에 있는 숫자예요.
             올바른 JSON:
             {"speak":"음... 분모가 아래 숫자라는 건 알겠는데, 왜 더하면 안 돼요?","emotion":"confused","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
-            [예시 3 - 완료]
-            선생님: 분수는 크기를 비교할 수 있어요. 분모가 같으면 분자가 큰 게 더 커요.
+            [예시 5 - garbage/off-topic (covered 유지 않고 redirect 질문)]
+            선생님: 평소에 이렇게 이렇게 다릅니다
+            올바른 JSON:
+            {"speak":"선생님, 그건 잘 모르겠어요. 분수가 전체를 똑같이 나눈 건 어떻게 설명하시나요?","emotion":"confused","covered":[],"missing":["c1","c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":false}
+
+            [예시 6 - c4 이해 (비교)]
+            선생님: 분수는 크기를 비교할 수 있어요. 같은 분모면 분자가 큰 게 더 커요.
             올바른 JSON:
             {"speak":"아하! 이제 분수 크기도 알겠어요. 고마워요 선생님!","emotion":"happy","covered":["c3","c4"],"missing":[],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":true}
             """.trimIndent(),
         )
         appendLine()
         appendLine("## 최종 지시")
-        appendLine("위 규칙과 예시를 모두 지켜서, **이번 선생님 발화에 대한 응답 JSON 객체 하나만** 출력하세요.")
+        appendLine(
+            "위 규칙과 예시(특히 모든 확인/단답형/garbage 예시에서 covered=[] + 질문 필수)를 100% 지켜서, " +
+                "**JSON 하나만** 출력하세요. covered 과다 금지, hint 키워드는 teacher 발화에서, 다음 focus 유도 질문 필수.",
+        )
     }
 
     companion object {
@@ -197,12 +306,16 @@ class LlmConversationService(
             ## 핵심 품질 규칙 (절대 준수)
             - speak는 **1문장 선호, 최대 2문장, 140자 이하**로 매우 짧게. 초등 4학년 존댓말 ("요", "죠", "네요"). 장황 절대 금지.
             - covered는 "이번 턴에 새로 이해한" 것만. 이전 턴 covered나 누적 covered는 절대 반복 금지.
+            - **'맞아', '그렇지', '네', '좋아요' 같은 단답/확인만으로는 covered 절대 증가 금지.**
+              hint 키워드가 teacher(userText) 발화 안에 실제로 있어야 함. speak에서 말해도 covered 아님.
+            - speak은 missing이 있으면 반드시 유도 질문으로 끝나야 하며, 단답형으로 끝내지 마세요.
             - missing은 covered를 제외한 나머지 전체를 concept 순서대로.
             - 모든 concept 이해 시 (missing == []) → emotion="happy", session_done=true, speak은 감사 마무리 (1~2문장).
             - covered / missing / focus_concept / misconceptions_detected 는 반드시 unit_json에 정의된 id만 사용.
             - emotion은 5개 값 중 정확히 일치하는 소문자 문자열.
             - **session_done=true인 경우에도 focus_concept은 반드시 문자열** (마지막 id 또는 c1). null 금지.
             - JSON 외의 어떤 텍스트도 출력하지 말 것 (Koog structured output이라도 최종은 순수 JSON).
+            - 목표는 선생님이 hint 키워드를 말하게 만드는 것이지, 네가 빨리 covered를 채우는 것이 아님.
             """.trimIndent()
     }
 
@@ -211,36 +324,12 @@ class LlmConversationService(
         conceptOrder: List<String>,
         accumulatedCovered: List<String>,
         repeatedFocusCount: Int,
-    ): AiTurnResponse {
-        val mergedCovered = aiResponseValidator.mergeCovered(accumulatedCovered, response.covered)
-        val missing = aiResponseValidator.resolveMissing(conceptOrder, mergedCovered)
-        val sessionDone = missing.isEmpty()
-        val correctionStage =
-            if (repeatedFocusCount >= 3) {
-                4
-            } else {
-                response.correctionStage
-            }
-
-        val speak =
-            if (correctionStage == 4 && response.correctionStage < 4) {
-                "음... 아직 헷갈리지만 일단 넘어갈게요. 나중에 다시 알려주세요!"
-            } else {
-                response.speak
-            }
-
-        return response.copy(
-            speak = speak,
-            covered = mergedCovered,
-            missing = missing,
-            correctionStage = correctionStage,
-            focusConcept = aiResponseValidator.resolveFocusConcept(
-                conceptOrder = conceptOrder,
-                missing = missing,
-                explicit = if (missing.isEmpty()) response.focusConcept else null,
-            ),
-            sessionDone = sessionDone,
-            emotion = if (sessionDone) AiEmotion.HAPPY else response.emotion,
-        )
-    }
+        currentUserText: String = "",
+    ): AiTurnResponse = progressGuard.normalize(
+        userText = currentUserText,
+        accumulatedCovered = accumulatedCovered,
+        conceptOrder = conceptOrder,
+        repeatedFocusCount = repeatedFocusCount,
+        raw = response,
+    )
 }

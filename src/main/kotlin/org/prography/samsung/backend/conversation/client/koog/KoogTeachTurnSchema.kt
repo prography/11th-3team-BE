@@ -7,10 +7,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class KoogTeachTurnSchema(
     @property:LLMDescription(
-        "학생(AI)이 선생님에게 말하는 **정확히 1문장 (선호) 또는 최대 2문장**. " +
-            "초등 4학년 존댓말('요/죠/네요')만. **140자 이하, 매우 짧고 간결하게**. " +
-            "장황/반복/긴 설명 절대 금지. '아하!', '음...', '그럼...' + 핵심만. " +
-            "session_done=true여도 1~2문장 감사 인사로 끝. 좋은 예: '아하! 그럼 분모는 아래 숫자인 거네요?'",
+        "학생(AI)이 선생님에게 말하는 **1문장(선호) 또는 최대 2문장(반응 + 다음 hint 유도 질문)**. " +
+            "초등 4학년 존댓말('요/죠/네요')만. **160자 이하**. 장황/반복 금지. " +
+            "speak으로 선생님 설명에 대한 짧은 반응 + **아직 이해 못한 특정 hint 내용(분모/분자 정의, 크기 비교 등)을 선생님이 풀어서 설명하게 만드는 질문**을 덧붙이세요. " +
+            "순수 단답형('아하!','네')로 끝내지 말고 항상 다음 힌트 질문 유도. session_done 시 감사 인사. 예: '분모는 어떻게 세나요?'",
     )
     val speak: String,
 
@@ -22,8 +22,11 @@ data class KoogTeachTurnSchema(
     val emotion: String,
 
     @property:LLMDescription(
-        "이번 턴 선생님 발화로 **새로** 이해한 concept id만 배열. 이미 covered된 것은 절대 포함 금지. " +
-            "unit_json concepts의 id(c1,c2...)만 사용. 이번 턴에 2개 동시 이해한 경우에만 2개 이상.",
+        "이번 턴 선생님(teacher) 발화로 **새로 그리고 명확히** 이해한 concept id만 배열. " +
+            "hint 키워드('전체를 똑같이', '아래 숫자', '위 숫자', '크기 비교' 등)가 선생님 userText 안에 실제로 있어야 함. " +
+            "이미 covered된 것은 절대 포함 금지. 당신(student)이 speak에서 말한 건 counted 아님. " +
+            "unit_json concepts의 id(c1,c2...)만 사용. 이번 턴에 2개 동시 이해한 경우에만 2개 이상. " +
+            "단답 확인('맞아','그렇지')으로는 절대 추가하지 말 것.",
     )
     val covered: List<String> = emptyList(),
 
