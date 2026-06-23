@@ -55,12 +55,11 @@ class LlmConversationService(
                 }
                 return@repeat // 다음 attempt
             }
-            // Debug for real LLM iteration evidence - write to scratch
+            // Debug for real LLM iteration evidence - write to scratch (local only, safe on all OS)
             try {
-                val debugFile = java.io.File(
-                    "/var/folders/xz/nldjhy617h7527415vpl1pcm0000gn/T/grok-goal-9cc776e223e8/implementer/raw-llm.log",
-                )
-                debugFile.parentFile.mkdirs()
+                val debugDir = java.io.File(System.getProperty("java.io.tmpdir"), "teach-debug")
+                val debugFile = java.io.File(debugDir, "raw-llm.log")
+                debugDir.mkdirs()
                 debugFile.appendText("USER: ${userText.take(80)}\nRAW: ${raw.take(500)}\n---\n")
             } catch (_: Exception) {}
             log.info("RAW_LLM_OUTPUT userText='{}' raw='{}'", userText.take(50), raw.take(300))
@@ -88,9 +87,8 @@ class LlmConversationService(
                 )}' covered=${parsed.covered} focus=${parsed.focusConcept}",
             )
             try {
-                val debugFile = java.io.File(
-                    "/var/folders/xz/nldjhy617h7527415vpl1pcm0000gn/T/grok-goal-9cc776e223e8/implementer/raw-llm.log",
-                )
+                val debugDir = java.io.File(System.getProperty("java.io.tmpdir"), "teach-debug")
+                val debugFile = java.io.File(debugDir, "raw-llm.log")
                 debugFile.appendText("PARSED_SPEAK: ${parsed.speak}\nPARSED_COVERED: ${parsed.covered}\n---\n")
             } catch (_: Exception) {}
 

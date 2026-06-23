@@ -3,6 +3,7 @@ package org.prography.samsung.backend.conversation
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 import org.prography.samsung.backend.support.IntegrationTestSupport
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 
@@ -165,14 +166,13 @@ class TeachApiIntegrationTest : IntegrationTestSupport() {
     }
 
     @Test
+    @DisabledIfEnvironmentVariable(named = "CI", matches = "true")
     @DisplayName(
         "local iteration: mixed short/good/garbage calls via API - capture raw for prompt refinement (real LLM when provider allows)",
     )
     fun localApiMixedTurnsCapture() {
-        val logFile = java.io.File(
-            "/var/folders/xz/nldjhy617h7527415vpl1pcm0000gn/T/grok-goal-9cc776e223e8/implementer/local-teach-runs.log",
-        )
-        logFile.parentFile.mkdirs()
+        // 로컬 프롬프트 개발/캡처용 테스트. CI에서는 실행하지 않음 (real LLM + 파일 쓰기 필요)
+        val logFile = getLocalTeachCaptureLogFile()
         // Clean log for this post-fix capture run only (satisfies skeptic evidence requirement)
         logFile.writeText("=== LOCAL TEACH RUN (post-fix) @ ${java.time.Instant.now()} ===\n")
 
@@ -225,12 +225,11 @@ class TeachApiIntegrationTest : IntegrationTestSupport() {
     }
 
     @Test
+    @DisabledIfEnvironmentVariable(named = "CI", matches = "true")
     @DisplayName("real data 3c80 seq: '그렇지' after c2-explain must not advance covered")
     fun shouldNotAdvanceCoveredOnAffirmAfterC2ExplainFromProvidedData() {
-        val logFile = java.io.File(
-            "/var/folders/xz/nldjhy617h7527415vpl1pcm0000gn/T/grok-goal-9cc776e223e8/implementer/local-teach-runs.log",
-        )
-        logFile.parentFile.mkdirs()
+        // 로컬 프롬프트 개발/캡처용 테스트 (사용자가 제공한 실제 세션 데이터 검증). CI에서는 실행하지 않음.
+        val logFile = getLocalTeachCaptureLogFile()
         logFile.appendText("\n=== REAL_BUG_DATA_SEQUENCE @ ${java.time.Instant.now()} ===\n")
 
         val deviceId = newDeviceId()
@@ -309,5 +308,16 @@ class TeachApiIntegrationTest : IntegrationTestSupport() {
             .path("data")
             .path("sessionId")
             .asText()
+    }
+
+    /**
+     * 로컬 개발용 teach capture 로그 파일.
+     * - CI에서는 @DisabledIfEnvironmentVariable 로 인해 이 테스트들이 실행되지 않음.
+     * - 로컬에서 실행할 때 cross-platform으로 안전한 tmp 위치 사용.
+     */
+    private fun getLocalTeachCaptureLogFile(): java.io.File {
+        val dir = java.io.File(System.getProperty("java.io.tmpdir"), "teach-local-capture")
+        dir.mkdirs()
+        return java.io.File(dir, "local-teach-runs.log")
     }
 }
