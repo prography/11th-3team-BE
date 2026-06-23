@@ -1,5 +1,9 @@
 package org.prography.samsung.backend.common.exception
 
+import jakarta.servlet.http.HttpServletRequest
+import org.prography.samsung.backend.common.alert.DiscordErrorNotifier
+import org.prography.samsung.backend.common.auth.CurrentUser
+import org.prography.samsung.backend.common.auth.CurrentUserHolder
 import org.prography.samsung.backend.common.response.ApiResponse
 import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.slf4j.LoggerFactory
@@ -13,11 +17,12 @@ import org.springframework.web.servlet.NoHandlerFoundException
 import java.sql.SQLException
 
 @RestControllerAdvice
-class GlobalExceptionHandler {
+class GlobalExceptionHandler(private val discordErrorNotifier: DiscordErrorNotifier) {
     @ExceptionHandler(CustomException::class)
-    fun handleCustomException(ex: CustomException): ResponseEntity<ApiResponse<Nothing>> {
+    fun handleCustomException(ex: CustomException, request: HttpServletRequest): ResponseEntity<ApiResponse<Nothing>> {
         if (ex.errorCode.httpStatus.is5xxServerError) {
             log.warn("Business exception: code={} message={}", ex.errorCode.code, ex.message)
+            notifyDiscord(ex, request)
         } else {
             log.debug("Business exception: code={} message={}", ex.errorCode.code, ex.message)
         }
@@ -27,7 +32,7 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataAccessException::class)
-    fun handleDataAccess(ex: DataAccessException): ResponseEntity<ApiResponse<Nothing>> {
+    fun handleDataAccess(ex: DataAccessException, request: HttpServletRequest): ResponseEntity<ApiResponse<Nothing>> {
         val sqlException = ex.mostSpecificCause as? SQLException
         log.error(
             "Database access failed sqlState={} errorCode={} message={}",
@@ -36,6 +41,7 @@ class GlobalExceptionHandler {
             ex.mostSpecificCause.message,
             ex,
         )
+        notifyDiscord(ex, request)
         return ResponseEntity
             .status(ErrorBaseCode.INTERNAL_SERVER_ERROR.httpStatus)
             .body(ApiResponse.onFailure(ErrorBaseCode.INTERNAL_SERVER_ERROR))
@@ -70,11 +76,35 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception::class)
-    fun handleUnexpected(ex: Exception): ResponseEntity<ApiResponse<Nothing>> {
+    fun handleUnexpected(ex: Exception, request: HttpServletRequest): ResponseEntity<ApiResponse<Nothing>> {
         log.error("Unhandled exception: {}", ex.message, ex)
+        notifyDiscord(ex, request)
         return ResponseEntity
             .status(ErrorBaseCode.INTERNAL_SERVER_ERROR.httpStatus)
             .body(ApiResponse.onFailure(ErrorBaseCode.INTERNAL_SERVER_ERROR))
+    }
+
+    private fun notifyDiscord(throwable: Throwable, request: HttpServletRequest) {
+        val uid = runCatching { CurrentUserHolder.get().userId.toString() }
+            .getOrNull()
+            ?: (request.getAttribute(CurrentUserHolder.REQUEST_ATTRIBUTE) as? CurrentUser)?.userId?.toString()
+
+        val path = request.requestURI
+        val method = request.method
+
+        val errorCode =
+            (throwable as? CustomException)
+                ?.let {
+                    "${it.errorCode.code} ${it.errorCode::class.simpleName}"
+                } ?: throwable::class.simpleName
+
+        discordErrorNotifier.notifyError(
+            throwable = throwable,
+            uid = uid,
+            path = path,
+            method = method,
+            errorCode = errorCode,
+        )
     }
 
     companion object {
