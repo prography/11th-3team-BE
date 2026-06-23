@@ -31,6 +31,7 @@ class DiscordErrorNotifier(@param:Value("\${alert.discord.webhook-url:}") privat
         path: String? = null,
         method: String? = null,
         errorCode: String? = null,
+        traceId: String? = null,
     ) {
         if (webhookUrl.isBlank()) {
             return
@@ -38,7 +39,7 @@ class DiscordErrorNotifier(@param:Value("\${alert.discord.webhook-url:}") privat
 
         scope.launch {
             runCatching {
-                val payload = buildPayload(throwable, uid, path, method, errorCode)
+                val payload = buildPayload(throwable, uid, path, method, errorCode, traceId)
                 send(payload)
             }.onFailure { e ->
                 log.warn("Discord error alert failed: {}", e.message)
@@ -52,6 +53,7 @@ class DiscordErrorNotifier(@param:Value("\${alert.discord.webhook-url:}") privat
         path: String?,
         method: String?,
         errorCode: String?,
+        traceId: String?,
     ): Map<String, Any> {
         val stackTrace = formatStackTrace(throwable)
         val timestamp = Instant.now().toString()
@@ -69,6 +71,14 @@ class DiscordErrorNotifier(@param:Value("\${alert.discord.webhook-url:}") privat
             fields += mapOf(
                 "name" to "UID",
                 "value" to uid,
+                "inline" to true,
+            )
+        }
+
+        if (!traceId.isNullOrBlank()) {
+            fields += mapOf(
+                "name" to "Trace ID",
+                "value" to traceId,
                 "inline" to true,
             )
         }
@@ -94,10 +104,10 @@ class DiscordErrorNotifier(@param:Value("\${alert.discord.webhook-url:}") privat
             "inline" to false,
         )
 
-        val description = buildString {
+        val mainDescription = buildString {
             append("**스택 트레이스**\n")
             append("```\n")
-            append(truncate(stackTrace, 3200))
+            append(takeTopLines(stackTrace, 20))
             append("\n```")
         }
 
@@ -105,13 +115,11 @@ class DiscordErrorNotifier(@param:Value("\${alert.discord.webhook-url:}") privat
             "title" to "🚨 서버 에러 발생",
             "color" to 0xED4245,
             "fields" to fields,
-            "description" to description,
+            "description" to mainDescription,
             "timestamp" to timestamp,
         )
 
-        return mapOf(
-            "embeds" to listOf(embed),
-        )
+        return mapOf("embeds" to listOf(embed))
     }
 
     private fun formatStackTrace(throwable: Throwable): String {
@@ -124,6 +132,20 @@ class DiscordErrorNotifier(@param:Value("\${alert.discord.webhook-url:}") privat
 
     private fun truncate(text: String, max: Int): String =
         if (text.length <= max) text else text.take(max) + "\n... (truncated)"
+
+    /**
+     * 스택 트레이스에서 상위 N줄만 추출 (가장 중요한 예외 발생 지점 + 호출 스택 상단).
+     * Discord 메시지가 너무 길어지지 않도록 제한.
+     */
+    private fun takeTopLines(stackTrace: String, maxLines: Int): String {
+        val lines = stackTrace.lines()
+        val selected = lines.take(maxLines).joinToString("\n")
+        return if (lines.size > maxLines) {
+            "$selected\n... (총 ${lines.size}줄 중 상위 ${maxLines}줄만 표시)"
+        } else {
+            selected
+        }
+    }
 
     private fun send(payload: Map<String, Any>) {
         try {

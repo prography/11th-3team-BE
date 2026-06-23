@@ -7,6 +7,7 @@ import org.prography.samsung.backend.common.auth.CurrentUserHolder
 import org.prography.samsung.backend.common.response.ApiResponse
 import org.prography.samsung.backend.common.response.ErrorBaseCode
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.dao.DataAccessException
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -91,6 +92,7 @@ class GlobalExceptionHandler(private val discordErrorNotifier: DiscordErrorNotif
 
         val path = request.requestURI
         val method = request.method
+        val traceId = MDC.get("requestId") ?: request.getHeader("X-Request-Id")
 
         val errorCode =
             (throwable as? CustomException)
@@ -104,6 +106,7 @@ class GlobalExceptionHandler(private val discordErrorNotifier: DiscordErrorNotif
             path = path,
             method = method,
             errorCode = errorCode,
+            traceId = traceId,
         )
     }
 
