@@ -17,10 +17,7 @@ import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.curriculum.repository.HintNoteRepository
-import org.prography.samsung.backend.curriculum.repository.LessonQuestionRepository
-import org.prography.samsung.backend.curriculum.repository.LessonTopicRepository
-import org.prography.samsung.backend.curriculum.service.HintNoteMapper
+import org.prography.samsung.backend.curriculum.service.CurriculumService
 import org.prography.samsung.backend.session.dto.SessionStartRequest
 import org.prography.samsung.backend.session.repository.SessionTopicSnapshotRepository
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
@@ -35,10 +32,7 @@ class SessionServiceTest {
     private val userRepository: UserRepository = mock()
     private val userCurriculumRepository: UserCurriculumRepository = mock()
     private val userProfileRepository: UserProfileRepository = mock()
-    private val lessonTopicRepository: LessonTopicRepository = mock()
-    private val lessonQuestionRepository: LessonQuestionRepository = mock()
-    private val hintNoteRepository: HintNoteRepository = mock()
-    private val hintNoteMapper: HintNoteMapper = mock()
+    private val curriculumService: CurriculumService = mock()
     private val tutoringSessionRepository: TutoringSessionRepository = mock()
     private val sessionTopicSnapshotRepository: SessionTopicSnapshotRepository = mock()
     private val sessionCompletionService: SessionCompletionService = mock()
@@ -51,10 +45,7 @@ class SessionServiceTest {
                 userRepository,
                 userCurriculumRepository,
                 userProfileRepository,
-                lessonTopicRepository,
-                lessonQuestionRepository,
-                hintNoteRepository,
-                hintNoteMapper,
+                curriculumService,
                 tutoringSessionRepository,
                 sessionTopicSnapshotRepository,
                 sessionCompletionService,

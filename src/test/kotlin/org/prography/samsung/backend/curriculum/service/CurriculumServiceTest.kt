@@ -12,17 +12,31 @@ import org.mockito.kotlin.whenever
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.curriculum.repository.CurriculumRepository
+import org.prography.samsung.backend.curriculum.repository.HintNoteRepository
+import org.prography.samsung.backend.curriculum.repository.LessonQuestionRepository
+import org.prography.samsung.backend.curriculum.repository.LessonTopicRepository
 import org.prography.samsung.backend.support.TestFixtures
 
 @ExtendWith(MockitoExtension::class)
 @DisplayName("CurriculumService 단위 테스트")
 class CurriculumServiceTest {
     private val curriculumRepository: CurriculumRepository = mock()
+    private val lessonTopicRepository: LessonTopicRepository = mock()
+    private val lessonQuestionRepository: LessonQuestionRepository = mock()
+    private val hintNoteRepository: HintNoteRepository = mock()
+    private val hintNoteMapper: HintNoteMapper = mock()
     private lateinit var sut: CurriculumService
 
     @BeforeEach
     fun setUp() {
-        sut = CurriculumService(curriculumRepository)
+        sut =
+            CurriculumService(
+                curriculumRepository,
+                lessonTopicRepository,
+                lessonQuestionRepository,
+                hintNoteRepository,
+                hintNoteMapper,
+            )
     }
 
     @Test

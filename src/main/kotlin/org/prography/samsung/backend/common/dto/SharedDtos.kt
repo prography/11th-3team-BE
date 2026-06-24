@@ -80,3 +80,5 @@ data class RewardResponse(
     val progressPercent: Int,
     val totalCoins: Int,
 )
+
+data class LessonContent(val question: LessonQuestionResponse, val hintNote: HintNoteResponse)
