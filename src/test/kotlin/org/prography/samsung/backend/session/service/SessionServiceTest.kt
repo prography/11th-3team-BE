@@ -17,7 +17,7 @@ import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.curriculum.service.CurriculumService
+import org.prography.samsung.backend.curriculum.repository.LessonTopicRepository
 import org.prography.samsung.backend.session.dto.SessionStartRequest
 import org.prography.samsung.backend.session.repository.SessionTopicSnapshotRepository
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
@@ -30,12 +30,12 @@ import org.prography.samsung.backend.user.repository.UserRepository
 @DisplayName("SessionService 단위 테스트")
 class SessionServiceTest {
     private val userRepository: UserRepository = mock()
-    private val userCurriculumRepository: UserCurriculumRepository = mock()
     private val userProfileRepository: UserProfileRepository = mock()
-    private val curriculumService: CurriculumService = mock()
+    private val userCurriculumRepository: UserCurriculumRepository = mock()
     private val tutoringSessionRepository: TutoringSessionRepository = mock()
     private val sessionTopicSnapshotRepository: SessionTopicSnapshotRepository = mock()
     private val sessionCompletionService: SessionCompletionService = mock()
+    private val lessonTopicRepository: LessonTopicRepository = mock()
     private lateinit var sut: SessionService
 
     @BeforeEach
@@ -45,7 +45,7 @@ class SessionServiceTest {
                 userRepository,
                 userCurriculumRepository,
                 userProfileRepository,
-                curriculumService,
+                lessonTopicRepository,
                 tutoringSessionRepository,
                 sessionTopicSnapshotRepository,
                 sessionCompletionService,
@@ -59,7 +59,10 @@ class SessionServiceTest {
         whenever(tutoringSessionRepository.findByUserIdAndStatus(TestFixtures.USER_ID, SessionStatus.STARTED))
             .thenReturn(existing)
 
-        val result = sut.start(TestFixtures.USER_ID, SessionStartRequest(curriculumId = TestFixtures.CURRICULUM_ID))
+        val result = sut.start(
+            TestFixtures.USER_ID,
+            SessionStartRequest(curriculumId = TestFixtures.CURRICULUM_ID)
+        )
 
         assertEquals(TestFixtures.SESSION_ID, result.sessionId)
         assertTrue(result.resumed)

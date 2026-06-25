@@ -19,7 +19,8 @@ import org.prography.samsung.backend.curriculum.service.CurriculumService
 import org.prography.samsung.backend.notification.service.NotificationService
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
 import org.prography.samsung.backend.support.TestFixtures
-import org.prography.samsung.backend.user.dto.UserSettingsRequest
+import org.prography.samsung.backend.user.dto.request.UserSettingsRequest
+import org.prography.samsung.backend.user.dto.response.UserScheduleResponse
 import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserRepository
 import org.prography.samsung.backend.user.repository.UserScheduleRepository
@@ -61,7 +62,7 @@ class UserSettingsServiceTest {
         whenever(userScheduleRepository.findWithDaysByUserId(TestFixtures.USER_ID)).thenReturn(schedule)
         whenever(onboardingService.toScheduleResponse(schedule))
             .thenReturn(
-                org.prography.samsung.backend.common.dto.UserScheduleResponse(
+                UserScheduleResponse(
                     frequency = 3,
                     days = listOf("TUE", "THU", "SAT"),
                     time = "17:00",
@@ -85,7 +86,7 @@ class UserSettingsServiceTest {
         whenever(userScheduleRepository.findWithDaysByUserId(TestFixtures.USER_ID)).thenReturn(schedule)
         whenever(onboardingService.toScheduleResponse(schedule))
             .thenReturn(
-                org.prography.samsung.backend.common.dto.UserScheduleResponse(
+                UserScheduleResponse(
                     frequency = 3,
                     days = listOf("TUE", "THU", "SAT"),
                     time = "17:00",
@@ -109,7 +110,7 @@ class UserSettingsServiceTest {
         whenever(userScheduleRepository.findWithDaysByUserId(TestFixtures.USER_ID)).thenReturn(schedule)
         whenever(onboardingService.toScheduleResponse(schedule))
             .thenReturn(
-                org.prography.samsung.backend.common.dto.UserScheduleResponse(
+                UserScheduleResponse(
                     frequency = 3,
                     days = listOf("TUE", "THU", "SAT"),
                     time = "17:00",
@@ -140,14 +141,14 @@ class UserSettingsServiceTest {
         whenever(userScheduleRepository.findWithDaysByUserId(TestFixtures.USER_ID)).thenReturn(schedule)
         whenever(onboardingService.toScheduleResponse(schedule))
             .thenReturn(
-                org.prography.samsung.backend.common.dto.UserScheduleResponse(
+                UserScheduleResponse(
                     frequency = 3,
                     days = listOf("TUE", "THU", "SAT"),
                     time = "17:00",
                 ),
             )
             .thenReturn(
-                org.prography.samsung.backend.common.dto.UserScheduleResponse(
+                UserScheduleResponse(
                     frequency = 2,
                     days = listOf("MON", "WED"),
                     time = "18:00",

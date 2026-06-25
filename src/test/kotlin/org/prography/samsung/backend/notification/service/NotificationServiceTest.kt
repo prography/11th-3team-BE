@@ -14,7 +14,7 @@ import org.mockito.kotlin.whenever
 import org.prography.samsung.backend.common.domain.DevicePlatform
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.notification.dto.NotificationRegisterRequest
+import org.prography.samsung.backend.notification.dto.request.NotificationRegisterRequest
 import org.prography.samsung.backend.notification.repository.DeviceTokenRepository
 import org.prography.samsung.backend.notification.repository.NotificationScheduleRepository
 import org.prography.samsung.backend.support.TestFixtures

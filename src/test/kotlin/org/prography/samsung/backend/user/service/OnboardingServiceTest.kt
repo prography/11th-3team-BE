@@ -16,8 +16,8 @@ import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.curriculum.service.CurriculumService
 import org.prography.samsung.backend.support.TestFixtures
-import org.prography.samsung.backend.user.dto.OnboardingRequest
-import org.prography.samsung.backend.user.dto.UserScheduleRequest
+import org.prography.samsung.backend.user.dto.request.OnboardingRequest
+import org.prography.samsung.backend.user.dto.request.UserScheduleRequest
 import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserProfileRepository
 import org.prography.samsung.backend.user.repository.UserRepository
