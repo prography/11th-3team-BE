@@ -2,9 +2,9 @@ package org.prography.samsung.backend.notification.service
 
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
-import org.prography.samsung.backend.notification.dto.NotificationRegisterRequest
-import org.prography.samsung.backend.notification.dto.NotificationRegisterResponse
-import org.prography.samsung.backend.notification.dto.NotificationRescheduleResponse
+import org.prography.samsung.backend.notification.dto.request.NotificationRegisterRequest
+import org.prography.samsung.backend.notification.dto.response.NotificationRegisterResponse
+import org.prography.samsung.backend.notification.dto.response.NotificationRescheduleResponse
 import org.prography.samsung.backend.notification.entity.DeviceToken
 import org.prography.samsung.backend.notification.entity.NotificationSchedule
 import org.prography.samsung.backend.notification.repository.DeviceTokenRepository

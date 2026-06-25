@@ -1,16 +1,16 @@
 package org.prography.samsung.backend.user.service
 
-import org.prography.samsung.backend.common.dto.UserScheduleResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.common.util.KstDateTimeUtils
 import org.prography.samsung.backend.common.util.ScheduleValidator
 import org.prography.samsung.backend.curriculum.service.CurriculumService
-import org.prography.samsung.backend.user.dto.OnboardingCompleteResponse
-import org.prography.samsung.backend.user.dto.OnboardingRequest
-import org.prography.samsung.backend.user.dto.OnboardingResponse
-import org.prography.samsung.backend.user.dto.OnboardingStatusResponse
-import org.prography.samsung.backend.user.dto.UserScheduleRequest
+import org.prography.samsung.backend.user.dto.request.OnboardingRequest
+import org.prography.samsung.backend.user.dto.request.UserScheduleRequest
+import org.prography.samsung.backend.user.dto.response.OnboardingCompleteResponse
+import org.prography.samsung.backend.user.dto.response.OnboardingResponse
+import org.prography.samsung.backend.user.dto.response.OnboardingStatusResponse
+import org.prography.samsung.backend.user.dto.response.UserScheduleResponse
 import org.prography.samsung.backend.user.entity.UserCurriculum
 import org.prography.samsung.backend.user.entity.UserSchedule
 import org.prography.samsung.backend.user.entity.UserScheduleDay

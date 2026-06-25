@@ -1,15 +1,15 @@
 package org.prography.samsung.backend.user.service
 
 import org.prography.samsung.backend.common.domain.SessionStatus
-import org.prography.samsung.backend.common.dto.CurriculumChipResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
+import org.prography.samsung.backend.curriculum.dto.response.CurriculumChipResponse
 import org.prography.samsung.backend.curriculum.service.CurriculumService
 import org.prography.samsung.backend.notification.service.NotificationService
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
-import org.prography.samsung.backend.user.dto.UserScheduleRequest
-import org.prography.samsung.backend.user.dto.UserSettingsRequest
-import org.prography.samsung.backend.user.dto.UserSettingsResponse
+import org.prography.samsung.backend.user.dto.request.UserScheduleRequest
+import org.prography.samsung.backend.user.dto.request.UserSettingsRequest
+import org.prography.samsung.backend.user.dto.response.UserSettingsResponse
 import org.prography.samsung.backend.user.entity.UserCurriculum
 import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserRepository

@@ -1,12 +1,12 @@
 package org.prography.samsung.backend.curriculum.service
 
 import org.prography.samsung.backend.common.domain.SessionPhase
-import org.prography.samsung.backend.common.dto.CurriculumChipResponse
-import org.prography.samsung.backend.common.dto.LessonContent
-import org.prography.samsung.backend.common.dto.LessonQuestionResponse
-import org.prography.samsung.backend.common.dto.TodayTopicResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
+import org.prography.samsung.backend.curriculum.dto.response.CurriculumChipResponse
+import org.prography.samsung.backend.curriculum.dto.response.LessonContent
+import org.prography.samsung.backend.curriculum.dto.response.LessonQuestionResponse
+import org.prography.samsung.backend.curriculum.dto.response.TodayTopicResponse
 import org.prography.samsung.backend.curriculum.entity.LessonTopic
 import org.prography.samsung.backend.curriculum.repository.CurriculumRepository
 import org.prography.samsung.backend.curriculum.repository.HintNoteRepository

@@ -6,8 +6,8 @@ import jakarta.validation.Valid
 import org.prography.samsung.backend.common.auth.CurrentUserHolder
 import org.prography.samsung.backend.common.response.SuccessCode
 import org.prography.samsung.backend.common.web.ApiResponseFactory
-import org.prography.samsung.backend.user.dto.OnboardingRequest
-import org.prography.samsung.backend.user.dto.UserScheduleRequest
+import org.prography.samsung.backend.user.dto.request.OnboardingRequest
+import org.prography.samsung.backend.user.dto.request.UserScheduleRequest
 import org.prography.samsung.backend.user.service.OnboardingService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping

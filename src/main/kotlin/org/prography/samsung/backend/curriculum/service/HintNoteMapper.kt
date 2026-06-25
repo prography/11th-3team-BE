@@ -1,7 +1,7 @@
 package org.prography.samsung.backend.curriculum.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.prography.samsung.backend.common.dto.HintNoteResponse
+import org.prography.samsung.backend.curriculum.dto.response.HintNoteResponse
 import org.springframework.stereotype.Component
 
 @Component
