@@ -42,10 +42,9 @@ class UserProfileService(
     }
 
     @Transactional(readOnly = true)
-    fun getUserCurriculum(userId: Long): UserCurriculum =
-        userCurriculumRepository.findById(userId).orElseThrow {
-            CustomException(DomainErrorCode.CURRICULUM_NOT_SELECTED)
-        }
+    fun getUserCurriculum(userId: Long): UserCurriculum = userCurriculumRepository.findById(userId).orElseThrow {
+        CustomException(DomainErrorCode.CURRICULUM_NOT_SELECTED)
+    }
 
     private fun buildHomeMessage(curriculumName: String): String = "쌤 오늘 학교에서 $curriculumName 배웠는데 하나도 모르겠어요 ㅠㅠ"
 }
