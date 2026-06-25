@@ -6,10 +6,12 @@ import jakarta.validation.Valid
 import org.prography.samsung.backend.common.auth.CurrentUserHolder
 import org.prography.samsung.backend.common.response.SuccessCode
 import org.prography.samsung.backend.common.web.ApiResponseFactory
-import org.prography.samsung.backend.session.dto.SessionCompleteRequest
-import org.prography.samsung.backend.session.dto.SessionStartRequest
+import org.prography.samsung.backend.session.dto.request.SessionCompleteRequest
+import org.prography.samsung.backend.session.dto.request.SessionStartRequest
 import org.prography.samsung.backend.session.service.SessionHistoryService
 import org.prography.samsung.backend.session.service.SessionService
+import org.prography.samsung.backend.session.usecase.SessionLessonUsecase
+import org.prography.samsung.backend.session.usecase.SessionStartUsecase
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class SessionController(
     private val sessionService: SessionService,
+    private val sessionStartUsecase: SessionStartUsecase,
+    private val sessionLessonUsecase: SessionLessonUsecase,
     private val sessionHistoryService: SessionHistoryService,
 ) {
     @Operation(
@@ -40,7 +44,7 @@ class SessionController(
     @GetMapping("/session/today")
     fun getToday() = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.getToday(CurrentUserHolder.get().userId),
+        sessionLessonUsecase.getToday(CurrentUserHolder.get().userId),
     )
 
     @Operation(
@@ -51,7 +55,7 @@ class SessionController(
     @PostMapping("/session/start")
     fun start(@RequestBody(required = false) request: SessionStartRequest?) = ApiResponseFactory.success(
         SuccessCode.CREATED,
-        sessionService.start(CurrentUserHolder.get().userId, request),
+        sessionStartUsecase.start(CurrentUserHolder.get().userId, request),
     )
 
     @Operation(
@@ -61,7 +65,7 @@ class SessionController(
     @GetMapping("/session/{sessionId}/lesson")
     fun getLesson(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.getLesson(CurrentUserHolder.get().userId, sessionId),
+        sessionLessonUsecase.getLesson(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(
@@ -71,7 +75,7 @@ class SessionController(
     @PostMapping("/session/{sessionId}/advance-phase")
     fun advancePhase(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.advancePhase(CurrentUserHolder.get().userId, sessionId),
+        sessionLessonUsecase.advancePhase(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(
@@ -81,7 +85,7 @@ class SessionController(
     @GetMapping("/session/{sessionId}/reaction")
     fun getReaction(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.getReaction(CurrentUserHolder.get().userId, sessionId),
+        sessionLessonUsecase.getReaction(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(
