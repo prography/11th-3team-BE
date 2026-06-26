@@ -9,6 +9,7 @@
 | API·DB 모델링 계획 | [api-and-database-modeling-plan.md](api-and-database-modeling-plan.md) | §2 화면별 API · §3 계약 · **§4 DB** · §13 Figma · **§14 Open Questions** |
 | **방향 A** — 텍스트 전용 BE + 클라 음성 | [teach-text-only-implementation.md](teach-text-only-implementation.md) | STT/TTS는 FE, BE는 `userText` → LLM JSON만 |
 | **방향 B** — Gemini Voice API | [gemini-voice-api-implementation.md](gemini-voice-api-implementation.md) | Live API(B-1) 또는 Text LLM + Gemini TTS(B-2) |
+| **다음** — 커리큘럼 맥락 스키마 비의존화 | [schema-agnostic-curriculum-context-plan.md](schema-agnostic-curriculum-context-plan.md) | `unit_json` raw 보관 + `lesson_context`/`concept_order`로 teach decouple |
 
 ## AI 대화 루프 — 방향 비교
 
