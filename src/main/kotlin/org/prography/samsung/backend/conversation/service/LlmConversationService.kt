@@ -208,39 +208,39 @@ class LlmConversationService(
         appendLine("- missing이 있으면 절대 session_done=true 하지 말고, 질문으로 계속 유도.")
         appendLine()
 
-        // Few-shot examples (강력한 신호) - shape only, generalized
+        // Few-shot examples (강력한 신호) - use concrete illustrative cases (social + fraction style) to ensure exact "speak" key + "선생님," form + correct covered delta
         appendLine("## 올바른 출력 예시 (이 형식과 논리를 정확히 따르세요)")
         appendLine(
             """
-            [예시 1 - first concept explained]
-            선생님: [key_point description from unit].
+            [예시 1 - first key_point explained (use exact term from unit)]
+            선생님: 공공기관은 주민 모두를 위한 곳이에요. 돈을 벌기 위한 곳이 아니에요.
             올바른 JSON:
-            {"speak":"아하! 그럼 [focus term]는 [short reaction]?","emotion":"aha","covered":["c1"],"missing":["c2","c3"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+            {"speak":"아하! 그럼 공공기관은 주민 모두를 위한 곳이라는 게 정확히 뭐예요?","emotion":"aha","covered":["c1"],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
 
-            [예시 2 - short affirm (covered must stay [], speak MUST start '선생님,' + open ? using focus key_point)]
+            [예시 2 - short affirm (MUST covered:[], speak EXACTLY starts '선생님,' + ? using focus key_point)]
             선생님: 그렇지
             올바른 JSON:
-            {"speak":"선생님, [current focus key_point or name]는 정확히 어떻게 설명하시나요? 자세히 알려주세요.","emotion":"curious","covered":[],"missing":["c2","c3"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+            {"speak":"선생님, 공공기관은 주민 전체의 이익과 편리를 위해 나라나 지역이 세우고 운영하는 기관이라는 게 정확히 어떻게 설명하시나요?","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
 
-            [예시 3 - short affirm after partial explain (still [], redirect to next focus)]
+            [예시 3 - affirm after good explain (no new covered)]
             선생님: 네
             올바른 JSON:
-            {"speak":"선생님, [next focus key_point]는 정확히 어떤 의미인가요? 더 설명해 주세요.","emotion":"curious","covered":[],"missing":["c3"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+            {"speak":"선생님, 경찰서는 안전과 질서를 지킨다는 건 정확히 어떻게 하나요? 자세히 알려주세요.","emotion":"curious","covered":[],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
-            [예시 4 - good second explain using key terms present in userText]
-            선생님: [key_point text for c2].
+            [예시 4 - good explain using actual words from teacher this turn]
+            선생님: 경찰서는 안전과 질서를 지키고, 소방서는 불을 끄고 사람을 구해요.
             올바른 JSON:
-            {"speak":"선생님, [c3 key_point]는 정확히 어떻게 하나요?","emotion":"curious","covered":["c2"],"missing":["c3"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+            {"speak":"선생님, 공공기관의 종류마다 하는 일이 다르다는 게 정확히 뭐예요?","emotion":"aha","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
-            [예시 5 - garbage or off-topic or repeated short affirm]
-            선생님: [off topic or "그래"]
+            [예시 5 - garbage or repeated affirm]
+            선생님: 그래
             올바른 JSON:
-            {"speak":"선생님, [current focus first key_point]는 정확히 어떻게 설명하시나요?","emotion":"confused","covered":[],"missing":["c1","c2","c3"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":false}
+            {"speak":"선생님, 공공기관이 주민 전체를 위해 일하는 곳이라는 건 정확히 어떻게 설명하시나요?","emotion":"confused","covered":[],"missing":["c1","c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":false}
 
-            [예시 6 - last concept]
-            선생님: [key_point for final concept].
+            [예시 6 - final]
+            선생님: 대화와 타협으로 의견을 모으고 다수결로 정하되 소수 의견도 존중해요.
             올바른 JSON:
-            {"speak":"아하! 이제 모두 알겠어요. 고마워요 선생님!","emotion":"happy","covered":["c3"],"missing":[],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":true}
+            {"speak":"아하! 이제 민주적인 문제 해결까지 알겠어요. 고마워요 선생님!","emotion":"happy","covered":["c4"],"missing":[],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":true}
             """.trimIndent(),
         )
         appendLine()
