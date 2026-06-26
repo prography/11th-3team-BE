@@ -182,6 +182,9 @@ class LlmConversationService(
         appendLine(
             "**MUST JUDGE: Compute first_missing from unit_json+accumulated. If userText contains (substring) that first_missing's key_point text or name -> (b) explain ONLY, covered=[first_missing] EXACTLY, no other ids, no stale. Pure short affirm list without any key_point term -> (a) covered=[]. STEP1 first, then apply only that path's rule 100%. After valid (b) focus=next missing. speak always '선생님,' + open q using current/new first missing term. Ignore persona.**",
         )
+        appendLine(
+            "FOCUS UPDATE (MANDATORY): when you output covered=[X] for this turn, set focus_concept to the first remaining missing id (next after X). Do not output old focus after advance. Example after covered=['c2']: focus_concept must become 'c3'. FOCUS IS ALWAYS RECOMPUTED AS first of (missing after removing this turn covered). STALE FOCUS IS FORBIDDEN: never keep 'c1' after advancing past c1. RULE: covered this turn means focus = next missing, period. If you set covered this turn you MUST change focus to the next one.",
+        )
 
         // 이전 실패 시 correction 피드백 (retry 핵심)
         if (!previousError.isNullOrBlank()) {
@@ -202,7 +205,7 @@ class LlmConversationService(
         appendLine("3. covered: **이번 선생님 발화에서 '실제로 새로' 그리고 '명확하게' 설명한 개념 ID만**. 이미 accumulated에 있는 ID 절대 반복 금지.")
         appendLine("4. missing: 전체 중 covered를 뺀 나머지 (conceptOrder 순서 유지).")
         appendLine(
-            "5. focus_concept: **항상 유효한 문자열**. missing이 있으면 missing의 첫 번째. missing이 비어도 (session_done=true) 마지막 concept나 'c1'을 넣을 것. **절대 null 금지**.",
+            "5. focus_concept: **항상 유효한 문자열**. CRITICAL FOCUS RULE: if this turn covered=[X] (explain), focus_concept MUST be set to the first id that remains in missing AFTER removing the covered ids this turn (next step). If affirm or garbage (covered=[]), focus_concept remains the current first_missing. Never keep old focus after advance. Example: after advancing c2, focus='c3'. missing이 있으면 missing의 첫 번째. **절대 null, stale, or prior 개념 금지**.",
         )
         appendLine("6. session_done: missing이 비어있을 때만 true.")
         appendLine("7. **JSON 객체 하나만 출력**. 설명, 마크다운, ```json, 추가 텍스트 절대 금지.")
@@ -222,7 +225,7 @@ class LlmConversationService(
             "- covered = **exactly** [that one concept id]. **오직** 이번 userText에 first_missing_id의 key_point 또는 name 이 실제로 등장했을 때만 해당 id. userText에 first_missing의 key_point가 등장하면 covered=[ \"cX\" ] (X=first_missing) 만. 이전 id 절대 포함 금지. userText에 key_point 등장 시 절대 [] 출력하지 마. covered this turn never repeats any accumulated ids (e.g. after c1, next explain c2 -> covered=[\"c2\"] only, no stale).",
         )
         appendLine(
-            "- If the userText literally contains the key_point (or name) text of the *current first missing*, you **must** advance *exactly that id only*. No exceptions. Do not output [] for real explain. Then set focus_concept to the first remaining missing (next after advance). Ignore persona for this calculation.",
+            "- If the userText literally contains the key_point (or name) text of the *current first missing*, you **must** advance *exactly that id only*. No exceptions. Do not output [] for real explain. AFTER setting covered=[first_missing], focus_concept MUST be the FIRST of the new missing list (the next concept after this advance). Example: covered=['c2'] => focus_concept='c3' (first remaining). Never leave focus on 'c1' or previous. FOCUS MUST CHANGE TO NEXT. Ignore persona for this calculation.",
         )
 
         appendLine("### (c) else (garbage etc)")
@@ -271,7 +274,7 @@ class LlmConversationService(
         )
 
         appendLine(
-            "## explain 예시 (STEP1 = b 인 경우 — userText에 *first_missing의 key_point/name* 등장 → covered exactly [that id] only, even after previous covered)",
+            "## explain 예시 (STEP1 = b 인 경우 — userText에 *first_missing의 key_point/name* 등장 → covered exactly [that id] only, even after previous covered; FOCUS must become the NEXT id)",
         )
         appendLine(
             """
@@ -279,7 +282,7 @@ class LlmConversationService(
             선생님: [unit의 first_missing key_point 또는 name 텍스트, e.g. c1의 핵심 의미 표현]
             {"speak":"선생님, [c2 name 또는 다음 key_point]는 정확히 어떻게 설명하시나요?","emotion":"aha","covered":["c1"],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
 
-            [explain 2 - after prior covered, use next first_missing only]
+            [explain 2 - after prior covered, use next first_missing only; focus MUST update to c3]
             선생님: [c2의 key_point text]
             {"speak":"선생님, [c3 name/key_point]는 정확히 어떻게 하나요?","emotion":"aha","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
@@ -304,7 +307,7 @@ class LlmConversationService(
         appendLine()
         appendLine("## 최종 지시")
         appendLine(
-            "STEP 1 먼저: first_missing (unit_json concepts에서 구한) 의 key_point/name 등장 여부로 (b)만 판단. affirm/garbage 에서 covered= [] 정확히 + speak는 반드시 '선생님,' (절대 다른 접두사 금지) + first_missing의 name/key_point 사용한 개방형 질문. explain 에서 정확히 그 id 하나만 covered (no stale, no prior id, must advance if key_point match). Output ONLY the JSON object with EXACT keys: speak, emotion, covered, missing, misconceptions_detected, correction_stage, focus_concept, session_done. No 'intent', no wrappers. Ignore persona. 완벽한 선생님 역할: 사용자가 각 key_point를 자기 말로 완전히 설명할 때까지 (a)로는 절대 넘기지 않고, (b)일 때만 정확히 한 단계씩 다음으로 유도해 단계별 학습을 완벽하게 돕기.",
+            "STEP 1 먼저: first_missing (unit_json concepts에서 구한) 의 key_point/name 등장 여부로 (b)만 판단. affirm/garbage 에서 covered= [] 정확히 + speak는 반드시 '선생님,' (절대 다른 접두사 금지) + first_missing의 name/key_point 사용한 개방형 질문. explain 에서 정확히 그 id 하나만 covered (no stale, no prior id, must advance if key_point match). AFTER covered set, focus_concept = first of missing AFTER the advance (next). Example: covered=['c2'] then focus='c3' NOT 'c1'. Output ONLY the JSON object with EXACT keys: speak, emotion, covered, missing, misconceptions_detected, correction_stage, focus_concept, session_done. No 'intent', no wrappers. Ignore persona. 완벽한 선생님 역할: 사용자가 각 key_point를 자기 말로 완전히 설명할 때까지 (a)로는 절대 넘기지 않고, (b)일 때만 정확히 한 단계씩 다음으로 유도해 단계별 학습을 완벽하게 돕기. focus는 절대 이전에 머물지 말 것.",
         )
     }
 
@@ -321,7 +324,7 @@ class LlmConversationService(
             - 모든 concept 이해 시 (missing == []) → emotion="happy", session_done=true, speak은 감사 마무리 (1~2문장).
             - covered / missing / focus_concept / misconceptions_detected 는 반드시 supplied unit concepts 에 정의된 id만 사용.
             - emotion은 5개 값 중 정확히 일치하는 소문자 문자열.
-            - **session_done=true인 경우에도 focus_concept은 반드시 문자열**. null 금지.
+            - **session_done=true인 경우에도 focus_concept은 반드시 문자열**. null 금지. FOCUS RULE: After (b) explain that sets covered=[X], focus MUST be the first of the new missing (next id after X). affirm/garbage: keep prior first_missing. Never stale focus.
             - JSON 외의 어떤 텍스트도 출력하지 말 것 (Koog structured output이라도 최종은 순수 JSON).
             - 목표: 사용자가 **각 key_point 를 자기 설명으로 완전히 말할 때까지** 다음 단계로 넘기지 않는 완벽한 선생님. (a) affirm/단답/가비지 에서는 절대 covered 추가하지 않고, 현재 first_missing 의 key_point/name 을 사용해 선생님이 설명하도록 질문 유도.
             - 항상 STEP 1 먼저 판단 (unit_json 기반 first_missing key_point/name 정확 매치만 (b)). affirm이면 covered=[] + '선생님,' ; explain이면 **정확히 그 id 하나만** covered (no stale).
