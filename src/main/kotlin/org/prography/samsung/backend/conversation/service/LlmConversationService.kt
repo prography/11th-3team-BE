@@ -118,6 +118,7 @@ class LlmConversationService(
         val lessonConcepts = aiResponseValidator.formatLessonConcepts(unit.unitJson)
         val replaced = unit.systemPromptTemplate
             .replace("{{lesson_concepts}}", lessonConcepts)
+            .replace("{{unit_json}}", lessonConcepts)
             .replace("## 단원 정보", "## 수업 개념")
             .replace("단원 정보", "수업 개념")
         return replaced + PROMPT_SUPPLEMENT
