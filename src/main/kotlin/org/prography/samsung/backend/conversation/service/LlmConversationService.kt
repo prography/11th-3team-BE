@@ -38,7 +38,6 @@ class LlmConversationService(
                 userText = userText,
                 accumulatedCovered = accumulatedCovered,
                 conceptOrder = conceptOrder,
-                unitJson = unit.unitJson,
                 previousError = lastError,
                 attempt = attempt + 1,
             )
@@ -114,15 +113,7 @@ class LlmConversationService(
                         safe.focusConcept
                     }
                     safe = safe.copy(focusConcept = finalFocus)
-                    // Last resort only: if semantic still unhappy on speak for non-teach (e.g. stub always weak), provide valid response.
-                    // For real LLM, prompt + semantic should have made it good by now.
-                    if (!safe.sessionDone && safe.missing.isNotEmpty()) {
-                        val hasQ = safe.speak.contains('?') || safe.speak.contains('？')
-                        val kw = aiResponseValidator.hintKeywordFor(safe.missing.first())
-                        if (!hasQ || !safe.speak.contains(kw)) {
-                            safe = safe.copy(speak = "네? 선생님, $kw 는 어떻게 설명하시나요?")
-                        }
-                    }
+                    // Last resort: rely on prompt/semantic/guard. No speak force override here (prompt aims for LLM success).
                     return safe
                 }
                 return@repeat
@@ -155,7 +146,6 @@ class LlmConversationService(
         userText: String,
         accumulatedCovered: List<String>,
         conceptOrder: List<String>,
-        unitJson: String,
         previousError: String?,
         attempt: Int,
     ): String = buildString {
@@ -163,20 +153,9 @@ class LlmConversationService(
         appendLine(conceptOrder.joinToString(", "))
         appendLine()
 
-        appendLine("## 수업 핵심 힌트 (이 내용을 선생님이 직접 말하도록 유도하는 질문을 우선하세요)")
-        val hints = aiResponseValidator.getConceptHints(unitJson)
-        if (hints.isNotEmpty()) {
-            hints.forEach { appendLine(it) }
-        } else {
-            // fallback for backward compat with old unit json without full concepts
-            appendLine("c1 힌트: 전체를 똑같이 나눈 것 중, 일부분을 나타내는 수")
-            appendLine("c2 힌트: 분모(아래)는 절대 더하지 않고 그대로 둔다. 분모는 전체를 똑같이 나눈 개수(아래 숫자)")
-            appendLine("c3 힌트: 분자(위)끼리만 더한다. 분자는 가지고 있는 조각의 수(위 숫자)")
-            appendLine("c4 힌트: 분수는 크기를 비교할 수 있다. 같은 분모일 때 분자가 큰 쪽이 더 크다.")
-        }
-        appendLine(
-            "중요: 위 힌트 내용을 네가 직접 말하지 말고, 선생님이 설명하게 만드는 질문을 해. (예: '선생님, 분모는 어떻게 해야 해요?') Use the key_points or description to form precise elicitation questions.",
-        )
+        appendLine("## 수업 핵심 힌트 (제공된 개념 정보에서 선생님이 설명하게 만드는 개방형 질문을 우선하세요)")
+        appendLine("제공된 단원 개념 설명과 키워드를 참고하여, 아직 설명되지 않은 개념에 대해 선생님이 직접 말하게 유도하는 질문을 만드세요.")
+        appendLine("중요: 힌트 내용을 네가 직접 말하지 말고, 선생님이 설명하게 만드는 질문을 해. (예: '선생님, [키워드]는 정확히 어떻게 설명하시나요?')")
         appendLine()
 
         appendLine("## 누적 이해한 개념 (이전 턴까지)")
@@ -227,6 +206,9 @@ class LlmConversationService(
         appendLine(
             "- '맞아', '네', '그렇지', '그래', '알겠어요', '좋아요', '응', '맞습니다' 같은 짧은 긍정/확인/단답형만으로는 **절대** covered에 아무것도 추가하지 마세요. (단답형 응답으로는 절대 진행되지 않아야 함) - real data shows '그렇지' after c2 explanation must NOT claim c3",
         )
+        appendLine(
+            "**CRITICAL FOR AFFIRM: When user says '그렇지' or '네' or '맞아', your speak MUST start with '선생님,' or direct question, NEVER '네' or '아' or '음'. Output pure open question using hint. Repeat the rule in your mind: no 단답형 prefix ever for affirm.**",
+        )
         appendLine("- 절대 covered에 아무것도 추가하지 마세요")
         appendLine(
             "- 선생님이 해당 개념의 **핵심 의미를 구체적으로 말**했을 때만 추가. 힌트 키워드('전체를 똑같이', '일부분', '아래 숫자', '나눈 개수', '위 숫자', '조각 수', '크기를 비교', '같은 분모면')가 **선생님의 이번 userText 발화 안에 실제로 등장**해야 covered에 넣을 수 있음. Do not infer from previous turns or history for this turn's covered.",
@@ -241,16 +223,13 @@ class LlmConversationService(
 
         appendLine("## 대화 목표 (자연스러운 수업 진행을 위해 — 단답형 금지, 질문으로 유도)")
         appendLine(
-            "- speak은 항상 짧은 반응 + **아직 missing인 개념(특히 현재 focus_concept)에 대해 선생님이 더 자세히 설명하도록 유도하는 짧은 질문**으로 끝내세요. **절대 '맞죠?', '인가요?', '맞나요?' 같은 확인형/태그 질문 사용 금지** — 그런 질문은 선생님이 다시 '네/그렇지' 같은 단답만 하게 만들어 대화가 멈춘다.",
+            "- speak은 항상 짧은 반응 + **아직 missing인 개념(특히 현재 focus_concept)에 대해 선생님이 더 자세히 설명하도록 유도하는 짧은 질문**으로 끝내세요. **절대 speak를 '네!', '네,', '아!', '음...', '네, 그럼', '그렇지' 등 단답형/접두사로 시작하지 마세요. ANY affirmation/단답 확인('그렇지','네','맞아','응','그래','알겠어요','좋아요','좋아요 선생님' 등) 에 대한 응답은 절대 '네'나 '아' '음'로 시작 금지. 무조건 '선생님, ' 로 시작 + unit_json concept 키워드를 사용한 개방형 질문. 예: '선생님, [키워드]는 정확히 어떻게 설명하시나요?' **",
         )
         appendLine(
-            "- 힌트 키워드를 '선생님이 말하게' 만드는 **개방형 질문**만: '선생님, 전체를 똑같이 나누는 건 정확히 뭐예요?', '분모는 아래 숫자라고 하셨는데 어떻게 세나요?', '분자는 위 숫자고 조각 수라는 게 정확히 어떤 의미인가요? 자세히 설명해 주세요.' Use exact words like '일부분', '아래 숫자', '조각 수'.",
+            "- 힌트 키워드를 '선생님이 말하게' 만드는 **개방형 질문**만 (접두사 없이): '선생님, 전체를 똑같이 나누는 건 정확히 뭐예요?', '분모는 아래 숫자라고 하셨는데 어떻게 세나요?', '분자는 위 숫자고 조각 수라는 게 정확히 어떤 의미인가요? 자세히 설명해 주세요.' Use exact words like '일부분', '아래 숫자', '조각 수'.",
         )
         appendLine(
-            "- 힌트 내용을 선생님이 설명하게 만드는 질문을 우선하세요. Use '일부분' in questions for c1. 항상 '어떻게', '무엇을 의미하나요', '자세히 설명해주세요' 스타일.",
-        )
-        appendLine(
-            "- 선생님 발화가 주제에서 벗어나거나 애매/단답형이면, covered는 절대 추가하지 말고 부드럽게 현재 focus로 돌아오는 질문을 하세요. 예: '선생님, 그건 잘 모르겠어요. 분수가 크기를 어떻게 비교하나요? 전체를 똑같이 나눈 개수에 대해 알려주세요.'",
+            "- 힌트 내용을 선생님이 설명하게 만드는 질문을 우선하세요. 항상 '어떻게', '무엇을 의미하나요', '자세히 설명해주세요' 스타일. affirmation 응답도 절대 '네!'로 시작 금지. 선생님 발화가 주제에서 벗어나거나 애매/단답형이면, covered는 절대 추가하지 말고 부드럽게 현재 focus로 돌아오는 질문을 하세요.",
         )
         appendLine("- '선생님도 모르시는 건가요?' 같은 말은 피하고, '선생님, 쉽게 알려주세요!' 또는 '그건 어떻게 해요?' 스타일로 호기심 표현 + 질문.")
         appendLine("- missing이 있으면 절대 session_done=true 하지 말고, 질문으로 계속 유도.")
@@ -265,30 +244,30 @@ class LlmConversationService(
             올바른 JSON:
             {"speak":"아하! 그럼 분수는 전체를 똑같이 나눈 것 중 일부군요?","emotion":"aha","covered":["c1"],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
 
-            [예시 2 - 짧은 확인 "그렇지" (covered 절대 증가 금지!)]
+            [예시 2 - 짧은 확인 "그렇지" (covered 절대 증가 금지! , NO '네' prefix)]
             선생님: 그렇지
             올바른 JSON:
-            {"speak":"네! 그럼 전체를 똑같이 나눈 것 중 일부분은 정확히 뭐예요? 자세히 설명해 주세요.","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+            {"speak":"선생님, 전체를 똑같이 나눈 것 중 일부분은 정확히 뭐예요? 자세히 설명해 주세요.","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
 
             [예시 2b - "그렇지" after explaining c2 (from real data - do NOT advance to c3)]
             선생님: 분모는 밑에 있는 거 분자 위에 있는 거
             올바른 JSON:
-            {"speak":"아! 분모는 아래 숫자군요. 그럼 분자는 위 숫자고 조각 수라는 게 정확히 어떤 의미인가요?","emotion":"aha","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+            {"speak":"선생님, 분모는 아래 숫자군요. 그럼 분자는 위 숫자고 조각 수라는 게 정확히 어떤 의미인가요?","emotion":"aha","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
-            [예시 2c - short "그렇지" confirmation (MUST NOT claim c3, open question only)]
+            [예시 2c - short "그렇지" confirmation (MUST NOT claim c3, open question only, no '네!' prefix)]
             선생님: 그렇지
             올바른 JSON:
-            {"speak":"네! 그럼 분자는 위 숫자고 가지고 있는 조각 수라는 걸 어떻게 설명하시나요? 자세히 알려주세요.","emotion":"curious","covered":[],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+            {"speak":"선생님, 분자는 위 숫자고 가지고 있는 조각 수라는 걸 어떻게 설명하시나요? 자세히 알려주세요.","emotion":"curious","covered":[],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
             [예시 3 - 짧은 확인 "네" 또는 "좋아요" (covered 증가 금지, 질문으로 유도)]
             선생님: 네
             올바른 JSON:
-            {"speak":"알겠어요! 그럼 분자는 위에 있는 숫자고 조각 수라는 게 정확히 무슨 뜻인가요? 자세히 설명해 주세요.","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+            {"speak":"선생님, 분자는 위에 있는 숫자고 조각 수라는 게 정확히 무슨 뜻인가요? 자세히 설명해 주세요.","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
             [예시 4 - 두 번째 이해 (힌트 키워드 teacher 말에서 나옴)]
             선생님: 분모는 전체를 똑같이 나눈 개수, 아래에 있는 숫자예요.
             올바른 JSON:
-            {"speak":"음... 분모가 아래 숫자라는 건 알겠는데, 왜 더하면 안 되는지 정확히 설명해 주시겠어요?","emotion":"confused","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+            {"speak":"선생님, 분모가 아래 숫자라는 건 알겠는데, 왜 더하면 안 되는지 정확히 설명해 주시겠어요?","emotion":"confused","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
             [예시 5 - garbage/off-topic (covered 유지 않고 redirect 질문)]
             선생님: 평소에 이렇게 이렇게 다릅니다
@@ -299,6 +278,36 @@ class LlmConversationService(
             선생님: 분수는 크기를 비교할 수 있어요. 같은 분모면 분자가 큰 게 더 커요.
             올바른 JSON:
             {"speak":"아하! 이제 분수 크기도 알겠어요. 고마워요 선생님!","emotion":"happy","covered":["c3","c4"],"missing":[],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":true}
+
+            [예시 7 - 짧은 affirm "응" (covered=[] , clean '선생님,' start)]
+            선생님: 응
+            올바른 JSON:
+            {"speak":"선생님, 그 부분은 정확히 어떻게 설명하시나요? 더 자세히 알려주세요.","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+
+            [예시 8 - affirm "알겠어요" after partial (no advance, open elicit)]
+            선생님: 알겠어요
+            올바른 JSON:
+            {"speak":"선생님, 분모는 전체를 똑같이 나눈 개수라는 게 정확히 어떻게 하나요?","emotion":"curious","covered":[],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+
+            [예시 9 - garbage/drift "음... 다른 얘기" (covered 유지, redirect)]
+            선생님: 음... 다른 얘기
+            올바른 JSON:
+            {"speak":"선생님, 그건 잘 모르겠어요. 전체를 똑같이 나눈 건 어떻게 설명하시나요?","emotion":"confused","covered":[],"missing":["c1","c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":false}
+
+            [예시 10 - misconception trigger "분모도 더해야죠?" (covered=[], elicit correct)]
+            선생님: 아마 분수 더하기는 분모 더하기?
+            올바른 JSON:
+            {"speak":"선생님, 분모는 더하면 안 된다고 하셨는데 정확히 왜 그런가요? 설명해 주세요.","emotion":"confused","covered":[],"missing":["c1","c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+
+            [예시 11 - near-miss "분모는 위 숫자예요" (wrong kw, covered not, redirect)]
+            선생님: 분모는 위 숫자예요
+            올바른 JSON:
+            {"speak":"선생님, 그건 분자가 아닐까요? 분모는 정확히 어떻게 설명하시나요?","emotion":"thoughtful","covered":[],"missing":["c1","c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+
+            [예시 12 - repeated affirm "그래" (still no covered)]
+            선생님: 그래
+            올바른 JSON:
+            {"speak":"선생님, 일부분을 나타내는 수라는 게 정확히 뭐예요? 자세히 설명해 주시겠어요?","emotion":"curious","covered":[],"missing":["c1","c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":false}
             """.trimIndent(),
         )
         appendLine()
@@ -318,7 +327,7 @@ class LlmConversationService(
             - covered는 "이번 턴에 새로 이해한" 것만. 이전 턴 covered나 누적 covered는 절대 반복 금지.
             - **'맞아', '그렇지', '네', '좋아요' 같은 단답/확인만으로는 covered 절대 증가 금지.**
               hint 키워드가 teacher(userText) 발화 안에 실제로 있어야 함. speak에서 말해도 covered 아님.
-            - speak은 missing이 있으면 반드시 **개방형** 유도 질문('어떻게 설명하시나요?', '정확히 어떤 의미인가요?', '자세히 알려주세요')으로 끝나야 하며, '맞죠?'/'인가요?' 같은 확인형/단답형으로 끝내지 마세요.
+            - speak은 missing이 있으면 반드시 **개방형** 유도 질문으로 끝나야 하며, '맞죠?'/'인가요?' 같은 확인형/단답형으로 끝내지 마세요. **affirm ('그렇지' 등) 응답은 절대 '네' 나 '음' 로 시작하지 말 것. 무조건 '선생님, [hint 키워드] 는 정확히 어떻게 설명하시나요?' 로 시작. **
             - missing은 covered를 제외한 나머지 전체를 concept 순서대로.
             - 모든 concept 이해 시 (missing == []) → emotion="happy", session_done=true, speak은 감사 마무리 (1~2문장).
             - covered / missing / focus_concept / misconceptions_detected 는 반드시 unit_json에 정의된 id만 사용.

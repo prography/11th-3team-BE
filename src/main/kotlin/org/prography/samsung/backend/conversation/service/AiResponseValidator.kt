@@ -122,6 +122,7 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
         accumulatedCovered: List<String>,
         conceptOrder: List<String>,
         currentUserText: String? = null,
+        unitJson: String = "",
     ): String? {
         val valid = conceptOrder.toSet()
 
@@ -164,7 +165,7 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
                     response.speak.contains("어떻게") ||
                     response.speak.contains("왜")
             val firstMissing = response.missing.firstOrNull()
-            val requiredKw = firstMissing?.let { hintKeywordFor(it) } ?: ""
+            val requiredKw = firstMissing?.let { hintKeywordFor(it, unitJson) } ?: ""
             val hasKw = requiredKw.isEmpty() ||
                 response.speak.contains(requiredKw) ||
                 (firstMissing == "c1" && (response.speak.contains("일부") || response.speak.contains("부분")))
@@ -189,16 +190,36 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
             return "short affirmation; covered must be []. Speak must have ? + hint kw."
         }
 
+        // For pure affirm, speak must NOT start with leading '네'/'맞아' etc prefix at all.
+        // Reject to force LLM to output pure open question (no 단답 prefix).
+        if (currentUserText != null && isPureAffirmation(currentUserText) && isLeadingAffirmationOnly(response.speak)) {
+            return "affirm speak must not start with leading 단답형 prefix; use open question with hint kw."
+        }
+
         return null // 통과
     }
 
     fun isPureAffirmation(text: String): Boolean {
         val t = text.trim().lowercase()
-        val exact = setOf("그렇지", "맞아", "네", "좋아요", "응", "그래", "알겠어요", "맞습니다", "yes", "yeah", "ok", "okay")
+        val exact =
+            setOf("그렇지", "맞아", "네", "좋아요", "응", "그래", "알겠어요", "맞습니다", "좋아요 선생님", "네 선생님", "yes", "yeah", "ok", "okay")
         if (t in exact) return true
         // very short utterances without core hint keywords are treated as non-explanatory
         if (t.length <= 5 && !containsHintKeyword(t)) return true
         return false
+    }
+
+    private fun isLeadingAffirmationOnly(s: String): Boolean {
+        val t = s.trim().lowercase()
+        return t.startsWith("네") ||
+            t.startsWith("맞아") ||
+            t.startsWith("그렇지") ||
+            t.startsWith("좋아요") ||
+            t.startsWith("응") ||
+            t.startsWith("그래") ||
+            t.startsWith("알겠어요") ||
+            t.startsWith("아") ||
+            t.startsWith("음")
     }
 
     private fun containsHintKeyword(t: String): Boolean = t.contains("전체") ||
@@ -211,33 +232,45 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
         t.contains("크기") ||
         t.contains("비교")
 
-    fun hintKeywordFor(id: String): String = when (id) {
-        "c1" -> "일부분"
-        "c2" -> "분모"
-        "c3" -> "분자"
-        "c4" -> "크기"
-        else -> id
-    }
-
-    fun getConceptHints(unitJson: String): List<String> {
-        val root = objectMapper.readTree(unitJson)
-        val concepts = root.path("concepts")
-        if (!concepts.isArray || concepts.size() == 0) return emptyList()
-        return concepts.map { node ->
-            val id = node.path("id").asText("")
-            val label = node.path("label").asText(node.path("name").asText(""))
-            val desc = node.path("description").asText("")
-            val keyPoints = if (node.has("key_points") && node.path("key_points").isArray) {
-                node.path("key_points").joinToString(" ") { it.asText("") }
-            } else {
-                ""
-            }
-            val hintText = when {
-                keyPoints.isNotBlank() -> "$label. $keyPoints"
-                desc.isNotBlank() -> "$label - $desc"
-                else -> label
-            }
-            "$id 힌트: $hintText"
+    fun hintKeywordFor(id: String, unitJson: String = ""): String {
+        if (unitJson.isNotBlank()) {
+            try {
+                val root = objectMapper.readTree(unitJson)
+                val concepts = root.path("concepts")
+                for (i in 0 until concepts.size()) {
+                    val c = concepts.get(i)
+                    if (c.path("id").asText("") == id) {
+                        // prefer keywords[0] (fractions style)
+                        val kws = c.path("keywords")
+                        if (kws.isArray && kws.size() > 0) {
+                            val first = kws.get(0).asText("")
+                            if (first.isNotBlank()) return first
+                        }
+                        // social style key_points[0] short
+                        val kps = c.path("key_points")
+                        if (kps.isArray && kps.size() > 0) {
+                            val first = kps.get(0).asText("").trim()
+                            if (first.isNotBlank()) return first.take(12)
+                        }
+                        // label or name
+                        val lbl = c.path("label").asText("").ifBlank { c.path("name").asText("") }
+                        if (lbl.isNotBlank()) {
+                            // extract key phrase e.g. before/after "는"
+                            val parts = lbl.split(Regex("[는은이가을를]"))
+                            val key = parts.firstOrNull { it.trim().length in 2..10 }?.trim() ?: lbl.take(10)
+                            if (key.isNotBlank()) return key
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        // fallback for known (fractions)
+        return when (id) {
+            "c1" -> "일부분"
+            "c2" -> "분모"
+            "c3" -> "분자"
+            "c4" -> "크기"
+            else -> id
         }
     }
 

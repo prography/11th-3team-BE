@@ -52,26 +52,17 @@ class StubLlmClient(private val aiResponseValidator: AiResponseValidator) : LlmC
             sessionDone = naiveDone,
         )
 
-        // For stub tests to exercise the semantic/retry/fallback path:
-        // for pure affirm, produce intentionally weak speak (no ? , no hint keyword)
-        // so validateSemantic will fail, leading to retry or final fallback.
-        val finalForStub = if (aiResponseValidator.isPureAffirmation(teacherText) && !naiveDone) {
-            raw.copy(speak = "네", covered = emptyList())
-        } else {
-            raw
-        }
-
-        // Return the (weak for affirm) JSON. The service layer (validator semantic + guard) will handle.
+        // Return the naive JSON. Stub is intentionally naive/weak for some cases to test path, but for affirm we let it produce based on keywords (no special force '네' to avoid bypass).
         return buildString {
             appendLine("{")
-            appendLine("  \"speak\": \"${finalForStub.speak.replace("\"", "\\\"")}\",")
-            appendLine("  \"emotion\": \"${finalForStub.emotion.value}\",")
-            appendLine("  \"covered\": ${toJsonArray(finalForStub.covered)},")
-            appendLine("  \"missing\": ${toJsonArray(finalForStub.missing)},")
+            appendLine("  \"speak\": \"${raw.speak.replace("\"", "\\\"")}\",")
+            appendLine("  \"emotion\": \"${raw.emotion.value}\",")
+            appendLine("  \"covered\": ${toJsonArray(raw.covered)},")
+            appendLine("  \"missing\": ${toJsonArray(raw.missing)},")
             appendLine("  \"misconceptions_detected\": [],")
-            appendLine("  \"correction_stage\": ${finalForStub.correctionStage},")
-            appendLine("  \"focus_concept\": \"${finalForStub.focusConcept}\",")
-            appendLine("  \"session_done\": ${finalForStub.sessionDone}")
+            appendLine("  \"correction_stage\": ${raw.correctionStage},")
+            appendLine("  \"focus_concept\": \"${raw.focusConcept}\",")
+            appendLine("  \"session_done\": ${raw.sessionDone}")
             appendLine("}")
         }
     }

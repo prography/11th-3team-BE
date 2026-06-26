@@ -39,8 +39,17 @@ class TeachProgressGuard(private val validator: AiResponseValidator) {
         // Final focus uses post-merge missing
         val focusConcept = validator.resolveFocusConcept(conceptOrder, missing, raw.focusConcept)
 
+        // Speak quality for affirm is primarily driven by prompt + semantic retry in validator.
+        // Generic fallback redirect (no curriculum-specific hints/keywords) to keep it general for multiple curricula.
+        val finalSpeak = if (isAffirm) {
+            val hasQ = raw.speak.contains('?') || raw.speak.contains('？')
+            if (!hasQ) "선생님, 그건 정확히 어떻게 설명하시나요?" else raw.speak
+        } else {
+            raw.speak
+        }
+
         return raw.copy(
-            speak = raw.speak, // speak from LLM/prompt or fallback later
+            speak = finalSpeak,
             covered = mergedCovered,
             missing = missing,
             correctionStage = correctionStage,
