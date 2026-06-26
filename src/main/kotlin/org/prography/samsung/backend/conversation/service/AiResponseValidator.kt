@@ -219,6 +219,28 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
         else -> id
     }
 
+    fun getConceptHints(unitJson: String): List<String> {
+        val root = objectMapper.readTree(unitJson)
+        val concepts = root.path("concepts")
+        if (!concepts.isArray || concepts.size() == 0) return emptyList()
+        return concepts.map { node ->
+            val id = node.path("id").asText("")
+            val label = node.path("label").asText(node.path("name").asText(""))
+            val desc = node.path("description").asText("")
+            val keyPoints = if (node.has("key_points") && node.path("key_points").isArray) {
+                node.path("key_points").joinToString(" ") { it.asText("") }
+            } else {
+                ""
+            }
+            val hintText = when {
+                keyPoints.isNotBlank() -> "$label. $keyPoints"
+                desc.isNotBlank() -> "$label - $desc"
+                else -> label
+            }
+            "$id 힌트: $hintText"
+        }
+    }
+
     private fun extractJsonObject(raw: String): String {
         val trimmed = raw.trim()
 

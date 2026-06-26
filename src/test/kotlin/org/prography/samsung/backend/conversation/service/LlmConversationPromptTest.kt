@@ -31,6 +31,11 @@ class LlmConversationPromptTest {
             userText = userText,
             accumulatedCovered = emptyList(),
             conceptOrder = conceptOrder,
+            unitJson = "{" + "\"concepts\":[" +
+                "{\"id\":\"c1\",\"label\":\"분수는 전체를 똑같이 나눈 것 중 일부를 나타내는 수\"}," +
+                "{\"id\":\"c2\",\"label\":\"분모는 전체를 똑같이 나눈 개수(아래 숫자)\"}," +
+                "{\"id\":\"c3\",\"label\":\"분자는 가지고 있는 조각의 수(위 숫자)\"}," +
+                "{\"id\":\"c4\",\"label\":\"분수는 크기를 비교할 수 있다\"}]" + "}",
             previousError = null,
             attempt = 1,
         )
@@ -57,6 +62,11 @@ class LlmConversationPromptTest {
             userText = "네",
             accumulatedCovered = listOf("c1"),
             conceptOrder = listOf("c1", "c2", "c3", "c4"),
+            unitJson = "{" + "\"concepts\":[" +
+                "{\"id\":\"c1\",\"label\":\"분수는 전체를 똑같이 나눈 것 중 일부를 나타내는 수\"}," +
+                "{\"id\":\"c2\",\"label\":\"분모는 전체를 똑같이 나눈 개수(아래 숫자)\"}," +
+                "{\"id\":\"c3\",\"label\":\"분자는 가지고 있는 조각의 수(위 숫자)\"}," +
+                "{\"id\":\"c4\",\"label\":\"분수는 크기를 비교할 수 있다\"}]" + "}",
             previousError = null,
             attempt = 1,
         )

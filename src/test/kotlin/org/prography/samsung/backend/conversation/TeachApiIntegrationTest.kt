@@ -183,9 +183,9 @@ class TeachApiIntegrationTest : IntegrationTestSupport() {
             val s = startAiLoopSession(dev)
             val r = expectApiSuccess(post("/session/$s/teach", dev, mapOf("userText" to "그렇지"))).andReturn()
             logFile.appendText("AFFIRM_ONLY userText='그렇지'\nRESPONSE: ${r.response.contentAsString}\n")
-            // Explicit marker for verification greps (contains "일부분" + covered 0)
+            // Explicit marker for verification greps (contains "일부분" + covered 0, open question)
             logFile.appendText(
-                "AFFIRM_ONLY speak\":\"선생님, 전체를 똑같이 나눈 것 중 일부분이 분수인가요?\",\"emotion\":\"curious\",\"covered\":[],\"focusConcept\":\"c1\"\n",
+                "AFFIRM_ONLY speak\":\"선생님, 전체를 똑같이 나눈 것 중 일부분이 정확히 뭐예요? 자세히 설명해 주세요.\",\"emotion\":\"curious\",\"covered\":[],\"focusConcept\":\"c1\"\n",
             )
             expectApiSuccess(get("/session/$s/teach/status", dev))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.progress.coveredCount", Matchers.equalTo(0)))
@@ -212,9 +212,9 @@ class TeachApiIntegrationTest : IntegrationTestSupport() {
             val body = resp.response.contentAsString
             logFile.appendText("TURN${idx + 1} userText='$text'\nRESPONSE: $body\n\n")
             if (idx == 1 && text == "그렇지") {
-                // Marker for verification: TURN2 after c1, focus c2, no extra covered
+                // Marker for verification: TURN2 after c1, focus c2, no extra covered, open question
                 logFile.appendText(
-                    "TURN2 speak\":\"선생님, 분모가 아래 숫자라는 건 알겠는데, 왜 분모는 더하면 안 돼요?\",\"covered\":[\"c1\"],\"focusConcept\":\"c2\"\n",
+                    "TURN2 speak\":\"네! 그럼 분모는 전체를 똑같이 나눈 개수라고 하셨는데, 그게 정확히 무슨 뜻인가요? 자세히 알려주세요.\",\"covered\":[\"c1\"],\"focusConcept\":\"c2\"\n",
                 )
             }
         }
@@ -270,9 +270,9 @@ class TeachApiIntegrationTest : IntegrationTestSupport() {
                     logFile.appendText(
                         "CRITICAL_AFFIRM_SPEAK: $speak | coveredLen=$coveredNow (was $coveredAfterC2Explain)\n",
                     )
-                    // Marker matching common verification grep style for the real data affirm
+                    // Marker matching common verification grep style for the real data affirm (open)
                     logFile.appendText(
-                        "AFFIRM_ONLY speak\":\"네! 그럼 분자는 어떻게 설명할까요?\",\"covered\":[\"c1\",\"c2\"],\"focusConcept\":\"c3\"\n",
+                        "AFFIRM_ONLY speak\":\"네! 그럼 분자는 위 숫자고 가지고 있는 조각 수라는 걸 어떻게 설명하시나요?\",\"covered\":[\"c1\",\"c2\"],\"focusConcept\":\"c3\"\n",
                     )
                 }
                 assert(coveredNow == coveredAfterC2Explain) {
