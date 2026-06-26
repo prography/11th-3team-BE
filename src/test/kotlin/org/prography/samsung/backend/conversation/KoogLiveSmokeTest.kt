@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import org.prography.samsung.backend.conversation.client.LlmClient
 import org.prography.samsung.backend.conversation.service.AiResponseValidator
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,11 +15,9 @@ import org.springframework.test.context.DynamicPropertySource
 /**
  * Live AI (DeepSeek via Koog) smoke tests.
  * These make real external LLM calls and are DISABLED for PR/CI.
- * Manually enable (remove @Disabled or run with specific profile) + set DEEPSEEK_API_KEY
- * when you want to verify schema compliance and response quality with actual model.
+ * Manually enable (remove @Disabled) + set DEEPSEEK_API_KEY when verifying with real model.
  */
-@Disabled("Live AI calls disabled for PR preparation. Re-enable for manual verification only.")
-@EnabledIfEnvironmentVariable(named = "DEEPSEEK_API_KEY", matches = ".+")
+@Disabled("Requires DEEPSEEK_API_KEY — disabled for CI/local test runs. Remove @Disabled for manual live verification.")
 @SpringBootTest
 @ActiveProfiles("test")
 @DisplayName("Koog + DeepSeek live smoke test")

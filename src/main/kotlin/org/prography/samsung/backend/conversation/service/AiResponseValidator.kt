@@ -94,6 +94,42 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
             .mapNotNull { it.path("id").asText(null)?.takeIf(String::isNotBlank) }
     }
 
+    /**
+     * Turns unit JSON into a human-readable lesson-concepts block (id, name, key points).
+     * Never emits raw JSON syntax — used in system prompts only.
+     */
+    fun formatLessonConcepts(unitJson: String): String = buildString {
+        val root = objectMapper.readTree(unitJson)
+        root.path("concepts").forEach { concept ->
+            val id = concept.path("id").asText("").trim()
+            if (id.isBlank()) return@forEach
+            val name =
+                concept.path("name").asText(null)?.takeIf { it.isNotBlank() }
+                    ?: concept.path("label").asText("").trim()
+            appendLine("- [$id] $name")
+            val keyPoints = concept.path("key_points")
+            if (keyPoints.isArray && keyPoints.size() > 0) {
+                keyPoints.forEach { kp ->
+                    val text = kp.asText("").trim()
+                    if (text.isNotBlank()) appendLine("  • $text")
+                }
+            } else {
+                val keywords = concept.path("keywords")
+                if (keywords.isArray && keywords.size() > 0) {
+                    keywords.forEach { kw ->
+                        val text = kw.asText("").trim()
+                        if (text.isNotBlank()) appendLine("  • $text")
+                    }
+                }
+            }
+            val desc = concept.path("description").asText(null)?.trim()
+            if (!desc.isNullOrBlank()) {
+                appendLine("  (요약: $desc)")
+            }
+            appendLine()
+        }
+    }.trimEnd()
+
     fun parseConceptIds(unitJson: String): Set<String> = parseConceptIdOrder(unitJson).toSet()
 
     fun resolveFocusConcept(conceptOrder: List<String>, missing: List<String>, explicit: String?): String {
@@ -112,6 +148,86 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
     }
 
     fun mergeCovered(existing: List<String>, current: List<String>): List<String> = (existing + current).distinct()
+
+    fun firstMissingId(conceptOrder: List<String>, accumulatedCovered: List<String>): String? =
+        conceptOrder.firstOrNull { it !in accumulatedCovered }
+
+    fun extractConceptTerms(unitJson: String): List<String> {
+        if (unitJson.isBlank()) return emptyList()
+        return try {
+            val root = objectMapper.readTree(unitJson)
+            val terms = mutableListOf<String>()
+            root.path("concepts").forEach { concept ->
+                concept.path("key_points").forEach { kp ->
+                    val text = kp.asText("").trim()
+                    if (text.length >= 2) terms.add(text)
+                }
+                concept.path("keywords").forEach { kw ->
+                    val text = kw.asText("").trim()
+                    if (text.length >= 2) terms.add(text)
+                }
+                val name = concept.path("name").asText("").ifBlank { concept.path("label").asText("") }.trim()
+                if (name.length >= 2) terms.add(name)
+            }
+            terms.distinct()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun termsForConcept(conceptId: String, unitJson: String): List<String> {
+        if (unitJson.isBlank()) return emptyList()
+        return try {
+            val root = objectMapper.readTree(unitJson)
+            val terms = mutableListOf<String>()
+            root.path("concepts").forEach { concept ->
+                if (concept.path("id").asText("") != conceptId) return@forEach
+                concept.path("key_points").forEach { kp ->
+                    val text = kp.asText("").trim()
+                    if (text.isNotBlank()) terms.add(text)
+                }
+                concept.path("keywords").forEach { kw ->
+                    val text = kw.asText("").trim()
+                    if (text.isNotBlank()) terms.add(text)
+                }
+                val name = concept.path("name").asText("").ifBlank { concept.path("label").asText("") }.trim()
+                if (name.isNotBlank()) terms.add(name)
+            }
+            terms.distinct()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun textContainsAnyTerm(text: String, terms: List<String>): Boolean =
+        terms.any { term -> term.isNotBlank() && text.contains(term) }
+
+    fun userTextExplainsConcept(userText: String, conceptId: String, unitJson: String): Boolean =
+        textContainsAnyTerm(userText, termsForConcept(conceptId, unitJson))
+
+    enum class TeacherTurnKind { AFFIRM, EXPLAIN, GARBAGE }
+
+    fun classifyTeacherTurn(
+        userText: String,
+        accumulatedCovered: List<String>,
+        conceptOrder: List<String>,
+        unitJson: String,
+    ): TeacherTurnKind {
+        val firstMissing = firstMissingId(conceptOrder, accumulatedCovered) ?: return TeacherTurnKind.GARBAGE
+        if (userTextExplainsConcept(userText, firstMissing, unitJson)) return TeacherTurnKind.EXPLAIN
+        if (isPureAffirmation(userText, unitJson)) return TeacherTurnKind.AFFIRM
+        return TeacherTurnKind.GARBAGE
+    }
+
+    fun expectedDeltaCovered(
+        userText: String,
+        accumulatedCovered: List<String>,
+        conceptOrder: List<String>,
+        unitJson: String,
+    ): List<String> {
+        val firstMissing = firstMissingId(conceptOrder, accumulatedCovered) ?: return emptyList()
+        return if (userTextExplainsConcept(userText, firstMissing, unitJson)) listOf(firstMissing) else emptyList()
+    }
 
     /**
      * parseAndValidate 통과 후에도 semantic 규칙을 추가 검사.
@@ -165,13 +281,12 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
                     response.speak.contains("어떻게") ||
                     response.speak.contains("왜")
             val firstMissing = response.missing.firstOrNull()
+            val focusTerms = firstMissing?.let { termsForConcept(it, unitJson) } ?: emptyList()
             val requiredKw = firstMissing?.let { hintKeywordFor(it, unitJson) } ?: ""
-            val hasKw = requiredKw.isEmpty() ||
-                response.speak.contains(requiredKw) ||
-                (firstMissing == "c1" && (response.speak.contains("일부") || response.speak.contains("부분")))
+            val hasKw = focusTerms.isEmpty() || focusTerms.any { term -> response.speak.contains(term) }
             if (!hasQuestion || !hasKw) {
                 return (
-                    "For non-teach (affirm): speak needs '?' + kw '$requiredKw' (or 일부 for c1). " +
+                    "For non-teach (affirm): speak needs '?' + lesson term from '$requiredKw'. " +
                         "covered must be []."
                     )
             }
@@ -186,26 +301,29 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
         }
 
         // AC1/AC3 deterministic guard: short affirmation from teacher must not claim any new covered
-        if (currentUserText != null && isPureAffirmation(currentUserText) && response.covered.isNotEmpty()) {
+        if (currentUserText != null && isPureAffirmation(currentUserText, unitJson) && response.covered.isNotEmpty()) {
             return "short affirmation; covered must be []. Speak must have ? + hint kw."
         }
 
         // For pure affirm, speak must NOT start with leading '네'/'맞아' etc prefix at all.
         // Reject to force LLM to output pure open question (no 단답 prefix).
-        if (currentUserText != null && isPureAffirmation(currentUserText) && isLeadingAffirmationOnly(response.speak)) {
+        if (currentUserText != null &&
+            isPureAffirmation(currentUserText, unitJson) &&
+            isLeadingAffirmationOnly(response.speak)
+        ) {
             return "affirm speak must not start with leading 단답형 prefix; use open question with hint kw."
         }
 
         return null // 통과
     }
 
-    fun isPureAffirmation(text: String): Boolean {
+    fun isPureAffirmation(text: String, unitJson: String = ""): Boolean {
         val t = text.trim().lowercase()
         val exact =
             setOf("그렇지", "맞아", "네", "좋아요", "응", "그래", "알겠어요", "맞습니다", "좋아요 선생님", "네 선생님", "yes", "yeah", "ok", "okay")
         if (t in exact) return true
-        // very short utterances without core hint keywords are treated as non-explanatory
-        if (t.length <= 5 && !containsHintKeyword(t)) return true
+        // very short utterances without lesson-concept terms are treated as non-explanatory
+        if (t.length <= 5 && !textContainsAnyTerm(text, extractConceptTerms(unitJson))) return true
         return false
     }
 
@@ -222,56 +340,12 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
             t.startsWith("음")
     }
 
-    private fun containsHintKeyword(t: String): Boolean = t.contains("전체") ||
-        t.contains("똑같이") ||
-        t.contains("일부") ||
-        t.contains("분모") ||
-        t.contains("아래") ||
-        t.contains("분자") ||
-        t.contains("위") ||
-        t.contains("크기") ||
-        t.contains("비교")
-
     fun hintKeywordFor(id: String, unitJson: String = ""): String {
-        if (unitJson.isNotBlank()) {
-            try {
-                val root = objectMapper.readTree(unitJson)
-                val concepts = root.path("concepts")
-                for (i in 0 until concepts.size()) {
-                    val c = concepts.get(i)
-                    if (c.path("id").asText("") == id) {
-                        // prefer keywords[0] (fractions style)
-                        val kws = c.path("keywords")
-                        if (kws.isArray && kws.size() > 0) {
-                            val first = kws.get(0).asText("")
-                            if (first.isNotBlank()) return first
-                        }
-                        // social style key_points[0] short
-                        val kps = c.path("key_points")
-                        if (kps.isArray && kps.size() > 0) {
-                            val first = kps.get(0).asText("").trim()
-                            if (first.isNotBlank()) return first.take(12)
-                        }
-                        // label or name
-                        val lbl = c.path("label").asText("").ifBlank { c.path("name").asText("") }
-                        if (lbl.isNotBlank()) {
-                            // extract key phrase e.g. before/after "는"
-                            val parts = lbl.split(Regex("[는은이가을를]"))
-                            val key = parts.firstOrNull { it.trim().length in 2..10 }?.trim() ?: lbl.take(10)
-                            if (key.isNotBlank()) return key
-                        }
-                    }
-                }
-            } catch (_: Exception) {}
+        val terms = termsForConcept(id, unitJson)
+        if (terms.isNotEmpty()) {
+            return terms.first().take(12)
         }
-        // fallback for known (fractions)
-        return when (id) {
-            "c1" -> "일부분"
-            "c2" -> "분모"
-            "c3" -> "분자"
-            "c4" -> "크기"
-            else -> id
-        }
+        return id
     }
 
     private fun extractJsonObject(raw: String): String {

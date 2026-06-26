@@ -18,11 +18,19 @@ class TeachProgressGuard(private val validator: AiResponseValidator) {
         conceptOrder: List<String>,
         repeatedFocusCount: Int,
         raw: AiTurnResponse,
+        unitJson: String = "",
     ): AiTurnResponse {
-        val isAffirm = validator.isPureAffirmation(userText)
+        val isAffirm = validator.isPureAffirmation(userText, unitJson)
 
-        // Claimed this turn: affirm teaches nothing
-        val claimedThisTurn = if (isAffirm) emptyList() else raw.covered
+        // Claimed this turn: delta only — affirm teaches nothing; explain uses curriculum-aware match
+        val expected =
+            validator.expectedDeltaCovered(userText, accumulatedCovered, conceptOrder, unitJson)
+        val claimedThisTurn =
+            when {
+                isAffirm -> emptyList()
+                expected.isNotEmpty() -> expected
+                else -> raw.covered.filter { it !in accumulatedCovered }
+            }
 
         val mergedCovered = validator.mergeCovered(accumulatedCovered, claimedThisTurn)
         val missing = validator.resolveMissing(conceptOrder, mergedCovered)
@@ -50,7 +58,7 @@ class TeachProgressGuard(private val validator: AiResponseValidator) {
 
         return raw.copy(
             speak = finalSpeak,
-            covered = mergedCovered,
+            covered = claimedThisTurn,
             missing = missing,
             correctionStage = correctionStage,
             focusConcept = focusConcept,

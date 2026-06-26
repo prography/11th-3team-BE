@@ -20,11 +20,11 @@ spring:
 
 conversation:
   llm:
-    provider: deepseek
+    provider: stub
 
 ai:
   koog:
     deepseek:
-      enabled: true
+      enabled: false
     ollama:
       enabled: false
