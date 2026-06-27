@@ -10,8 +10,10 @@ import org.prography.samsung.backend.conversation.dto.TeachRequest
 import org.prography.samsung.backend.conversation.dto.TeachStatusResponse
 import org.prography.samsung.backend.conversation.dto.TeachTurnResponse
 import org.prography.samsung.backend.conversation.entity.ConversationTurn
+import org.prography.samsung.backend.conversation.entity.CurriculumUnit
 import org.prography.samsung.backend.conversation.repository.ConversationTurnRepository
-import org.prography.samsung.backend.conversation.repository.CurriculumUnitRepository
+import org.prography.samsung.backend.curriculum.repository.LessonTopicRepository
+import org.prography.samsung.backend.session.SessionConstants
 import org.prography.samsung.backend.session.entity.TutoringSession
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
 import org.springframework.stereotype.Service
@@ -21,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 class TeachService(
     private val tutoringSessionRepository: TutoringSessionRepository,
     private val conversationTurnRepository: ConversationTurnRepository,
-    private val curriculumUnitRepository: CurriculumUnitRepository,
+    private val lessonTopicRepository: LessonTopicRepository,
     private val llmConversationService: LlmConversationService,
     private val aiResponseValidator: AiResponseValidator,
     private val properties: ConversationLlmProperties,
@@ -41,9 +43,7 @@ class TeachService(
             throw CustomException(DomainErrorCode.TEACH_TURN_LIMIT_EXCEEDED)
         }
 
-        val unit =
-            curriculumUnitRepository.findFirstByCurriculumIdOrderByIdAsc(session.curriculum.id)
-                ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
+        val unit = resolveCurriculumUnit(session)
 
         val previousTurns = conversationTurnRepository.findAllBySessionIdOrderByTurnNumberAsc(sessionId)
         val accumulatedCovered = session.getCoveredConceptList(objectMapper)
@@ -87,9 +87,7 @@ class TeachService(
     @Transactional(readOnly = true)
     fun getStatus(userId: Long, sessionId: String): TeachStatusResponse {
         val session = getAiLoopSession(userId, sessionId)
-        val unit =
-            curriculumUnitRepository.findFirstByCurriculumIdOrderByIdAsc(session.curriculum.id)
-                ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
+        val unit = resolveCurriculumUnit(session)
         val lastTurn = conversationTurnRepository.findTopBySessionIdOrderByTurnNumberDesc(sessionId)
         val covered = session.getCoveredConceptList(objectMapper)
         val total = aiResponseValidator.totalConcepts(unit.unitJson)
@@ -115,6 +113,12 @@ class TeachService(
         }
         return session
     }
+
+    private fun resolveCurriculumUnit(session: TutoringSession): CurriculumUnit = lessonTopicRepository
+        .findByCurriculumIdAndSequence(
+            session.curriculum.id,
+            SessionConstants.INTRO_TOPIC_SEQUENCE,
+        )?.curriculumUnit ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
 
     private fun countRepeatedFocus(previousTurns: List<ConversationTurn>): Int {
         if (previousTurns.size < 2) return 0

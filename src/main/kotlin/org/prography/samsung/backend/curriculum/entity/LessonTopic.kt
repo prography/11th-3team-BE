@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.prography.samsung.backend.common.domain.TopicType
 import org.prography.samsung.backend.common.entity.BaseEntity
+import org.prography.samsung.backend.conversation.entity.CurriculumUnit
 
 @Entity
 @Table(name = "lesson_topics")
@@ -24,6 +25,10 @@ class LessonTopic(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curriculum_id", nullable = false)
     val curriculum: Curriculum,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "curriculum_unit_id", nullable = false)
+    val curriculumUnit: CurriculumUnit,
 
     @Column(nullable = false)
     val sequence: Int,

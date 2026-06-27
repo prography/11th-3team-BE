@@ -4,6 +4,7 @@ import org.prography.samsung.backend.common.domain.DayOfWeekCode
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.domain.TopicType
+import org.prography.samsung.backend.conversation.entity.CurriculumUnit
 import org.prography.samsung.backend.curriculum.entity.Curriculum
 import org.prography.samsung.backend.curriculum.entity.LessonTopic
 import org.prography.samsung.backend.gamification.entity.BadgeLevel
@@ -102,14 +103,30 @@ object TestFixtures {
         progressAfter = progressAfter,
     )
 
+    fun curriculumUnit(curriculum: Curriculum = curriculum(), unitId: String = "frac_concept_01"): CurriculumUnit {
+        val unit =
+            CurriculumUnit(
+                unitId = unitId,
+                curriculum = curriculum,
+                unitJson = "{}",
+                systemPromptTemplate = "template",
+            )
+        val idField = CurriculumUnit::class.java.getDeclaredField("id")
+        idField.isAccessible = true
+        idField.set(unit, 401L)
+        return unit
+    }
+
     fun lessonTopic(
         curriculum: Curriculum = curriculum(),
+        curriculumUnit: CurriculumUnit = curriculumUnit(curriculum),
         sequence: Int = 1,
         gnbTitle: String = "3. 분수의 개념",
     ): LessonTopic {
         val topic =
             LessonTopic(
                 curriculum = curriculum,
+                curriculumUnit = curriculumUnit,
                 sequence = sequence,
                 title = "분수란?",
                 subtitle = "개념이해",
