@@ -116,7 +116,7 @@ class TeachService(
 
     private fun resolveCurriculumUnit(session: TutoringSession): CurriculumUnit = session.lessonTopic?.curriculumUnit
         ?: lessonTopicRepository
-            .findByCurriculumIdAndSequence(session.curriculum.id, SessionConstants.INTRO_TOPIC_SEQUENCE)
+            .findByCurriculumIdAndSequence(session.curriculum.id, SessionConstants.SNAPSHOT_SEQUENCE)
             ?.curriculumUnit
         ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
 

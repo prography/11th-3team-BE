@@ -1,4 +1,4 @@
--- Add curriculum_unit and relink lesson_topic for 분수의 덧셈과 뺄셈 (FRACTION_CALC sequence 2).
+-- Add frac_add_01 unit, relink topics (1 topic = 1 unit), and ensure INTRO+REACTION per topic.
 
 INSERT INTO curriculum_units (unit_id, curriculum_id, unit_json, system_prompt_template, created_at, updated_at)
 SELECT
@@ -34,7 +34,6 @@ FROM curriculums c
 WHERE c.code = 'FRACTION_CALC'
   AND NOT EXISTS (SELECT 1 FROM curriculum_units WHERE unit_id = 'frac_add_01');
 
--- sequence 1: 분수의 개념 unit
 UPDATE lesson_topics
 SET curriculum_unit_id = (
     SELECT cu.id
@@ -45,7 +44,6 @@ SET curriculum_unit_id = (
 WHERE curriculum_id = (SELECT id FROM curriculums WHERE code = 'FRACTION_CALC')
   AND sequence = 1;
 
--- sequence 2: 분수의 덧셈과 뺄셈 unit
 UPDATE lesson_topics
 SET curriculum_unit_id = (
     SELECT cu.id
@@ -56,6 +54,40 @@ SET curriculum_unit_id = (
 WHERE curriculum_id = (SELECT id FROM curriculums WHERE code = 'FRACTION_CALC')
   AND sequence = 2;
 
+ALTER TABLE lesson_topics
+    ADD CONSTRAINT uq_lesson_topics_curriculum_unit UNIQUE (curriculum_unit_id);
+
+-- sequence 1 (분수의 개념): REACTION question
+INSERT INTO lesson_questions (lesson_topic_id, phase, bubble_text, wrong_answer_html, emotion, created_at, updated_at)
+SELECT lt.id, 'REACTION', '아하! 그럼 1/4는 <strong>4보다 작은</strong> 수라서 덜 중요한 거죠?', '4보다 작은', 'confused', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM lesson_topics lt
+JOIN curriculums c ON lt.curriculum_id = c.id
+WHERE c.code = 'FRACTION_CALC' AND lt.sequence = 1
+  AND NOT EXISTS (
+    SELECT 1 FROM lesson_questions lq WHERE lq.lesson_topic_id = lt.id AND lq.phase = 'REACTION'
+  );
+
+INSERT INTO hint_notes (lesson_topic_id, phase, content_json, created_at, updated_at)
+SELECT lt.id, 'REACTION',
+    '{"header":{"chapter":"제 3장","title":"분수의 개념"},"sections":[{"id":"compare","title":"오개념 정정","bodyHtml":"분수는 전체를 똑같이 나눈 <strong>일부분</strong>을 나타내는 수예요!","highlight":true}]}',
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM lesson_topics lt
+JOIN curriculums c ON lt.curriculum_id = c.id
+WHERE c.code = 'FRACTION_CALC' AND lt.sequence = 1
+  AND NOT EXISTS (
+    SELECT 1 FROM hint_notes hn WHERE hn.lesson_topic_id = lt.id AND hn.phase = 'REACTION'
+  );
+
+-- sequence 2 (분수의 덧셈과 뺄셈): INTRO question
+INSERT INTO lesson_questions (lesson_topic_id, phase, bubble_text, wrong_answer_html, emotion, created_at, updated_at)
+SELECT lt.id, 'INTRO', '선생님, 2/5 더하기 1/5는 어떻게 구해요?', NULL, 'curious', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM lesson_topics lt
+JOIN curriculums c ON lt.curriculum_id = c.id
+WHERE c.code = 'FRACTION_CALC' AND lt.sequence = 2
+  AND NOT EXISTS (
+    SELECT 1 FROM lesson_questions lq WHERE lq.lesson_topic_id = lt.id AND lq.phase = 'INTRO'
+  );
+
 INSERT INTO lesson_questions (lesson_topic_id, phase, bubble_text, wrong_answer_html, emotion, created_at, updated_at)
 SELECT lt.id, 'REACTION', '아하! 그럼 2/5 더하기 1/5는 <strong>3/10</strong>이죠?', '3/10', 'confused', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM lesson_topics lt
@@ -63,6 +95,17 @@ JOIN curriculums c ON lt.curriculum_id = c.id
 WHERE c.code = 'FRACTION_CALC' AND lt.sequence = 2
   AND NOT EXISTS (
     SELECT 1 FROM lesson_questions lq WHERE lq.lesson_topic_id = lt.id AND lq.phase = 'REACTION'
+  );
+
+INSERT INTO hint_notes (lesson_topic_id, phase, content_json, created_at, updated_at)
+SELECT lt.id, 'INTRO',
+    '{"header":{"chapter":"제 3장","title":"분수의 덧셈과 뺄셈"},"sections":[{"id":"rule","title":"핵심 규칙","bodyHtml":"분모가 같으면 <strong>분자끼리</strong>만 더하거나 빼요","highlight":false}]}',
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM lesson_topics lt
+JOIN curriculums c ON lt.curriculum_id = c.id
+WHERE c.code = 'FRACTION_CALC' AND lt.sequence = 2
+  AND NOT EXISTS (
+    SELECT 1 FROM hint_notes hn WHERE hn.lesson_topic_id = lt.id AND hn.phase = 'INTRO'
   );
 
 INSERT INTO hint_notes (lesson_topic_id, phase, content_json, created_at, updated_at)

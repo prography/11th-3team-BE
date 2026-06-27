@@ -55,7 +55,7 @@ class SessionCompletionService(
             }
 
         val primaryTopic =
-            sessionTopicSnapshotRepository.findBySessionIdAndSequence(sessionId, 1)
+            sessionTopicSnapshotRepository.findBySessionIdAndSequence(sessionId, SessionConstants.SNAPSHOT_SEQUENCE)
                 ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
 
         val previousLevel = profile.badgeLevel.level

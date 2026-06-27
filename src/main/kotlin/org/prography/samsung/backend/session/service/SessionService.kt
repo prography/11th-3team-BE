@@ -120,15 +120,10 @@ class SessionService(
             throw CustomException(DomainErrorCode.CURRICULUM_MISMATCH)
         }
 
-        val topics =
-            if (selectedTopic != null) {
-                lessonTopicRepository.findAllByCurriculumUnitIdOrderBySequenceAsc(selectedTopic.curriculumUnit.id)
-            } else {
-                lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(targetCurriculumId)
-            }
-        if (topics.isEmpty()) {
-            throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
-        }
+        val topic =
+            selectedTopic
+                ?: lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(targetCurriculumId).firstOrNull()
+                ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
 
         val now = Instant.now()
         val conversationMode = request?.conversationMode ?: ConversationMode.STATIC
@@ -138,7 +133,7 @@ class SessionService(
                     id = UUID.randomUUID().toString(),
                     user = user,
                     curriculum = userCurriculum.curriculum,
-                    lessonTopic = selectedTopic ?: topics.first(),
+                    lessonTopic = topic,
                     status = SessionStatus.STARTED,
                     currentPhase = SessionPhase.INTRO,
                     conversationMode = conversationMode,
@@ -147,18 +142,16 @@ class SessionService(
                 ),
             )
 
-        topics.forEachIndexed { index, topic ->
-            sessionTopicSnapshotRepository.save(
-                SessionTopicSnapshot(
-                    session = session,
-                    lessonTopic = topic,
-                    sequence = index + 1,
-                    title = topic.title,
-                    subtitle = topic.subtitle,
-                    topicType = topic.topicType,
-                ),
-            )
-        }
+        sessionTopicSnapshotRepository.save(
+            SessionTopicSnapshot(
+                session = session,
+                lessonTopic = topic,
+                sequence = SessionConstants.SNAPSHOT_SEQUENCE,
+                title = topic.title,
+                subtitle = topic.subtitle,
+                topicType = topic.topicType,
+            ),
+        )
 
         return SessionStartResponse(
             sessionId = session.id,
@@ -169,11 +162,11 @@ class SessionService(
 
     @Transactional(readOnly = true)
     fun getLesson(userId: Long, sessionId: String): SessionLessonResponse =
-        buildPhaseResponse(userId, sessionId, SessionPhase.INTRO, SessionConstants.INTRO_TOPIC_SEQUENCE)
+        buildPhaseResponse(userId, sessionId, SessionPhase.INTRO, SessionConstants.SNAPSHOT_SEQUENCE)
 
     @Transactional(readOnly = true)
     fun getReaction(userId: Long, sessionId: String): SessionLessonResponse =
-        buildPhaseResponse(userId, sessionId, SessionPhase.REACTION, SessionConstants.REACTION_TOPIC_SEQUENCE)
+        buildPhaseResponse(userId, sessionId, SessionPhase.REACTION, SessionConstants.SNAPSHOT_SEQUENCE)
 
     @Transactional
     fun advancePhase(userId: Long, sessionId: String): SessionPhaseResponse {

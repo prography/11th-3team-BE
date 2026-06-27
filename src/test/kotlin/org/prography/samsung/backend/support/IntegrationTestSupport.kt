@@ -92,10 +92,12 @@ abstract class IntegrationTestSupport {
         expectApiSuccess(post("/user/onboarding/complete", deviceId))
     }
 
-    protected fun startSession(deviceId: String): String {
+    protected fun startSession(deviceId: String, lessonTopicId: Long? = null): String {
+        val payload = mutableMapOf<String, Any>("curriculumId" to FRACTION_CURRICULUM_ID)
+        lessonTopicId?.let { payload["lessonTopicId"] = it }
         val result =
             expectApiSuccess(
-                post("/session/start", deviceId, mapOf("curriculumId" to FRACTION_CURRICULUM_ID)),
+                post("/session/start", deviceId, payload),
                 httpStatus = 201,
                 businessCode = 201,
             ).andReturn()

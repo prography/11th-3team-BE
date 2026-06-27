@@ -20,6 +20,3 @@ ALTER TABLE lesson_topics
     ALTER COLUMN curriculum_unit_id SET NOT NULL;
 
 CREATE INDEX idx_lesson_topics_curriculum_unit ON lesson_topics (curriculum_unit_id);
-
-ALTER TABLE lesson_topics
-    ADD CONSTRAINT uq_lesson_topics_unit_sequence UNIQUE (curriculum_unit_id, sequence);
