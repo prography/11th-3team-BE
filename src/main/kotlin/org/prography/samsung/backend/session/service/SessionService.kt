@@ -10,6 +10,7 @@ import org.prography.samsung.backend.common.dto.TodayTopicResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.common.util.KstDateTimeUtils
+import org.prography.samsung.backend.curriculum.entity.LessonTopic
 import org.prography.samsung.backend.curriculum.repository.HintNoteRepository
 import org.prography.samsung.backend.curriculum.repository.LessonQuestionRepository
 import org.prography.samsung.backend.curriculum.repository.LessonTopicRepository
@@ -99,7 +100,6 @@ class SessionService(
         userId: Long,
         request: org.prography.samsung.backend.session.dto.SessionStartRequest?,
     ): SessionStartResponse {
-        val curriculumId = request?.curriculumId
         val existing = tutoringSessionRepository.findByUserIdAndStatus(userId, SessionStatus.STARTED)
         if (existing != null) {
             return SessionStartResponse(
@@ -114,12 +114,22 @@ class SessionService(
             userCurriculumRepository.findById(userId).orElseThrow {
                 CustomException(DomainErrorCode.CURRICULUM_NOT_SELECTED)
             }
-        val targetCurriculumId = curriculumId ?: userCurriculum.curriculum.id
+        val selectedTopic = resolveSelectedLessonTopic(request?.lessonTopicId, userCurriculum.curriculum.id)
+        val targetCurriculumId = selectedTopic?.curriculum?.id ?: request?.curriculumId ?: userCurriculum.curriculum.id
         if (userCurriculum.curriculum.id != targetCurriculumId) {
             throw CustomException(DomainErrorCode.CURRICULUM_MISMATCH)
         }
 
-        val topics = lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(targetCurriculumId)
+        val topics =
+            if (selectedTopic != null) {
+                lessonTopicRepository.findAllByCurriculumUnitIdOrderBySequenceAsc(selectedTopic.curriculumUnit.id)
+            } else {
+                lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(targetCurriculumId)
+            }
+        if (topics.isEmpty()) {
+            throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
+        }
+
         val now = Instant.now()
         val conversationMode = request?.conversationMode ?: ConversationMode.STATIC
         val session =
@@ -128,6 +138,7 @@ class SessionService(
                     id = UUID.randomUUID().toString(),
                     user = user,
                     curriculum = userCurriculum.curriculum,
+                    lessonTopic = selectedTopic ?: topics.first(),
                     status = SessionStatus.STARTED,
                     currentPhase = SessionPhase.INTRO,
                     conversationMode = conversationMode,
@@ -136,12 +147,12 @@ class SessionService(
                 ),
             )
 
-        topics.forEach { topic ->
+        topics.forEachIndexed { index, topic ->
             sessionTopicSnapshotRepository.save(
                 SessionTopicSnapshot(
                     session = session,
                     lessonTopic = topic,
-                    sequence = topic.sequence,
+                    sequence = index + 1,
                     title = topic.title,
                     subtitle = topic.subtitle,
                     topicType = topic.topicType,
@@ -255,6 +266,18 @@ class SessionService(
     private fun getOwnedSession(userId: Long, sessionId: String): TutoringSession =
         tutoringSessionRepository.findByUserIdAndId(userId, sessionId)
             ?: throw CustomException(DomainErrorCode.SESSION_NOT_FOUND)
+
+    private fun resolveSelectedLessonTopic(lessonTopicId: Long?, curriculumId: Long): LessonTopic? {
+        if (lessonTopicId == null) return null
+        val topic =
+            lessonTopicRepository.findById(lessonTopicId).orElseThrow {
+                CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
+            }
+        if (topic.curriculum.id != curriculumId) {
+            throw CustomException(DomainErrorCode.CURRICULUM_MISMATCH)
+        }
+        return topic
+    }
 
     private fun getStartedSession(userId: Long, sessionId: String): TutoringSession {
         val session = getOwnedSession(userId, sessionId)

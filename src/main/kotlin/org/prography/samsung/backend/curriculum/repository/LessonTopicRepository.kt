@@ -7,4 +7,6 @@ interface LessonTopicRepository : JpaRepository<LessonTopic, Long> {
     fun findAllByCurriculumIdOrderBySequenceAsc(curriculumId: Long): List<LessonTopic>
 
     fun findByCurriculumIdAndSequence(curriculumId: Long, sequence: Int): LessonTopic?
+
+    fun findAllByCurriculumUnitIdOrderBySequenceAsc(curriculumUnitId: Long): List<LessonTopic>
 }

@@ -114,11 +114,11 @@ class TeachService(
         return session
     }
 
-    private fun resolveCurriculumUnit(session: TutoringSession): CurriculumUnit = lessonTopicRepository
-        .findByCurriculumIdAndSequence(
-            session.curriculum.id,
-            SessionConstants.INTRO_TOPIC_SEQUENCE,
-        )?.curriculumUnit ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
+    private fun resolveCurriculumUnit(session: TutoringSession): CurriculumUnit = session.lessonTopic?.curriculumUnit
+        ?: lessonTopicRepository
+            .findByCurriculumIdAndSequence(session.curriculum.id, SessionConstants.INTRO_TOPIC_SEQUENCE)
+            ?.curriculumUnit
+        ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
 
     private fun countRepeatedFocus(previousTurns: List<ConversationTurn>): Int {
         if (previousTurns.size < 2) return 0
