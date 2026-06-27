@@ -19,6 +19,19 @@ class AiResponseValidatorTest {
         """.trimIndent()
 
     @Test
+    @DisplayName("formatLessonConcepts는 raw JSON 없이 사람이 읽을 수 있는 개념 블록을 만든다")
+    fun formatLessonConcepts_shouldProduceReadableBlockWithoutRawJson() {
+        val json =
+            """
+            {"concepts":[{"id":"c1","name":"문화유산","key_points":["조상 유산"],"description":"요약"}]}
+            """.trimIndent()
+        val formatted = sut.formatLessonConcepts(json)
+        assertEquals(false, formatted.contains("\"unit_id\""))
+        assertEquals(true, formatted.contains("[c1]"))
+        assertEquals(true, formatted.contains("조상 유산"))
+    }
+
+    @Test
     @DisplayName("유효한 JSON을 파싱한다")
     fun shouldParseValidJson() {
         val raw =

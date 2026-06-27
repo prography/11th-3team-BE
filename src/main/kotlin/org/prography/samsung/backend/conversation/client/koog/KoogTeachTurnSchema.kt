@@ -7,10 +7,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class KoogTeachTurnSchema(
     @property:LLMDescription(
-        "학생(AI)이 선생님에게 말하는 **정확히 1문장 (선호) 또는 최대 2문장**. " +
-            "초등 4학년 존댓말('요/죠/네요')만. **140자 이하, 매우 짧고 간결하게**. " +
-            "장황/반복/긴 설명 절대 금지. '아하!', '음...', '그럼...' + 핵심만. " +
-            "session_done=true여도 1~2문장 감사 인사로 끝. 좋은 예: '아하! 그럼 분모는 아래 숫자인 거네요?'",
+        "학생(AI)이 선생님에게 말하는 **1문장(선호) 또는 최대 2문장(반응 + 다음 hint 유도 질문)**. " +
+            "초등 4학년 존댓말('요/죠/네요')만. **160자 이하**. 장황/반복 금지. " +
+            "speak으로 선생님 설명에 대한 짧은 반응 + **아직 이해 못한 현재 focus 개념의 key_point를 선생님이 풀어서 설명하게 만드는 개방형 질문**을 덧붙이세요. " +
+            "**절대 '맞죠?', '인가요?', '맞나요?', '네!', '네,' 같은 확인형/접두사 질문 금지** — 그런 건 선생님이 또 단답('네')만 하게 만들어 대화가 멈춘다. affirmation 응답도 절대 '네!' 접두사 없이 바로 '선생님, [key_point]는 어떻게 설명하시나요?' 스타일. 항상 '어떻게 설명하시나요?', '정확히 어떤 의미인가요?' 스타일. 순수 단답형('아하!','네')로 끝내지 말고 항상 다음 힌트 질문 유도. session_done 시 감사 인사.",
     )
     val speak: String,
 
@@ -22,13 +22,16 @@ data class KoogTeachTurnSchema(
     val emotion: String,
 
     @property:LLMDescription(
-        "이번 턴 선생님 발화로 **새로** 이해한 concept id만 배열. 이미 covered된 것은 절대 포함 금지. " +
-            "unit_json concepts의 id(c1,c2...)만 사용. 이번 턴에 2개 동시 이해한 경우에만 2개 이상.",
+        "이번 턴 선생님(teacher) 발화로 **새로 그리고 명확히** 이해한 concept id만 배열. " +
+            "현재 first_missing 개념의 key_point 또는 name이 선생님 userText 안에 실제로 있어야 함. " +
+            "이미 covered된 것은 절대 포함 금지. 당신(student)이 speak에서 말한 건 counted 아님. " +
+            "수업 개념에 정의된 id(c1,c2...)만 사용. 이번 턴에 2개 동시 이해한 경우에만 2개 이상. " +
+            "단답 확인('맞아','그렇지')으로는 절대 추가하지 말 것. teacher가 정의를 풀어서 말했을 때만.",
     )
     val covered: List<String> = emptyList(),
 
     @property:LLMDescription(
-        "아직 이해 못한 concept id 전체. unit_json concepts 순서 유지. covered로 이동한 것은 제거. " +
+        "아직 이해 못한 concept id 전체. 수업 개념 순서 유지. covered로 이동한 것은 제거. " +
             "모두 이해하면 빈 배열.",
     )
     val missing: List<String> = emptyList(),

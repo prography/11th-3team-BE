@@ -68,7 +68,8 @@ class TeachService(
             ),
         )
 
-        session.recordTurn(aiResponse.covered, objectMapper)
+        val mergedCovered = aiResponseValidator.mergeCovered(accumulatedCovered, aiResponse.covered)
+        session.recordTurn(mergedCovered, objectMapper)
         tutoringSessionRepository.save(session)
 
         val total = aiResponseValidator.totalConcepts(unit.unitJson)
@@ -77,7 +78,7 @@ class TeachService(
             userText = userText,
             aiResponse = aiResponse,
             progress = TeachProgressResponse(
-                coveredCount = aiResponse.covered.size,
+                coveredCount = mergedCovered.size,
                 total = total,
             ),
         )

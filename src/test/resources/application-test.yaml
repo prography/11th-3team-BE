@@ -26,6 +26,5 @@ ai:
   koog:
     deepseek:
       enabled: false
-      api-key:
     ollama:
       enabled: false
