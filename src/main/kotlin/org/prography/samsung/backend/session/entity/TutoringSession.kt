@@ -20,6 +20,7 @@ import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.entity.BaseEntity
 import org.prography.samsung.backend.curriculum.entity.Curriculum
+import org.prography.samsung.backend.curriculum.entity.LessonTopic
 import org.prography.samsung.backend.user.entity.User
 import java.time.Instant
 import java.time.LocalDate
@@ -38,6 +39,10 @@ class TutoringSession(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curriculum_id", nullable = false)
     val curriculum: Curriculum,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lesson_topic_id")
+    val lessonTopic: LessonTopic? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

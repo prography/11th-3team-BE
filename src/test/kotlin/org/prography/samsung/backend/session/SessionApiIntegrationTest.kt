@@ -57,11 +57,22 @@ class SessionApiIntegrationTest : IntegrationTestSupport() {
     fun shouldCompleteFullLessonFlowAndUpdateRewards() {
         val deviceId = newDeviceId()
         completeOnboarding(deviceId)
-        val sessionId = startSession(deviceId)
+        val todayBody =
+            expectApiSuccess(get("/session/today", deviceId))
+                .andReturn()
+                .response
+                .contentAsString
+        val additionTopicId =
+            objectMapper.readTree(todayBody)
+                .path("data")
+                .path("topics")[1]
+                .path("lessonTopicId")
+                .asLong()
+        val sessionId = startSession(deviceId, additionTopicId)
 
         expectApiSuccess(get("/session/$sessionId/lesson", deviceId))
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.currentPhase").value("INTRO"))
-            .andExpect(MockMvcResultMatchers.jsonPath("$.data.topicLabel").value("3. 분수의 개념"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.topicLabel").value("3. 분수의 덧셈과 뺄셈"))
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.question.bubbleText").exists())
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.hintNote.sections[0].highlight").value(false))
 

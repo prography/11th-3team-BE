@@ -3,6 +3,7 @@ package org.prography.samsung.backend.session.repository
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.session.entity.TutoringSession
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -31,6 +32,7 @@ interface TutoringSessionRepository : JpaRepository<TutoringSession, String> {
         @Param("status") status: SessionStatus,
     ): Boolean
 
+    @EntityGraph(attributePaths = ["lessonTopic", "lessonTopic.curriculumUnit"])
     @Query(
         """
         SELECT s FROM TutoringSession s

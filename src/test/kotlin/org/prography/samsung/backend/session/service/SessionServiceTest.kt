@@ -76,6 +76,26 @@ class SessionServiceTest {
     }
 
     @Test
+    @DisplayName("lessonTopicId가 현재 커리큘럼과 다르면 BAD_REQUEST를 던진다")
+    fun shouldThrowWhenLessonTopicIdMismatchOnStart() {
+        val otherCurriculum = TestFixtures.curriculum(id = 99L)
+        val otherTopic = TestFixtures.lessonTopic(curriculum = otherCurriculum, sequence = 1)
+        whenever(tutoringSessionRepository.findByUserIdAndStatus(TestFixtures.USER_ID, SessionStatus.STARTED))
+            .thenReturn(null)
+        whenever(userRepository.findById(TestFixtures.USER_ID)).thenReturn(TestFixtures.optional(TestFixtures.user()))
+        whenever(userCurriculumRepository.findById(TestFixtures.USER_ID))
+            .thenReturn(TestFixtures.optional(TestFixtures.userCurriculum()))
+        whenever(lessonTopicRepository.findById(otherTopic.id)).thenReturn(TestFixtures.optional(otherTopic))
+
+        val exception =
+            assertThrows(CustomException::class.java) {
+                sut.start(TestFixtures.USER_ID, SessionStartRequest(lessonTopicId = otherTopic.id))
+            }
+
+        assertEquals(DomainErrorCode.CURRICULUM_MISMATCH, exception.errorCode)
+    }
+
+    @Test
     @DisplayName("curriculumId가 현재 선택과 다르면 BAD_REQUEST를 던진다")
     fun shouldThrowWhenCurriculumIdMismatchOnStart() {
         whenever(tutoringSessionRepository.findByUserIdAndStatus(TestFixtures.USER_ID, SessionStatus.STARTED))
