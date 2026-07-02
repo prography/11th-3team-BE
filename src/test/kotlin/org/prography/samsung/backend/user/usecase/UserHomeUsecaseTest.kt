@@ -9,10 +9,11 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.prography.samsung.backend.session.dto.response.SessionStatusResponse
-import org.prography.samsung.backend.session.service.SessionService
+import org.prography.samsung.backend.session.service.SessionQueryService
 import org.prography.samsung.backend.support.TestFixtures
 import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserProfileRepository
+import org.prography.samsung.backend.user.repository.UserRepository
 import org.prography.samsung.backend.user.service.UserProfileService
 
 @ExtendWith(MockitoExtension::class)
@@ -20,14 +21,15 @@ import org.prography.samsung.backend.user.service.UserProfileService
 class UserHomeUsecaseTest {
     private val userProfileRepository: UserProfileRepository = mock()
     private val userCurriculumRepository: UserCurriculumRepository = mock()
-    private val sessionService: SessionService = mock()
+    private val userRepository: UserRepository = mock()
+    private val sessionQueryService: SessionQueryService = mock()
     private lateinit var sut: UserHomeUsecase
 
     @BeforeEach
     fun setUp() {
         sut = UserHomeUsecase(
-            userProfileService = UserProfileService(userProfileRepository, userCurriculumRepository),
-            sessionService = sessionService,
+            userProfileService = UserProfileService(userProfileRepository, userCurriculumRepository, userRepository),
+            sessionQueryService = sessionQueryService,
         )
     }
 
@@ -40,7 +42,7 @@ class UserHomeUsecaseTest {
         whenever(
             userCurriculumRepository.findById(TestFixtures.USER_ID),
         ).thenReturn(TestFixtures.optional(userCurriculum))
-        whenever(sessionService.getStatus(TestFixtures.USER_ID)).thenReturn(
+        whenever(sessionQueryService.getStatus(TestFixtures.USER_ID)).thenReturn(
             SessionStatusResponse(
                 lessonCompletedToday = true,
                 activeSession = null,
@@ -64,7 +66,7 @@ class UserHomeUsecaseTest {
         whenever(
             userCurriculumRepository.findById(TestFixtures.USER_ID),
         ).thenReturn(TestFixtures.optional(userCurriculum))
-        whenever(sessionService.getStatus(TestFixtures.USER_ID)).thenReturn(
+        whenever(sessionQueryService.getStatus(TestFixtures.USER_ID)).thenReturn(
             SessionStatusResponse(
                 lessonCompletedToday = false,
                 activeSession = null,

@@ -12,17 +12,19 @@ import org.mockito.kotlin.whenever
 import org.prography.samsung.backend.support.TestFixtures
 import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserProfileRepository
+import org.prography.samsung.backend.user.repository.UserRepository
 
 @ExtendWith(MockitoExtension::class)
 @DisplayName("UserProfileService 단위 테스트")
 class UserProfileServiceTest {
     private val userProfileRepository: UserProfileRepository = mock()
     private val userCurriculumRepository: UserCurriculumRepository = mock()
+    private val userRepository: UserRepository = mock()
     private lateinit var sut: UserProfileService
 
     @BeforeEach
     fun setUp() {
-        sut = UserProfileService(userProfileRepository, userCurriculumRepository)
+        sut = UserProfileService(userProfileRepository, userCurriculumRepository, userRepository)
     }
 
     @Test
@@ -35,7 +37,7 @@ class UserProfileServiceTest {
             userCurriculumRepository.findById(TestFixtures.USER_ID),
         ).thenReturn(TestFixtures.optional(userCurriculum))
 
-        val result = sut.getProfile(TestFixtures.USER_ID)
+        val result = sut.getUserProfileResponse(TestFixtures.USER_ID)
 
         assertEquals(1, result.level.number)
         assertEquals("분수의 계산", result.curriculum.name)
@@ -52,7 +54,7 @@ class UserProfileServiceTest {
             userCurriculumRepository.findById(TestFixtures.USER_ID),
         ).thenReturn(TestFixtures.optional(userCurriculum))
 
-        val result = sut.getProfile(TestFixtures.USER_ID)
+        val result = sut.getUserProfileResponse(TestFixtures.USER_ID)
 
         assertFalse(result.homeMessage.contains("마스터"))
     }

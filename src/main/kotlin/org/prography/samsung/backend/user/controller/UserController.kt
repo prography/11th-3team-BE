@@ -29,7 +29,7 @@ class UserController(
     @GetMapping("/user/profile")
     fun getProfile() = ApiResponseFactory.success(
         SuccessCode.OK,
-        userProfileService.getProfile(CurrentUserHolder.get().userId),
+        userProfileService.getUserProfileResponse(CurrentUserHolder.get().userId),
     )
 
     @Operation(

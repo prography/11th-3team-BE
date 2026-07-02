@@ -7,15 +7,18 @@ import org.prography.samsung.backend.curriculum.service.CurriculumService
 import org.prography.samsung.backend.session.SessionConstants
 import org.prography.samsung.backend.session.dto.response.SessionLessonResponse
 import org.prography.samsung.backend.session.dto.response.SessionPhaseResponse
+import org.prography.samsung.backend.session.dto.response.SessionStatusResponse
 import org.prography.samsung.backend.session.dto.response.SessionTodayResponse
-import org.prography.samsung.backend.session.service.SessionService
+import org.prography.samsung.backend.session.service.SessionLifecycleService
+import org.prography.samsung.backend.session.service.SessionQueryService
 import org.prography.samsung.backend.user.service.UserProfileService
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
 class SessionLessonUsecase(
-    private val sessionService: SessionService,
+    private val sessionQueryService: SessionQueryService,
+    private val sessionLifecycleService: SessionLifecycleService,
     private val curriculumService: CurriculumService,
     private val userProfileService: UserProfileService,
 ) {
@@ -24,7 +27,7 @@ class SessionLessonUsecase(
         val userCurriculum = userProfileService.getUserCurriculum(userId)
         val curriculum = userCurriculum.curriculum
         val topics = curriculumService.getTodayTopics(curriculum.id)
-        val activeSession = sessionService.findActiveSession(userId)
+        val activeSession = sessionQueryService.findActiveSession(userId)
         return SessionTodayResponse(
             curriculumId = curriculum.id,
             sessionTitle = curriculum.sessionTitleTemplate,
@@ -35,15 +38,18 @@ class SessionLessonUsecase(
 
     @Transactional(readOnly = true)
     fun getLesson(userId: Long, sessionId: String): SessionLessonResponse =
-        buildPhaseResponse(userId, sessionId, SessionPhase.INTRO, SessionConstants.INTRO_TOPIC_SEQUENCE)
+        buildPhaseResponse(userId, sessionId, SessionPhase.INTRO, SessionConstants.SNAPSHOT_SEQUENCE)
 
     @Transactional(readOnly = true)
     fun getReaction(userId: Long, sessionId: String): SessionLessonResponse =
-        buildPhaseResponse(userId, sessionId, SessionPhase.REACTION, SessionConstants.REACTION_TOPIC_SEQUENCE)
+        buildPhaseResponse(userId, sessionId, SessionPhase.REACTION, SessionConstants.SNAPSHOT_SEQUENCE)
 
     @Transactional
     fun advancePhase(userId: Long, sessionId: String): SessionPhaseResponse =
-        sessionService.advancePhase(userId, sessionId)
+        sessionLifecycleService.advancePhase(userId, sessionId)
+
+    @Transactional(readOnly = true)
+    fun getStatus(userId: Long): SessionStatusResponse = sessionQueryService.getStatus(userId)
 
     private fun buildPhaseResponse(
         userId: Long,
@@ -51,7 +57,7 @@ class SessionLessonUsecase(
         expectedPhase: SessionPhase,
         topicSequence: Int,
     ): SessionLessonResponse {
-        val (session, snapshot) = sessionService.getStartedSessionWithSnapshot(userId, sessionId, topicSequence)
+        val (session, snapshot) = sessionQueryService.getStartedSessionWithSnapshot(userId, sessionId, topicSequence)
         if (session.currentPhase != expectedPhase) {
             throw CustomException(DomainErrorCode.SESSION_PHASE_MISMATCH)
         }

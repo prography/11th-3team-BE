@@ -23,6 +23,7 @@ enum class DomainErrorCode(override val httpStatus: HttpStatus, override val cod
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, 40420, "세션을 찾을 수 없습니다."),
     CURRICULUM_NOT_FOUND(HttpStatus.NOT_FOUND, 40430, "커리큘럼을 찾을 수 없습니다."),
     LESSON_TOPIC_NOT_FOUND(HttpStatus.NOT_FOUND, 40440, "학습 주제를 찾을 수 없습니다."),
+    HINT_NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, 40450, "힌트 노트를 찾을 수 없습니다."),
 
     // 409xx — 현재 상태 때문에 수행 불가
     SESSION_ALREADY_STARTED(HttpStatus.CONFLICT, 40920, "이미 진행 중인 수업이 있습니다."),

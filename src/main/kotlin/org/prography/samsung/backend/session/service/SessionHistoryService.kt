@@ -1,8 +1,8 @@
 package org.prography.samsung.backend.session.service
 
 import org.prography.samsung.backend.common.util.KstDateTimeUtils
-import org.prography.samsung.backend.session.dto.SessionHistoryItemResponse
-import org.prography.samsung.backend.session.dto.SessionHistoryResponse
+import org.prography.samsung.backend.session.dto.response.SessionHistoryItemResponse
+import org.prography.samsung.backend.session.dto.response.SessionHistoryResponse
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service

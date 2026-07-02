@@ -5,9 +5,12 @@ import org.prography.samsung.backend.common.dto.LevelResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.user.dto.response.UserProfileResponse
+import org.prography.samsung.backend.user.entity.User
 import org.prography.samsung.backend.user.entity.UserCurriculum
+import org.prography.samsung.backend.user.entity.UserProfile
 import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserProfileRepository
+import org.prography.samsung.backend.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -15,17 +18,15 @@ import org.springframework.transaction.annotation.Transactional
 class UserProfileService(
     private val userProfileRepository: UserProfileRepository,
     private val userCurriculumRepository: UserCurriculumRepository,
+    private val userRepository: UserRepository,
 ) {
     @Transactional(readOnly = true)
-    fun getProfile(userId: Long): UserProfileResponse {
+    fun getUserProfileResponse(userId: Long): UserProfileResponse {
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
                 CustomException(DomainErrorCode.USER_NOT_FOUND)
             }
-        val userCurriculum =
-            userCurriculumRepository.findById(userId).orElseThrow {
-                CustomException(DomainErrorCode.CURRICULUM_NOT_SELECTED)
-            }
+        val userCurriculum = getUserCurriculum(userId)
 
         return UserProfileResponse(
             level = LevelResponse(profile.badgeLevel.level, profile.badgeLevel.name),
@@ -39,6 +40,16 @@ class UserProfileService(
             progressPercent = userCurriculum.progressPercent,
             homeMessage = buildHomeMessage(userCurriculum.curriculum.name),
         )
+    }
+
+    @Transactional(readOnly = true)
+    fun getUserProfile(userId: Long): UserProfile = userProfileRepository.findById(userId).orElseThrow {
+        CustomException(DomainErrorCode.USER_NOT_FOUND)
+    }
+
+    @Transactional(readOnly = true)
+    fun getUser(userId: Long): User = userRepository.findById(userId).orElseThrow {
+        CustomException(DomainErrorCode.USER_NOT_FOUND)
     }
 
     @Transactional(readOnly = true)

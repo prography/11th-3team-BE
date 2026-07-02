@@ -39,8 +39,15 @@ class CurriculumService(
         ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
 
     @Transactional(readOnly = true)
-    fun getLessonTopics(curriculumId: Long): List<LessonTopic> =
-        lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(curriculumId)
+    fun getLessonTopicById(lessonTopicId: Long): LessonTopic =
+        lessonTopicRepository.findById(lessonTopicId).orElseThrow {
+            CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
+        }
+
+    @Transactional(readOnly = true)
+    fun getFirstLessonTopic(curriculumId: Long): LessonTopic =
+        lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(curriculumId).firstOrNull()
+            ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
 
     @Transactional(readOnly = true)
     fun getTodayTopics(curriculumId: Long): List<TodayTopicResponse> =
@@ -59,7 +66,7 @@ class CurriculumService(
         val question = lessonQuestionRepository.findByLessonTopicIdAndPhase(lessonTopicId, phase)
             ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
         val hintNote = hintNoteRepository.findByLessonTopicIdAndPhase(lessonTopicId, phase)
-            ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
+            ?: throw CustomException(DomainErrorCode.HINT_NOTE_NOT_FOUND)
         return LessonContent(
             question = LessonQuestionResponse(
                 bubbleText = question.bubbleText,
