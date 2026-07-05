@@ -1,0 +1,105 @@
+{
+  "_comment": "conversation_turns.json(2026-06-17~06-30) 실데이터 실패 사례를 테스트 fixture로 변환. baseline=현재 파이프라인 실제 동작(특성 테스트 고정값), expected=개선 후 기대. 상세: docs/ai-reference/TEACH_PIPELINE_ANALYSIS.md §7",
+  "unitResource": "teach-eval/fraction-unit.json",
+  "cases": [
+    {
+      "id": "f8b38857-t1-first-explain",
+      "source": "session f8b38857 turn 1 (2026-06-30)",
+      "issue": "reference-pass",
+      "note": "정상 explain — c1 정의 설명 → c1 advance. 회귀 게이트용(개선 후에도 통과해야 함)",
+      "given": { "accumulatedCovered": [], "userText": "전체를 똑같이 나눈 것 중에 일 부분을 나타내는 수" },
+      "baseline": { "coveredDelta": ["c1"] },
+      "expected": { "coveredDelta": ["c1"] }
+    },
+    {
+      "id": "f8b38857-t2-paraphrase-rejected",
+      "source": "session f8b38857 turn 2 (2026-06-30)",
+      "issue": "P1",
+      "note": "t1과 사실상 동일 문장. focus는 c2로 이동한 상태라 covered=[]는 옳으나 상태 피드백 부재",
+      "given": { "accumulatedCovered": ["c1"], "userText": "전체를 똑같이 나눈 것 중 일 부분을 나타내는 수" },
+      "baseline": { "coveredDelta": [] },
+      "expected": { "coveredDelta": [], "speakMustSignal": "already-covered-redirect" }
+    },
+    {
+      "id": "paraphrase-c2-rejected",
+      "source": "합성 케이스 (§3.1 P1 페러프레이즈)",
+      "issue": "P1",
+      "note": "c2를 의미상 정확히 설명('나눈 것의 개수')하지만 keyword ' 나눈 개수'와 substring 불일치 → 거절. 서버 substring으로는 영구 불통과, L3에서만 반전 가능",
+      "given": { "accumulatedCovered": ["c1"], "userText": "전체를 똑같이 나눈 것의 개수를 말해요" },
+      "baseline": { "coveredDelta": [] },
+      "expected": { "coveredDelta": ["c2"], "requiresSemanticJudgment": true }
+    },
+    {
+      "id": "misconception-below-false-advance",
+      "source": "합성 케이스 (§3.1 비변별 keyword)",
+      "issue": "P1",
+      "note": "'부모는 아래에 있는 숫자예요' — 분모/분자 혼동 오개념이지만 keyword '아래' substring 매칭으로 c2 오-advance",
+      "given": { "accumulatedCovered": ["c1"], "userText": "부모는 아래에 있는 숫자예요" },
+      "baseline": { "coveredDelta": ["c2"] },
+      "expected": { "coveredDelta": [], "misconceptionsNotEmpty": true }
+    },
+    {
+      "id": "c1ab2035-t2-misconception-missed",
+      "source": "session c1ab2035 turn 2 (2026-06-27)",
+      "issue": "P2",
+      "note": "'부모는 분수에서 윗 숫자를 말해' — 분모/분자 혼동. keyword 불일치로 covered=[]는 맞으나 misconceptions 무탐지",
+      "given": { "accumulatedCovered": ["c1"], "userText": "부모는 분수에서 윗 숫자를 말해" },
+      "baseline": { "coveredDelta": [], "misconceptionsEmpty": true },
+      "expected": { "coveredDelta": [], "misconceptionsNotEmpty": true }
+    },
+    {
+      "id": "7d18f09b-t2-stt-advance",
+      "source": "session 7d18f09b turn 2 (2026-06-27)",
+      "issue": "P1",
+      "note": "'굿모(분모 오인식)는 ... 나눈 개수 아래 숫자' — STT 오인식이나 keyword '아래' 매칭으로 c2 advance. 유저 의도상 정답이라 결과는 옳으나 우연한 substring 의존",
+      "given": { "accumulatedCovered": ["c1"], "userText": "굿모는 전체를 똑같이 나눈 개수 아래 숫자를 말해요" },
+      "baseline": { "coveredDelta": ["c2"] },
+      "expected": { "coveredDelta": ["c2"], "requiresSemanticJudgment": true }
+    },
+    {
+      "id": "7d18f09b-t3-stt-advance",
+      "source": "session 7d18f09b turn 3 (2026-06-27)",
+      "issue": "P1",
+      "note": "'군자(분자 오인식)는 ... 조각의 수 위 숫자' → keyword '위'/'조각' 매칭으로 c3 advance",
+      "given": { "accumulatedCovered": ["c1", "c2"], "userText": "군자는 가지고 있는 조각의 수 위 숫자를 말해요" },
+      "baseline": { "coveredDelta": ["c3"] },
+      "expected": { "coveredDelta": ["c3"], "requiresSemanticJudgment": true }
+    },
+    {
+      "id": "7d18f09b-t4-stt-complete",
+      "source": "session 7d18f09b turn 4 (2026-06-27)",
+      "issue": "P1",
+      "note": "'눈썹끼리(분수끼리 오인식) 크기 비교는 ...' → keyword '크기'/'비교' 매칭으로 c4 advance, session_done",
+      "given": { "accumulatedCovered": ["c1", "c2", "c3"], "userText": "눈썹끼리 크기 비교는 분모를 맞추고 그리고 분자의 값 중 크고 자금을 비교하면 하면 됩니다" },
+      "baseline": { "coveredDelta": ["c4"] },
+      "expected": { "coveredDelta": ["c4"], "requiresSemanticJudgment": true }
+    },
+    {
+      "id": "087b867f-t2-offtopic-garbage",
+      "source": "session 087b867f turn 2 (2026-06-27)",
+      "issue": "P4",
+      "note": "'소금 빵 레시피 알려줘' — 오프토픽. covered=[]는 맞으나 AFFIRM과 구분 없는 동일 질문 반복",
+      "given": { "accumulatedCovered": [], "userText": "소금 빵 레시피 알려줘" },
+      "baseline": { "coveredDelta": [], "classifiedAs": "GARBAGE" },
+      "expected": { "coveredDelta": [], "classifiedAs": "GARBAGE", "speakMustSignal": "off-topic-return" }
+    },
+    {
+      "id": "e0a86f4f-t2-answer-leak",
+      "source": "session e0a86f4f turn 2 (2026-06-27)",
+      "issue": "P5",
+      "note": "user='응'(affirm)에 AI가 '네, 선생님! 그럼 분모가 아래 숫자 맞죠?' — leading '네'+정답 유출+확인형. maxAttempts 소진 시 fallback이 이 speak를 그대로 반환",
+      "given": { "accumulatedCovered": ["c1"], "userText": "응", "violatingSpeak": "네, 선생님! 그럼 분모가 아래 숫자 맞죠?" },
+      "baseline": { "coveredDelta": [], "speakReturnedVerbatim": true },
+      "expected": { "coveredDelta": [], "speakReturnedVerbatim": false, "speakMustSignal": "generic-redirect" }
+    },
+    {
+      "id": "c1ab2035-t4-stuck-no-hint",
+      "source": "session c1ab2035 turn 4 (2026-06-27)",
+      "issue": "P3",
+      "note": "'잘 모르겠어요 혹시 부모에 대해서 알려 줄 수 있나요' — 명시적 도움 요청. stage=4여도 동일 질문 반복, 힌트 없음",
+      "given": { "accumulatedCovered": ["c1"], "userText": "잘 모르겠어요 혹시 부모에 대해서 알려 줄 수 있나요", "repeatedFocusCount": 3 },
+      "baseline": { "coveredDelta": [], "correctionStage": 4, "hintProvided": false },
+      "expected": { "coveredDelta": [], "correctionStage": 4, "hintProvided": true }
+    }
+  ]
+}
