@@ -1,9 +1,9 @@
 package org.prography.samsung.backend.user.service
 
-import org.prography.samsung.backend.common.dto.CurriculumSummaryResponse
-import org.prography.samsung.backend.common.dto.LevelResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
+import org.prography.samsung.backend.curriculum.dto.response.CurriculumSummaryResponse
+import org.prography.samsung.backend.gamification.dto.response.LevelResponse
 import org.prography.samsung.backend.user.dto.response.UserProfileResponse
 import org.prography.samsung.backend.user.entity.User
 import org.prography.samsung.backend.user.entity.UserCurriculum

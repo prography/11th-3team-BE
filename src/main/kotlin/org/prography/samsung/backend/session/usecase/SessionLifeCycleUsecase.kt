@@ -4,6 +4,7 @@ import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.session.dto.request.SessionStartRequest
 import org.prography.samsung.backend.session.dto.response.SessionAbortResponse
+import org.prography.samsung.backend.session.dto.response.SessionPhaseResponse
 import org.prography.samsung.backend.session.dto.response.SessionStartResponse
 import org.prography.samsung.backend.session.service.SessionLifecycleService
 import org.prography.samsung.backend.user.service.UserProfileService
@@ -25,6 +26,10 @@ class SessionLifeCycleUsecase(
         }
         return sessionLifecycleService.start(user, userCurriculum, request)
     }
+
+    @Transactional
+    fun advancePhase(userId: Long, sessionId: String): SessionPhaseResponse =
+        sessionLifecycleService.advancePhase(userId, sessionId)
 
     @Transactional
     fun abort(userId: Long, sessionId: String): SessionAbortResponse = sessionLifecycleService.abort(userId, sessionId)

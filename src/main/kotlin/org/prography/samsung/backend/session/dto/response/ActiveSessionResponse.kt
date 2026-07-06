@@ -1,4 +1,4 @@
-package org.prography.samsung.backend.common.dto
+package org.prography.samsung.backend.session.dto.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 import org.prography.samsung.backend.common.domain.SessionPhase

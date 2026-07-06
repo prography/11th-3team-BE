@@ -1,7 +1,7 @@
 package org.prography.samsung.backend.user.dto.response
 
-import org.prography.samsung.backend.common.dto.CurriculumSummaryResponse
-import org.prography.samsung.backend.common.dto.LevelResponse
+import org.prography.samsung.backend.curriculum.dto.response.CurriculumSummaryResponse
+import org.prography.samsung.backend.gamification.dto.response.LevelResponse
 
 data class UserProfileResponse(
     val level: LevelResponse,

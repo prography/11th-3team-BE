@@ -75,7 +75,7 @@ class SessionController(
     @PostMapping("/session/{sessionId}/advance-phase")
     fun advancePhase(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionLessonUsecase.advancePhase(CurrentUserHolder.get().userId, sessionId),
+        sessionLifeCycleUsecase.advancePhase(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(

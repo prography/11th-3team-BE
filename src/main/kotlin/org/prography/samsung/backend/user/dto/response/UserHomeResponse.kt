@@ -1,9 +1,9 @@
 package org.prography.samsung.backend.user.dto.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import org.prography.samsung.backend.common.dto.ActiveSessionResponse
-import org.prography.samsung.backend.common.dto.CurriculumSummaryResponse
-import org.prography.samsung.backend.common.dto.LevelResponse
+import org.prography.samsung.backend.curriculum.dto.response.CurriculumSummaryResponse
+import org.prography.samsung.backend.gamification.dto.response.LevelResponse
+import org.prography.samsung.backend.session.dto.response.ActiveSessionResponse
 
 data class UserHomeResponse(
     val level: LevelResponse,

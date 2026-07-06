@@ -1,7 +1,6 @@
 package org.prography.samsung.backend.gamification.dto.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import org.prography.samsung.backend.common.dto.LevelResponse
 import org.prography.samsung.backend.gamification.entity.BadgeLevel
 import org.prography.samsung.backend.session.SessionConstants
 import org.prography.samsung.backend.session.entity.TutoringSession

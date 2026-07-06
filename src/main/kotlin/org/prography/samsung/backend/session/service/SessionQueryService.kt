@@ -2,10 +2,10 @@ package org.prography.samsung.backend.session.service
 
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
-import org.prography.samsung.backend.common.dto.ActiveSessionResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.common.util.KstDateTimeUtils
+import org.prography.samsung.backend.session.dto.response.ActiveSessionResponse
 import org.prography.samsung.backend.session.dto.response.SessionStatusResponse
 import org.prography.samsung.backend.session.entity.SessionTopicSnapshot
 import org.prography.samsung.backend.session.entity.TutoringSession

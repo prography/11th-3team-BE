@@ -1,7 +1,6 @@
 package org.prography.samsung.backend.session.dto.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import org.prography.samsung.backend.common.dto.ActiveSessionResponse
 
 data class SessionStatusResponse(
     val lessonCompletedToday: Boolean,
