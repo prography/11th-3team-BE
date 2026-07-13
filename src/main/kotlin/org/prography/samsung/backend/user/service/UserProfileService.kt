@@ -12,7 +12,6 @@ import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserProfileRepository
 import org.prography.samsung.backend.user.repository.UserRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
 class UserProfileService(
@@ -20,7 +19,6 @@ class UserProfileService(
     private val userCurriculumRepository: UserCurriculumRepository,
     private val userRepository: UserRepository,
 ) {
-    @Transactional(readOnly = true)
     fun getUserProfileResponse(userId: Long): UserProfileResponse {
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
@@ -42,17 +40,14 @@ class UserProfileService(
         )
     }
 
-    @Transactional(readOnly = true)
     fun getUserProfile(userId: Long): UserProfile = userProfileRepository.findById(userId).orElseThrow {
         CustomException(DomainErrorCode.USER_NOT_FOUND)
     }
 
-    @Transactional(readOnly = true)
     fun getUser(userId: Long): User = userRepository.findById(userId).orElseThrow {
         CustomException(DomainErrorCode.USER_NOT_FOUND)
     }
 
-    @Transactional(readOnly = true)
     fun getUserCurriculum(userId: Long): UserCurriculum = userCurriculumRepository.findById(userId).orElseThrow {
         CustomException(DomainErrorCode.CURRICULUM_NOT_SELECTED)
     }

@@ -20,7 +20,6 @@ import org.prography.samsung.backend.session.repository.TutoringSessionRepositor
 import org.prography.samsung.backend.user.entity.User
 import org.prography.samsung.backend.user.entity.UserCurriculum
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.UUID
 
@@ -31,7 +30,6 @@ class SessionLifecycleService(
     private val tutoringSessionRepository: TutoringSessionRepository,
     private val sessionTopicSnapshotRepository: SessionTopicSnapshotRepository,
 ) {
-    @Transactional
     fun start(user: User, userCurriculum: UserCurriculum, request: SessionStartRequest?): SessionStartResponse {
         val existing = tutoringSessionRepository.findByUserIdAndStatus(user.id, SessionStatus.STARTED)
         if (existing != null) {
@@ -85,7 +83,6 @@ class SessionLifecycleService(
         )
     }
 
-    @Transactional
     fun advancePhase(userId: Long, sessionId: String): SessionPhaseResponse {
         val session = sessionQueryService.getStartedSession(userId, sessionId)
         if (session.currentPhase != SessionPhase.INTRO) {
@@ -96,7 +93,6 @@ class SessionLifecycleService(
         return SessionPhaseResponse(sessionId = session.id, currentPhase = SessionPhase.REACTION)
     }
 
-    @Transactional
     fun abort(userId: Long, sessionId: String): SessionAbortResponse {
         val session = sessionQueryService.getStartedSession(userId, sessionId)
         session.abort()

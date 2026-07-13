@@ -14,7 +14,6 @@ import org.prography.samsung.backend.session.repository.TutoringSessionRepositor
 import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserProfileRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import kotlin.math.min
 
@@ -27,7 +26,6 @@ class SessionCompletionService(
     private val userCurriculumRepository: UserCurriculumRepository,
     private val badgeLevelRepository: BadgeLevelRepository,
 ) {
-    @Transactional
     fun complete(userId: Long, sessionId: String): RewardResponse {
         val session =
             tutoringSessionRepository.findByUserIdAndId(userId, sessionId)

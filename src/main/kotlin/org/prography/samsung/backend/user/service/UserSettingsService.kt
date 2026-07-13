@@ -15,7 +15,6 @@ import org.prography.samsung.backend.user.repository.UserCurriculumRepository
 import org.prography.samsung.backend.user.repository.UserRepository
 import org.prography.samsung.backend.user.repository.UserScheduleRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
 class UserSettingsService(
@@ -27,7 +26,6 @@ class UserSettingsService(
     private val onboardingService: OnboardingService,
     private val notificationService: NotificationService,
 ) {
-    @Transactional(readOnly = true)
     fun getSettings(userId: Long): UserSettingsResponse {
         val userCurriculum =
             userCurriculumRepository.findById(userId).orElseThrow {
@@ -49,7 +47,6 @@ class UserSettingsService(
         )
     }
 
-    @Transactional
     fun updateSettings(userId: Long, request: UserSettingsRequest): UserSettingsResponse {
         val current = getSettings(userId)
         var changed = false

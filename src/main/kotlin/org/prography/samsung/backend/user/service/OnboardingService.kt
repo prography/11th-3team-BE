@@ -19,7 +19,6 @@ import org.prography.samsung.backend.user.repository.UserProfileRepository
 import org.prography.samsung.backend.user.repository.UserRepository
 import org.prography.samsung.backend.user.repository.UserScheduleRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -31,7 +30,6 @@ class OnboardingService(
     private val userScheduleRepository: UserScheduleRepository,
     private val curriculumService: CurriculumService,
 ) {
-    @Transactional(readOnly = true)
     fun getStatus(userId: Long): OnboardingStatusResponse {
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
@@ -43,7 +41,6 @@ class OnboardingService(
         )
     }
 
-    @Transactional
     fun saveCurriculum(userId: Long, request: OnboardingRequest): OnboardingResponse {
         val user = userRepository.findById(userId).orElseThrow {
             CustomException(DomainErrorCode.USER_NOT_FOUND)
@@ -67,7 +64,6 @@ class OnboardingService(
         return OnboardingResponse(curriculumId = curriculum.id, step = 1)
     }
 
-    @Transactional
     fun saveSchedule(userId: Long, request: UserScheduleRequest): UserScheduleResponse {
         val days = ScheduleValidator.parseDays(request.days)
         ScheduleValidator.validateSchedule(request.frequency, days, request.time)
@@ -104,7 +100,6 @@ class OnboardingService(
         return toScheduleResponse(schedule)
     }
 
-    @Transactional
     fun completeOnboarding(userId: Long): OnboardingCompleteResponse {
         val profile =
             userProfileRepository.findById(userId).orElseThrow {

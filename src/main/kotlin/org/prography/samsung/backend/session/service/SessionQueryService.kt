@@ -12,14 +12,12 @@ import org.prography.samsung.backend.session.entity.TutoringSession
 import org.prography.samsung.backend.session.repository.SessionTopicSnapshotRepository
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
 class SessionQueryService(
     private val tutoringSessionRepository: TutoringSessionRepository,
     private val sessionTopicSnapshotRepository: SessionTopicSnapshotRepository,
 ) {
-    @Transactional(readOnly = true)
     fun getStatus(userId: Long): SessionStatusResponse {
         val today = KstDateTimeUtils.todayKst()
         val lessonCompletedToday =
@@ -38,11 +36,9 @@ class SessionQueryService(
         )
     }
 
-    @Transactional(readOnly = true)
     fun findActiveSession(userId: Long): ActiveSessionResponse? =
         tutoringSessionRepository.findByUserIdAndStatus(userId, SessionStatus.STARTED)?.let { toActiveSession(it) }
 
-    @Transactional(readOnly = true)
     fun getStartedSessionWithSnapshot(
         userId: Long,
         sessionId: String,
@@ -55,12 +51,10 @@ class SessionQueryService(
         return session to snapshot
     }
 
-    @Transactional(readOnly = true)
     fun getOwnedSession(userId: Long, sessionId: String): TutoringSession =
         tutoringSessionRepository.findByUserIdAndId(userId, sessionId)
             ?: throw CustomException(DomainErrorCode.SESSION_NOT_FOUND)
 
-    @Transactional(readOnly = true)
     fun getStartedSession(userId: Long, sessionId: String): TutoringSession {
         val session = getOwnedSession(userId, sessionId)
         if (session.status != SessionStatus.STARTED) {
