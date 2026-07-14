@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.prography.samsung.backend.conversation.client.LlmClient
-import org.prography.samsung.backend.conversation.service.AiResponseValidator
+import org.prography.samsung.backend.conversation.util.AiResponseValidator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles

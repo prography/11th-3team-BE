@@ -1,12 +1,18 @@
-package org.prography.samsung.backend.conversation.service
+package org.prography.samsung.backend.conversation.prompt
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
-import org.prography.samsung.backend.conversation.client.LlmClient
 import org.prography.samsung.backend.conversation.config.ConversationLlmProperties
+import org.prography.samsung.backend.conversation.entity.ConversationTurn
 import org.prography.samsung.backend.conversation.entity.CurriculumUnit
+import org.prography.samsung.backend.conversation.util.AiResponseValidator
+import org.prography.samsung.backend.conversation.util.TeacherTurnClassifier
 import org.prography.samsung.backend.curriculum.entity.Curriculum
+import org.prography.samsung.backend.support.TestFixtures
+import java.io.File
+import java.security.MessageDigest
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -14,15 +20,15 @@ import kotlin.test.assertTrue
  * Direct prompt builder test (same package so internal fun is visible).
  * Verifies critical instruction text for AC4 (no LLM call).
  */
-@DisplayName("LlmConversationService prompt string checks (buildUserPrompt)")
-class LlmConversationPromptTest {
+@DisplayName("TeachPromptBuilder prompt string checks (buildUserPrompt)")
+class TeachPromptBuilderTest {
 
-    private val mockLlmClient = Mockito.mock(LlmClient::class.java)
     private val properties = ConversationLlmProperties()
-    private val validator = AiResponseValidator(com.fasterxml.jackson.databind.ObjectMapper())
-    private val mockGuard = Mockito.mock(TeachProgressGuard::class.java)
+    private val objectMapper = ObjectMapper()
+    private val teacherTurnClassifier = TeacherTurnClassifier(objectMapper)
+    private val validator = AiResponseValidator(objectMapper, teacherTurnClassifier)
 
-    private val service = LlmConversationService(mockLlmClient, properties, validator, mockGuard)
+    private val builder = TeachPromptBuilder(properties, validator)
 
     private val generalSystemTemplate =
         """
@@ -54,7 +60,7 @@ class LlmConversationPromptTest {
         val conceptOrder = listOf("c1", "c2", "c3", "c4")
         val userText = "그렇지"
 
-        val prompt = service.buildUserPrompt(
+        val prompt = builder.buildUserPrompt(
             previousTurns = emptyList(),
             userText = userText,
             accumulatedCovered = emptyList(),
@@ -79,7 +85,7 @@ class LlmConversationPromptTest {
 
     @Test
     fun buildUserPrompt_mustInstructQuestionsToElicitTeacherHintText() {
-        val prompt = service.buildUserPrompt(
+        val prompt = builder.buildUserPrompt(
             previousTurns = emptyList(),
             userText = "네",
             accumulatedCovered = listOf("c1"),
@@ -94,6 +100,66 @@ class LlmConversationPromptTest {
         assertTrue(
             prompt.contains("주제에서 벗어나거나 애매") || prompt.contains("잘 모르겠어요"),
             "should handle off-topic redirect",
+        )
+    }
+
+    @Test
+    fun promptOutputs_shouldMatchGoldenHashes_forSystemAndUserRetryContext() {
+        val curriculum = Curriculum(
+            code = "GOLDEN",
+            name = "golden",
+            chapterLabel = "chapter",
+            sessionTitleTemplate = "title",
+            displayOrder = 1,
+        )
+        val unit = CurriculumUnit(
+            unitId = "golden_unit",
+            curriculum = curriculum,
+            unitJson =
+            """
+                {
+                  "concepts": [
+                    {
+                      "id": "c1",
+                      "name": "주민 참여",
+                      "key_points": ["주민은 의견을 낼 수 있다"],
+                      "description": "주민이 지역 문제 해결에 참여하는 방법"
+                    },
+                    {
+                      "id": "c2",
+                      "label": "공공기관",
+                      "keywords": ["공공 서비스"]
+                    }
+                  ]
+                }
+            """.trimIndent(),
+            systemPromptTemplate = generalSystemTemplate,
+        )
+        val previousTurn = ConversationTurn(
+            session = TestFixtures.tutoringSession(),
+            turnNumber = 1,
+            userText = "주민은 의견을 낼 수 있어요.",
+            aiResponseJson =
+            """{"speak":"지난 설명을 기억해요.","emotion":"thoughtful","covered":["c1"],"missing":["c2"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}""",
+        )
+
+        val systemPrompt = builder.buildSystemPrompt(unit)
+        val userPrompt = builder.buildUserPrompt(
+            previousTurns = listOf(previousTurn),
+            userText = "공공 서비스가 필요해요.",
+            accumulatedCovered = listOf("c1"),
+            conceptOrder = listOf("c1", "c2"),
+            previousError = "focus_concept가 missing에 속하지 않습니다.",
+            attempt = 2,
+        )
+
+        assertEquals(
+            "640a8062796af551252dcbf4932a94096c8e8a8afaf03b6620451fb40ddbb644",
+            sha256(systemPrompt),
+        )
+        assertEquals(
+            "b45b5cb262269a147532bdafe46fe5b2bcaf4c14a72e42a7f7739e2fa4b466b8",
+            sha256(userPrompt),
         )
     }
 
@@ -114,14 +180,14 @@ class LlmConversationPromptTest {
         )
 
         curricula.forEach { path ->
-            val unitJson = java.io.File(path).readText()
+            val unitJson = File(path).readText()
             val unit = CurriculumUnit(
                 unitId = "test_unit",
                 curriculum = curriculum,
                 unitJson = unitJson,
                 systemPromptTemplate = generalSystemTemplate,
             )
-            val systemPrompt = service.buildSystemPrompt(unit)
+            val systemPrompt = builder.buildSystemPrompt(unit)
 
             assertFalse(systemPrompt.contains("{{lesson_concepts}}"), "placeholder must be replaced")
             assertFalse(systemPrompt.contains("\"unit_id\""), "must not paste raw JSON")
@@ -141,9 +207,9 @@ class LlmConversationPromptTest {
             "docs/curriculum/단원JSON_초등4학년사회_지역의문화유산.json",
         )
 
-        val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+        val mapper = ObjectMapper()
         curricula.forEach { path ->
-            val json = java.io.File(path).readText()
+            val json = File(path).readText()
             val root = mapper.readTree(json)
             val concepts = root.path("concepts")
             val conceptOrder = concepts.map { it.path("id").asText() }
@@ -154,7 +220,7 @@ class LlmConversationPromptTest {
                     if (kps.isArray) kps.map { it.asText() } else emptyList()
                 }.filter { it.isNotBlank() }
 
-            val affirmPrompt = service.buildUserPrompt(
+            val affirmPrompt = builder.buildUserPrompt(
                 previousTurns = emptyList(),
                 userText = "그렇지",
                 accumulatedCovered = emptyList(),
@@ -174,7 +240,7 @@ class LlmConversationPromptTest {
             )
 
             val sampleExplain = keyPointPhrases.firstOrNull() ?: "개념 설명 예시"
-            val explainPrompt = service.buildUserPrompt(
+            val explainPrompt = builder.buildUserPrompt(
                 previousTurns = emptyList(),
                 userText = sampleExplain.take(80),
                 accumulatedCovered = emptyList(),
@@ -190,4 +256,8 @@ class LlmConversationPromptTest {
             )
         }
     }
+
+    private fun sha256(value: String): String = MessageDigest.getInstance("SHA-256")
+        .digest(value.toByteArray(Charsets.UTF_8))
+        .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
 }

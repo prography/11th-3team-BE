@@ -1,4 +1,4 @@
-package org.prography.samsung.backend.conversation.service
+package org.prography.samsung.backend.conversation.util
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.prography.samsung.backend.common.domain.AiEmotion
 import org.prography.samsung.backend.conversation.dto.AiTurnResponse
+import org.prography.samsung.backend.conversation.enums.TeacherTurnKind
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -13,8 +14,9 @@ import kotlin.test.assertTrue
 @DisplayName("Teach semantic flow — curriculum-agnostic classify, guard delta, advance")
 class TeachSemanticFlowTest {
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
-    private val validator = AiResponseValidator(objectMapper)
-    private val guard = TeachProgressGuard(validator)
+    private val teacherTurnClassifier = TeacherTurnClassifier(objectMapper)
+    private val validator = AiResponseValidator(objectMapper, teacherTurnClassifier)
+    private val guard = TeachProgressGuard(validator, teacherTurnClassifier)
 
     private val heritageJson =
         java.io.File("docs/curriculum/단원JSON_초등4학년사회_지역의문화유산.json").readText()
@@ -24,28 +26,28 @@ class TeachSemanticFlowTest {
     @Test
     fun classifyTeacherTurn_affirm_with_social_curriculum() {
         assertEquals(
-            AiResponseValidator.TeacherTurnKind.AFFIRM,
-            validator.classifyTeacherTurn("그렇지", emptyList(), conceptOrder, heritageJson),
+            TeacherTurnKind.AFFIRM,
+            teacherTurnClassifier.classifyTeacherTurn("그렇지", emptyList(), conceptOrder, heritageJson),
         )
         assertEquals(
-            AiResponseValidator.TeacherTurnKind.AFFIRM,
-            validator.classifyTeacherTurn("네", listOf("c1"), conceptOrder, heritageJson),
+            TeacherTurnKind.AFFIRM,
+            teacherTurnClassifier.classifyTeacherTurn("네", listOf("c1"), conceptOrder, heritageJson),
         )
     }
 
     @Test
     fun classifyTeacherTurn_explain_advances_exactly_one_from_key_point() {
         assertEquals(
-            AiResponseValidator.TeacherTurnKind.EXPLAIN,
-            validator.classifyTeacherTurn("조상들이 물려준 소중한 것", emptyList(), conceptOrder, heritageJson),
+            TeacherTurnKind.EXPLAIN,
+            teacherTurnClassifier.classifyTeacherTurn("조상들이 물려준 소중한 것", emptyList(), conceptOrder, heritageJson),
         )
         assertEquals(
             listOf("c1"),
-            validator.expectedDeltaCovered("조상들이 물려준 소중한 것", emptyList(), conceptOrder, heritageJson),
+            teacherTurnClassifier.expectedDeltaCovered("조상들이 물려준 소중한 것", emptyList(), conceptOrder, heritageJson),
         )
         assertEquals(
             listOf("c2"),
-            validator.expectedDeltaCovered("직접 찾아가는 답사", listOf("c1"), conceptOrder, heritageJson),
+            teacherTurnClassifier.expectedDeltaCovered("직접 찾아가는 답사", listOf("c1"), conceptOrder, heritageJson),
         )
     }
 
@@ -125,7 +127,7 @@ class TeachSemanticFlowTest {
 
     @Test
     fun hintKeywordFor_uses_social_key_points_not_fraction_fallback() {
-        val kw = validator.hintKeywordFor("c1", heritageJson)
+        val kw = teacherTurnClassifier.hintKeywordFor("c1", heritageJson)
         assertTrue(kw.contains("조상") || kw.contains("물려"), "must use social curriculum term, got: $kw")
         assertEquals(false, kw == "분모" || kw == "분자")
     }

@@ -1,4 +1,4 @@
-package org.prography.samsung.backend.conversation.service
+package org.prography.samsung.backend.conversation.util
 
 import org.prography.samsung.backend.common.domain.AiEmotion
 import org.prography.samsung.backend.conversation.dto.AiTurnResponse
@@ -10,7 +10,10 @@ import org.springframework.stereotype.Component
  * Fallback redirect only on final attempt in service if needed.
  */
 @Component
-class TeachProgressGuard(private val validator: AiResponseValidator) {
+class TeachProgressGuard(
+    private val validator: AiResponseValidator,
+    private val teacherTurnClassifier: TeacherTurnClassifier,
+) {
 
     fun normalize(
         userText: String,
@@ -20,11 +23,11 @@ class TeachProgressGuard(private val validator: AiResponseValidator) {
         raw: AiTurnResponse,
         unitJson: String = "",
     ): AiTurnResponse {
-        val isAffirm = validator.isPureAffirmation(userText, unitJson)
+        val isAffirm = teacherTurnClassifier.isPureAffirmation(userText, unitJson)
 
         // Claimed this turn: delta only — affirm teaches nothing; explain uses curriculum-aware match
         val expected =
-            validator.expectedDeltaCovered(userText, accumulatedCovered, conceptOrder, unitJson)
+            teacherTurnClassifier.expectedDeltaCovered(userText, accumulatedCovered, conceptOrder, unitJson)
         val claimedThisTurn =
             when {
                 isAffirm -> emptyList()

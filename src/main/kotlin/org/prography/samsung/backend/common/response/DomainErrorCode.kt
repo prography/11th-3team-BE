@@ -32,4 +32,9 @@ enum class DomainErrorCode(override val httpStatus: HttpStatus, override val cod
     SESSION_NOT_COMPLETED(HttpStatus.CONFLICT, 40950, "아직 완료되지 않은 수업입니다."),
     ACTIVE_SESSION_EXISTS(HttpStatus.CONFLICT, 40960, "진행 중인 수업이 있어 변경할 수 없습니다."),
     TEACH_TURN_LIMIT_EXCEEDED(HttpStatus.CONFLICT, 40970, "대화 턴 한도를 초과했습니다."),
+
+    // 5xx — 외부 AI 응답 처리 실패
+    LLM_CALL_FAILED(HttpStatus.BAD_GATEWAY, 50210, "AI 응답 생성에 실패했습니다."),
+    LLM_RESPONSE_INVALID(HttpStatus.BAD_GATEWAY, 50220, "AI 응답 형식이 올바르지 않습니다."),
+    LLM_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, 50410, "AI 응답 시간이 초과되었습니다."),
 }

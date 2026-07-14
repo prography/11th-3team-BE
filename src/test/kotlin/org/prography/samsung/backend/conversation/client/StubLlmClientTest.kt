@@ -4,14 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.prography.samsung.backend.conversation.service.AiResponseValidator
+import org.prography.samsung.backend.conversation.util.AiResponseValidator
+import org.prography.samsung.backend.conversation.util.TeacherTurnClassifier
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @DisplayName("StubLlmClient — curriculum-agnostic stub responses")
 class StubLlmClientTest {
-    private val validator = AiResponseValidator(jacksonObjectMapper())
-    private val sut = StubLlmClient(validator)
+    private val objectMapper = jacksonObjectMapper()
+    private val teacherTurnClassifier = TeacherTurnClassifier(objectMapper)
+    private val validator = AiResponseValidator(objectMapper, teacherTurnClassifier)
+    private val sut = StubLlmClient(validator, teacherTurnClassifier)
 
     private val systemPrompt =
         """

@@ -8,7 +8,6 @@ import ai.koog.prompt.executor.ollama.client.OllamaModels
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.prography.samsung.backend.conversation.client.LlmClient
 import org.prography.samsung.backend.conversation.client.LlmTimeoutException
@@ -17,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.stereotype.Component
+import kotlin.time.Duration.Companion.milliseconds
 
 @Component
 @ConditionalOnExpression("'${'$'}{conversation.llm.provider:deepseek}' != 'stub'")
@@ -42,7 +42,7 @@ class KoogLlmClient(
 
         return try {
             runBlocking {
-                withTimeout(properties.timeoutMs) {
+                withTimeout(properties.timeoutMs.milliseconds) {
                     val result = executor.executeStructured<KoogTeachTurnSchema>(
                         prompt = prompt("teach-turn") {
                             system(systemPrompt)

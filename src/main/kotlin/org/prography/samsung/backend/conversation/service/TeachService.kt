@@ -12,6 +12,7 @@ import org.prography.samsung.backend.conversation.dto.TeachTurnResponse
 import org.prography.samsung.backend.conversation.entity.ConversationTurn
 import org.prography.samsung.backend.conversation.entity.CurriculumUnit
 import org.prography.samsung.backend.conversation.repository.ConversationTurnRepository
+import org.prography.samsung.backend.conversation.util.AiResponseValidator
 import org.prography.samsung.backend.curriculum.repository.LessonTopicRepository
 import org.prography.samsung.backend.session.SessionConstants
 import org.prography.samsung.backend.session.entity.TutoringSession

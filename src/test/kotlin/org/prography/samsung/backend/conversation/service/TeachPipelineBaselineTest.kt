@@ -5,6 +5,14 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.prography.samsung.backend.conversation.config.ConversationLlmProperties
+import org.prography.samsung.backend.conversation.entity.CurriculumUnit
+import org.prography.samsung.backend.conversation.enums.TeacherTurnKind
+import org.prography.samsung.backend.conversation.prompt.TeachPromptBuilder
+import org.prography.samsung.backend.conversation.util.AiResponseValidator
+import org.prography.samsung.backend.conversation.util.TeachProgressGuard
+import org.prography.samsung.backend.conversation.util.TeacherTurnClassifier
+import org.prography.samsung.backend.curriculum.entity.Curriculum
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -21,15 +29,33 @@ import kotlin.test.assertTrue
 @DisplayName("Teach 파이프라인 baseline 특성 테스트 (현재 동작 고정)")
 class TeachPipelineBaselineTest {
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
-    private val validator = AiResponseValidator(objectMapper)
-    private val guard = TeachProgressGuard(validator)
+    private val teacherTurnClassifier = TeacherTurnClassifier(objectMapper)
+    private val validator = AiResponseValidator(objectMapper, teacherTurnClassifier)
+    private val guard = TeachProgressGuard(validator, teacherTurnClassifier)
+    private val promptBuilder = TeachPromptBuilder(ConversationLlmProperties(), validator)
 
     private val fractionJson =
         this::class.java.classLoader.getResource("teach-eval/fraction-unit.json")!!.readText()
     private val conceptOrder = validator.parseConceptIdOrder(fractionJson)
 
     private fun delta(userText: String, covered: List<String>): List<String> =
-        validator.expectedDeltaCovered(userText, covered, conceptOrder, fractionJson)
+        teacherTurnClassifier.expectedDeltaCovered(userText, covered, conceptOrder, fractionJson)
+
+    private fun buildSystemPrompt(unitJson: String): String = promptBuilder.buildSystemPrompt(
+        CurriculumUnit(
+            unitId = "test-unit",
+            curriculum =
+            Curriculum(
+                code = "TEST",
+                name = "test",
+                chapterLabel = "test",
+                sessionTitleTemplate = "test",
+                displayOrder = 1,
+            ),
+            unitJson = unitJson,
+            systemPromptTemplate = "{{lesson_concepts}}",
+        ),
+    )
 
     @Nested
     @DisplayName("정상 동작 — 회귀 게이트 (개선 후에도 유지되어야 함)")
@@ -43,7 +69,7 @@ class TeachPipelineBaselineTest {
         @Test
         @DisplayName("순수 affirm('그렇지')은 covered=[] (guard가 delta 비움)")
         fun affirm_never_advances() {
-            assertTrue(validator.isPureAffirmation("그렇지", fractionJson))
+            assertTrue(teacherTurnClassifier.isPureAffirmation("그렇지", fractionJson))
             assertEquals(emptyList(), delta("그렇지", listOf("c1")))
         }
     }
@@ -88,8 +114,8 @@ class TeachPipelineBaselineTest {
         @DisplayName("오프토픽('소금 빵 레시피')은 GARBAGE로 분류되지만 covered=[] (087b867f-t2)")
         fun offtopic_classified_garbage() {
             assertEquals(
-                AiResponseValidator.TeacherTurnKind.GARBAGE,
-                validator.classifyTeacherTurn("소금 빵 레시피 알려줘", emptyList(), conceptOrder, fractionJson),
+                TeacherTurnKind.GARBAGE,
+                teacherTurnClassifier.classifyTeacherTurn("소금 빵 레시피 알려줘", emptyList(), conceptOrder, fractionJson),
             )
             assertEquals(emptyList(), delta("소금 빵 레시피 알려줘", emptyList()))
         }
@@ -101,7 +127,7 @@ class TeachPipelineBaselineTest {
         @Test
         @DisplayName("[BASELINE-BUG] misconceptions 필드가 formatLessonConcepts 출력에 포함되지 않는다")
         fun misconceptions_not_in_formatted_concepts() {
-            val formatted = validator.formatLessonConcepts(fractionJson)
+            val formatted = buildSystemPrompt(fractionJson)
             // fixture에 정의된 오개념 pattern/correction 이 프롬프트용 포맷 문자열에 전혀 없음
             assertTrue(formatted.contains("분모")) // concepts 는 포함됨을 확인 (포맷 자체는 동작)
             assertTrue(

@@ -1,4 +1,4 @@
-package org.prography.samsung.backend.conversation.service
+package org.prography.samsung.backend.conversation.util
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -11,25 +11,13 @@ import org.prography.samsung.backend.common.domain.AiEmotion
 @DisplayName("AiResponseValidator 단위 테스트")
 class AiResponseValidatorTest {
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
-    private val sut = AiResponseValidator(objectMapper)
+    private val teacherTurnClassifier = TeacherTurnClassifier(objectMapper)
+    private val sut = AiResponseValidator(objectMapper, teacherTurnClassifier)
 
     private val unitJson =
         """
         {"concepts":[{"id":"c1"},{"id":"c2"}],"max_concepts":2}
         """.trimIndent()
-
-    @Test
-    @DisplayName("formatLessonConcepts는 raw JSON 없이 사람이 읽을 수 있는 개념 블록을 만든다")
-    fun formatLessonConcepts_shouldProduceReadableBlockWithoutRawJson() {
-        val json =
-            """
-            {"concepts":[{"id":"c1","name":"문화유산","key_points":["조상 유산"],"description":"요약"}]}
-            """.trimIndent()
-        val formatted = sut.formatLessonConcepts(json)
-        assertEquals(false, formatted.contains("\"unit_id\""))
-        assertEquals(true, formatted.contains("[c1]"))
-        assertEquals(true, formatted.contains("조상 유산"))
-    }
 
     @Test
     @DisplayName("유효한 JSON을 파싱한다")

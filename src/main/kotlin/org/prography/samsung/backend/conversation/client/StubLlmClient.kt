@@ -1,13 +1,17 @@
 package org.prography.samsung.backend.conversation.client
 
 import org.prography.samsung.backend.conversation.dto.AiTurnResponse
-import org.prography.samsung.backend.conversation.service.AiResponseValidator
+import org.prography.samsung.backend.conversation.util.AiResponseValidator
+import org.prography.samsung.backend.conversation.util.TeacherTurnClassifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
 @Component
 @ConditionalOnProperty(name = ["conversation.llm.provider"], havingValue = "stub")
-class StubLlmClient(private val aiResponseValidator: AiResponseValidator) : LlmClient {
+class StubLlmClient(
+    private val aiResponseValidator: AiResponseValidator,
+    private val teacherTurnClassifier: TeacherTurnClassifier,
+) : LlmClient {
     override fun complete(systemPrompt: String, userPrompt: String): String {
         val conceptOrder = extractConceptOrder(userPrompt)
         val unitJson = extractUnitJsonFromSystem(systemPrompt, conceptOrder)
@@ -17,7 +21,7 @@ class StubLlmClient(private val aiResponseValidator: AiResponseValidator) : LlmC
             userPrompt.substringAfter("## 이번 턴 — 선생님 발화", userPrompt).trim().lineSequence().firstOrNull()?.trim()
                 ?: userPrompt
 
-        val deltaCovered = aiResponseValidator.expectedDeltaCovered(
+        val deltaCovered = teacherTurnClassifier.expectedDeltaCovered(
             userText = teacherText,
             accumulatedCovered = accumulated,
             conceptOrder = conceptOrder,
@@ -28,15 +32,15 @@ class StubLlmClient(private val aiResponseValidator: AiResponseValidator) : LlmC
         val sessionDone = missing.isEmpty()
         val focusConcept = aiResponseValidator.resolveFocusConcept(conceptOrder, missing, null)
 
-        val firstMissing = aiResponseValidator.firstMissingId(conceptOrder, accumulated)
+        val firstMissing = teacherTurnClassifier.firstMissingId(conceptOrder, accumulated)
         val elicitTerm =
-            firstMissing?.let { aiResponseValidator.hintKeywordFor(it, unitJson) }?.takeIf { it.isNotBlank() }
+            firstMissing?.let { teacherTurnClassifier.hintKeywordFor(it, unitJson) }?.takeIf { it.isNotBlank() }
                 ?: "그건"
 
         val naiveSpeak = when {
             sessionDone -> "선생님, 이제 다 이해했어요. 정말 고마워요!"
             deltaCovered.isNotEmpty() -> {
-                val nextTerm = aiResponseValidator.hintKeywordFor(focusConcept, unitJson)
+                val nextTerm = teacherTurnClassifier.hintKeywordFor(focusConcept, unitJson)
                 "선생님, $nextTerm 는 정확히 어떻게 설명하시나요?"
             }
             else -> "선생님, $elicitTerm 는 정확히 어떻게 설명하시나요?"
