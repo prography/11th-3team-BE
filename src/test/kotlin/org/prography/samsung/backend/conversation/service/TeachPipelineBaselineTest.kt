@@ -141,7 +141,7 @@ class TeachPipelineBaselineTest {
     @Nested
     @DisplayName("P3 — correction_stage (BASELINE-BUG: 0→4 점프, 중간 단계 없음)")
     inner class P3CorrectionStage {
-        private fun rawStuck(stage: Int) = org.prography.samsung.backend.conversation.dto.AiTurnResponse(
+        private fun rawStuck(stage: Int) = org.prography.samsung.backend.conversation.dto.response.AiTurnResponse(
             speak = "선생님, 분모는 정확히 어떻게 설명하시나요?",
             emotion = org.prography.samsung.backend.common.domain.AiEmotion.CONFUSED,
             covered = emptyList(),
@@ -191,7 +191,7 @@ class TeachPipelineBaselineTest {
         @Test
         @DisplayName("[BASELINE-BUG] affirm fallback은 '?' 존재만 검사 — 확인형 '맞죠?'가 통과된다 (e0a86f4f-t2)")
         fun closed_question_passes_affirm_fallback() {
-            val raw = org.prography.samsung.backend.conversation.dto.AiTurnResponse(
+            val raw = org.prography.samsung.backend.conversation.dto.response.AiTurnResponse(
                 speak = "네, 선생님! 그럼 분모가 아래 숫자 맞죠?",
                 emotion = org.prography.samsung.backend.common.domain.AiEmotion.CURIOUS,
                 covered = emptyList(),

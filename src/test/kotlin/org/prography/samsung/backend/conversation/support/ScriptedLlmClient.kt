@@ -1,6 +1,8 @@
 package org.prography.samsung.backend.conversation.support
 
 import org.prography.samsung.backend.conversation.client.LlmClient
+import org.prography.samsung.backend.conversation.client.LlmRequest
+import org.prography.samsung.backend.conversation.client.LlmResult
 
 /**
  * 테스트 전용 LlmClient — LLM raw 응답을 시나리오별로 스크립트 주입한다.
@@ -22,13 +24,17 @@ class ScriptedLlmClient(responses: List<String> = emptyList()) : LlmClient {
         queue.addAll(responses)
     }
 
-    override fun complete(systemPrompt: String, userPrompt: String): String {
-        capturedSystemPrompts += systemPrompt
-        capturedUserPrompts += userPrompt
+    override fun complete(request: LlmRequest): LlmResult {
+        capturedSystemPrompts += request.systemPrompt
+        capturedUserPrompts += request.userPrompt
         check(queue.isNotEmpty()) {
             "ScriptedLlmClient: complete() called ${capturedUserPrompts.size} times but script ran out of responses. " +
                 "Provide enough responses for every retry attempt."
         }
-        return queue.removeFirst()
+        return LlmResult(
+            content = queue.removeFirst(),
+            provider = "scripted",
+            model = "scripted",
+        )
     }
 }

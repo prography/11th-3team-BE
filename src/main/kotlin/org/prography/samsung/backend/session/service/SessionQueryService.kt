@@ -1,5 +1,6 @@
 package org.prography.samsung.backend.session.service
 
+import org.prography.samsung.backend.common.domain.ConversationMode
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.domain.SessionStatus
 import org.prography.samsung.backend.common.exception.CustomException
@@ -59,6 +60,14 @@ class SessionQueryService(
         val session = getOwnedSession(userId, sessionId)
         if (session.status != SessionStatus.STARTED) {
             throw CustomException(DomainErrorCode.SESSION_NOT_STARTED)
+        }
+        return session
+    }
+
+    fun getStartedAiLoopSession(userId: Long, sessionId: String): TutoringSession {
+        val session = getStartedSession(userId, sessionId)
+        if (session.conversationMode != ConversationMode.AI_LOOP) {
+            throw CustomException(DomainErrorCode.TEACH_SESSION_NOT_AI_LOOP)
         }
         return session
     }

@@ -1,7 +1,7 @@
 package org.prography.samsung.backend.conversation.util
 
 import org.prography.samsung.backend.common.domain.AiEmotion
-import org.prography.samsung.backend.conversation.dto.AiTurnResponse
+import org.prography.samsung.backend.conversation.dto.response.AiTurnResponse
 import org.springframework.stereotype.Component
 
 /**

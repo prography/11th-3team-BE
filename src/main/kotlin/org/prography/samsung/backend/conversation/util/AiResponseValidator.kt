@@ -3,7 +3,7 @@ package org.prography.samsung.backend.conversation.util
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.prography.samsung.backend.common.domain.AiEmotion
-import org.prography.samsung.backend.conversation.dto.AiTurnResponse
+import org.prography.samsung.backend.conversation.dto.response.AiTurnResponse
 import org.springframework.stereotype.Component
 
 private const val SPEAK_MAX_LENGTH = 180

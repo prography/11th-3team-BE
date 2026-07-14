@@ -1,6 +1,9 @@
-package org.prography.samsung.backend.conversation.client
+package org.prography.samsung.backend.conversation.client.stub
 
-import org.prography.samsung.backend.conversation.dto.AiTurnResponse
+import org.prography.samsung.backend.conversation.client.LlmClient
+import org.prography.samsung.backend.conversation.client.LlmRequest
+import org.prography.samsung.backend.conversation.client.LlmResult
+import org.prography.samsung.backend.conversation.dto.response.AiTurnResponse
 import org.prography.samsung.backend.conversation.util.AiResponseValidator
 import org.prography.samsung.backend.conversation.util.TeacherTurnClassifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -12,7 +15,9 @@ class StubLlmClient(
     private val aiResponseValidator: AiResponseValidator,
     private val teacherTurnClassifier: TeacherTurnClassifier,
 ) : LlmClient {
-    override fun complete(systemPrompt: String, userPrompt: String): String {
+    override fun complete(request: LlmRequest): LlmResult {
+        val systemPrompt = request.systemPrompt
+        val userPrompt = request.userPrompt
         val conceptOrder = extractConceptOrder(userPrompt)
         val unitJson = extractUnitJsonFromSystem(systemPrompt, conceptOrder)
         val accumulated = parseAccumulated(userPrompt)
@@ -63,7 +68,7 @@ class StubLlmClient(
             sessionDone = sessionDone,
         )
 
-        return buildString {
+        val content = buildString {
             appendLine("{")
             appendLine("  \"speak\": \"${raw.speak.replace("\"", "\\\"")}\",")
             appendLine("  \"emotion\": \"${raw.emotion.value}\",")
@@ -75,6 +80,12 @@ class StubLlmClient(
             appendLine("  \"session_done\": ${raw.sessionDone}")
             appendLine("}")
         }
+
+        return LlmResult(
+            content = content,
+            provider = PROVIDER,
+            model = PROVIDER,
+        )
     }
 
     private fun parseAccumulated(userPrompt: String): List<String> {
@@ -140,4 +151,8 @@ class StubLlmClient(
 
     private fun toJsonArray(values: List<String>): String =
         values.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
+
+    private companion object {
+        const val PROVIDER = "stub"
+    }
 }

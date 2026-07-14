@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.prography.samsung.backend.conversation.client.LlmClient
+import org.prography.samsung.backend.conversation.client.LlmRequest
 import org.prography.samsung.backend.conversation.util.AiResponseValidator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -65,7 +66,7 @@ class KoogLiveSmokeTest {
             - JSON 한 개만 출력하세요.
             """.trimIndent()
 
-        val raw = llmClient.complete(systemPrompt, userPrompt)
+        val raw = llmClient.complete(LlmRequest(systemPrompt, userPrompt)).content
         val parsed = aiResponseValidator.parseAndValidate(raw, conceptOrder)
 
         assertThat(parsed.speak).isNotBlank()
@@ -123,7 +124,7 @@ class KoogLiveSmokeTest {
                 appendLine("- 선생님 설명에서 이해한 개념만 covered에 넣으세요.")
                 appendLine("- JSON 한 개만 출력하세요.")
             }
-            val raw = llmClient.complete(systemPrompt, userP)
+            val raw = llmClient.complete(LlmRequest(systemPrompt, userP)).content
             val parsed = aiResponseValidator.parseAndValidate(raw, conceptOrder)
             accumulated = aiResponseValidator.mergeCovered(accumulated, parsed.covered)
 
@@ -190,7 +191,7 @@ class KoogLiveSmokeTest {
                 appendLine("- 이번 설명으로 새로 이해한 것만 covered에 넣으세요.")
                 appendLine("- JSON 한 개만 출력하세요. 다른 텍스트 금지.")
             }
-            val raw = llmClient.complete(systemPrompt, userP)
+            val raw = llmClient.complete(LlmRequest(systemPrompt, userP)).content
             val parsed = aiResponseValidator.parseAndValidate(raw, conceptOrder)
 
             println("=== Diverse Scenario ${index + 1} ===")

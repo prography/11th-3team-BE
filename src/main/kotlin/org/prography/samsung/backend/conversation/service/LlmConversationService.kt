@@ -3,9 +3,10 @@ package org.prography.samsung.backend.conversation.service
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.conversation.client.LlmClient
-import org.prography.samsung.backend.conversation.client.LlmTimeoutException
+import org.prography.samsung.backend.conversation.client.LlmRequest
+import org.prography.samsung.backend.conversation.client.exception.LlmTimeoutException
 import org.prography.samsung.backend.conversation.config.ConversationLlmProperties
-import org.prography.samsung.backend.conversation.dto.AiTurnResponse
+import org.prography.samsung.backend.conversation.dto.response.AiTurnResponse
 import org.prography.samsung.backend.conversation.entity.ConversationTurn
 import org.prography.samsung.backend.conversation.entity.CurriculumUnit
 import org.prography.samsung.backend.conversation.prompt.TeachPromptBuilder
@@ -48,7 +49,12 @@ class LlmConversationService(
             )
 
             val raw = try {
-                llmClient.complete(systemPrompt, userPrompt)
+                llmClient.complete(
+                    LlmRequest(
+                        systemPrompt = systemPrompt,
+                        userPrompt = userPrompt,
+                    ),
+                ).content
             } catch (e: LlmTimeoutException) {
                 log.warn("Teach LLM timeout on attempt ${attempt + 1}")
                 throw CustomException(DomainErrorCode.LLM_TIMEOUT, cause = e)

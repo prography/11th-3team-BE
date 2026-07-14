@@ -127,7 +127,7 @@ service는 "무엇을(비즈니스)"만 안다. "어떻게 DB에 반영하는가
 usecase가 소유한다.** service는 트랜잭션 경계를 선언하지 않고 usecase의 경계에 참여만 한다.
 이렇게 하면 rollback-only 마킹 지점이 한 곳(usecase)으로 고정되어 "왜 커밋이 안 되지?" 디버깅이 쉬워진다.
 
-> **적용 범위**: `usecase/` 레이어가 있는 도메인만. 현재 `session`, `user`.
+> **적용 범위**: `usecase/` 레이어가 있는 도메인만. 현재 `conversation`, `session`, `user`.
 > usecase가 아직 없는 도메인(`curriculum`, `notification` 등)은 이 그룹 검증에서 제외한다
 > — controller가 service를 직접 호출하고 service가 `@Transactional`을 갖는 게 정상이다.
 > 판정 전에 해당 도메인에 `.../{domain}/usecase/` 디렉토리가 존재하는지 먼저 확인한다.

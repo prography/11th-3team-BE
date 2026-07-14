@@ -6,8 +6,8 @@ import jakarta.validation.Valid
 import org.prography.samsung.backend.common.auth.CurrentUserHolder
 import org.prography.samsung.backend.common.response.SuccessCode
 import org.prography.samsung.backend.common.web.ApiResponseFactory
-import org.prography.samsung.backend.conversation.dto.TeachRequest
-import org.prography.samsung.backend.conversation.service.TeachService
+import org.prography.samsung.backend.conversation.dto.request.TeachRequest
+import org.prography.samsung.backend.conversation.usecase.TeachUsecase
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "Teach", description = "AI 대화 루프 teach API")
 @RestController
-class TeachController(private val teachService: TeachService) {
+class TeachController(private val teachUsecase: TeachUsecase) {
     @Operation(
         summary = "teach 1턴",
         description = "유저 텍스트 1턴을 받아 LLM JSON 응답을 반환합니다. ai_loop 세션 전용입니다.",
@@ -24,7 +24,7 @@ class TeachController(private val teachService: TeachService) {
     @PostMapping("/session/{sessionId}/teach")
     fun teach(@PathVariable sessionId: String, @Valid @RequestBody request: TeachRequest) = ApiResponseFactory.success(
         SuccessCode.OK,
-        teachService.teach(CurrentUserHolder.get().userId, sessionId, request),
+        teachUsecase.teach(CurrentUserHolder.get().userId, sessionId, request),
     )
 
     @Operation(
@@ -34,6 +34,6 @@ class TeachController(private val teachService: TeachService) {
     @GetMapping("/session/{sessionId}/teach/status")
     fun getStatus(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        teachService.getStatus(CurrentUserHolder.get().userId, sessionId),
+        teachUsecase.getStatus(CurrentUserHolder.get().userId, sessionId),
     )
 }

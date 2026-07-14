@@ -29,7 +29,7 @@ This file is a short map for agents working in the Prography Samsung Backend. Do
 - Keep packages domain-oriented under `org.prography.samsung.backend`.
 - Keep controllers thin. Put business rules in `service` or `usecase`.
 - Entry point is always the usecase: for domains that have a `usecase/` layer, controllers call only usecases (never a service directly), even for pass-through calls. The pass-through usecase is an accepted trade-off of the "controller entry point is always the usecase" rule.
-- The usecase owns the transaction boundary: `@Transactional` (including `readOnly = true`) lives on the usecase. Services carry no `@Transactional` and merely participate in the usecase's boundary. This keeps the rollback-only marker traceable to one place. (Applies to domains with a `usecase/` layer — currently `session`, `user`.)
+- The usecase owns the transaction boundary: `@Transactional` (including `readOnly = true`) lives on the usecase. Services carry no `@Transactional` and merely participate in the usecase's boundary. This keeps the rollback-only marker traceable to one place. (Applies to domains with a `usecase/` layer — currently `conversation`, `session`, `user`.)
 - Keep DTO naming explicit: `*Request` inbound, `*Response` outbound, `*Command` service-layer transfer.
 - Prefer constructor injection and follow existing Spring/Lombok/Kotlin patterns.
 - Use `CustomException` + `DomainErrorCode` in service layer — never raw `RuntimeException`, and never throw `ErrorBaseCode` directly from services.

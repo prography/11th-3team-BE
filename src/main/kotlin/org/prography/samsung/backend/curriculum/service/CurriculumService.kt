@@ -3,6 +3,7 @@ package org.prography.samsung.backend.curriculum.service
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
+import org.prography.samsung.backend.conversation.entity.CurriculumUnit
 import org.prography.samsung.backend.curriculum.dto.response.CurriculumChipResponse
 import org.prography.samsung.backend.curriculum.dto.response.LessonContent
 import org.prography.samsung.backend.curriculum.dto.response.LessonQuestionResponse
@@ -48,6 +49,15 @@ class CurriculumService(
     fun getFirstLessonTopic(curriculumId: Long): LessonTopic =
         lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(curriculumId).firstOrNull()
             ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
+
+    @Transactional(readOnly = true)
+    fun resolveCurriculumUnit(lessonTopic: LessonTopic?, curriculumId: Long, sequence: Int): CurriculumUnit =
+        lessonTopic?.curriculumUnit
+            ?: findLessonTopicByCurriculumIdAndSequence(curriculumId, sequence)?.curriculumUnit
+            ?: throw CustomException(DomainErrorCode.CURRICULUM_NOT_FOUND)
+
+    private fun findLessonTopicByCurriculumIdAndSequence(curriculumId: Long, sequence: Int): LessonTopic? =
+        lessonTopicRepository.findByCurriculumIdAndSequence(curriculumId, sequence)
 
     @Transactional(readOnly = true)
     fun getTodayTopics(curriculumId: Long): List<TodayTopicResponse> =

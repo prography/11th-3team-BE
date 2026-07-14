@@ -1,9 +1,10 @@
-package org.prography.samsung.backend.conversation.client
+package org.prography.samsung.backend.conversation.client.stub
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.prography.samsung.backend.conversation.client.LlmRequest
 import org.prography.samsung.backend.conversation.util.AiResponseValidator
 import org.prography.samsung.backend.conversation.util.TeacherTurnClassifier
 import kotlin.test.assertEquals
@@ -41,7 +42,7 @@ class StubLlmClientTest {
 
     @Test
     fun affirm_produces_empty_delta_covered() {
-        val raw = sut.complete(systemPrompt, userPrompt("그렇지"))
+        val raw = sut.complete(LlmRequest(systemPrompt, userPrompt("그렇지"))).content
         val node = ObjectMapper().readTree(raw)
         assertEquals("[]", node.path("covered").toString())
         assertTrue(node.path("speak").asText().startsWith("선생님,"))
@@ -49,7 +50,7 @@ class StubLlmClientTest {
 
     @Test
     fun explain_with_social_key_point_advances_exactly_one() {
-        val raw = sut.complete(systemPrompt, userPrompt("조상들이 물려준 소중한 것"))
+        val raw = sut.complete(LlmRequest(systemPrompt, userPrompt("조상들이 물려준 소중한 것"))).content
         val node = ObjectMapper().readTree(raw)
         assertEquals("""["c1"]""", node.path("covered").toString())
         assertEquals("c2", node.path("focus_concept").asText())

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.prography.samsung.backend.common.domain.AiEmotion
-import org.prography.samsung.backend.conversation.dto.AiTurnResponse
+import org.prography.samsung.backend.conversation.dto.response.AiTurnResponse
 import org.prography.samsung.backend.conversation.enums.TeacherTurnKind
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
