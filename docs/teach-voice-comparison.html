@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학생 페르소나 개선 — 부실한 설명을 이끌어내는가 (실측: 이전 vs 이번)</title>
+<style>
+  :root {
+    --bg: #f5f6f9; --surface: #ffffff; --surface-2: #fbfcfe; --ink: #1a1d24; --muted: #5c6572;
+    --faint: #8a92a0; --line: #e3e6ec; --accent: #3b4cc0; --accent-soft: #eceefb;
+    --old: #b4432f; --old-bg: #fbeae5; --old-line: #eecabf; --new: #1c7a58; --new-bg: #e3f3ec;
+    --new-line: #bfe3d1; --teacher-bg: #eef0f4; --teacher-ink: #333944; --leak: #f6c9bd;
+    --gap: #f0d68a; --gap-ink: #6b5410;
+    --shadow: 0 1px 2px rgba(20,25,40,.05), 0 8px 24px rgba(20,25,40,.06);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #13151a; --surface: #1b1e25; --surface-2: #20242c; --ink: #e8eaef; --muted: #9aa2b0;
+      --faint: #6d7583; --line: #2b2f38; --accent: #929cf2; --accent-soft: #23283b;
+      --old: #e5866f; --old-bg: #34211d; --old-line: #4d2e28; --new: #6dc8a0; --new-bg: #16302479;
+      --new-line: #244c39; --teacher-bg: #262b34; --teacher-ink: #cdd3dd; --leak: #5a3128;
+      --gap: #4a3d16; --gap-ink: #e8d38f;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f6f9; --surface: #ffffff; --surface-2: #fbfcfe; --ink: #1a1d24; --muted: #5c6572;
+    --faint: #8a92a0; --line: #e3e6ec; --accent: #3b4cc0; --accent-soft: #eceefb;
+    --old: #b4432f; --old-bg: #fbeae5; --old-line: #eecabf; --new: #1c7a58; --new-bg: #e3f3ec;
+    --new-line: #bfe3d1; --teacher-bg: #eef0f4; --teacher-ink: #333944; --leak: #f6c9bd;
+    --gap: #f0d68a; --gap-ink: #6b5410;
+    --shadow: 0 1px 2px rgba(20,25,40,.05), 0 8px 24px rgba(20,25,40,.06);
+  }
+  :root[data-theme="dark"] {
+    --bg: #13151a; --surface: #1b1e25; --surface-2: #20242c; --ink: #e8eaef; --muted: #9aa2b0;
+    --faint: #6d7583; --line: #2b2f38; --accent: #929cf2; --accent-soft: #23283b;
+    --old: #e5866f; --old-bg: #34211d; --old-line: #4d2e28; --new: #6dc8a0; --new-bg: #16302479;
+    --new-line: #244c39; --teacher-bg: #262b34; --teacher-ink: #cdd3dd; --leak: #5a3128;
+    --gap: #4a3d16; --gap-ink: #e8d38f;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: clamp(28px, 5vw, 64px) clamp(18px, 4vw, 40px) 80px; }
+
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin: 0 0 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .live { font-family: var(--mono); font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--new); background: var(--new-bg); border: 1px solid var(--new-line); padding: 2px 9px; border-radius: 999px; }
+  h1 { font-size: clamp(25px, 4.2vw, 39px); line-height: 1.18; font-weight: 800; letter-spacing: -.02em; margin: 0 0 16px; text-wrap: balance; max-width: 22ch; }
+  .lede { font-size: clamp(15px, 1.6vw, 17px); color: var(--muted); max-width: 64ch; margin: 0; }
+  .meta { margin: 14px 0 0; font-family: var(--mono); font-size: 12px; color: var(--faint); }
+
+  .problem { margin: 26px 0 0; padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--old); border-radius: 10px; box-shadow: var(--shadow); font-size: 15px; }
+  .problem b { color: var(--old); }
+
+  .fixes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .fix { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; box-shadow: var(--shadow); }
+  .fix .tag { display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--new); background: var(--new-bg); border: 1px solid var(--new-line); padding: 2px 9px; border-radius: 999px; margin-bottom: 10px; }
+  .fix h3 { margin: 0 0 6px; font-size: 15px; font-weight: 700; }
+  .fix p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  .fix code { font-family: var(--mono); font-size: 12px; background: var(--accent-soft); color: var(--accent); padding: 1px 5px; border-radius: 4px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 40px 0 6px; font-size: 13px; color: var(--muted); }
+  .swatch { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; }
+  .dot.teacher { background: var(--teacher-ink); }
+  .dot.old { background: var(--old); }
+  .dot.new { background: var(--new); }
+
+  h2.scenario-title { margin: 26px 0 2px; font-size: 19px; font-weight: 800; letter-spacing: -.01em; display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; }
+  .snum { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 700; }
+  .kase { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--gap-ink); background: var(--gap); padding: 2px 8px; border-radius: 999px; letter-spacing: 0; }
+  .scenario-sub { margin: 0 0 16px; font-size: 14px; color: var(--muted); max-width: 78ch; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .col { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+  .col-head { padding: 12px 16px; font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .col.old .col-head { background: var(--old-bg); color: var(--old); border-bottom: 1px solid var(--old-line); }
+  .col.new .col-head { background: var(--new-bg); color: var(--new); border-bottom: 1px solid var(--new-line); }
+  .verdict { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; opacity: .85; }
+
+  .thread { padding: 16px; display: flex; flex-direction: column; gap: 11px; flex: 1; }
+  .bubble { max-width: 92%; padding: 10px 13px; border-radius: 13px; font-size: 14.5px; }
+  .role { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 3px; opacity: .7; }
+  .teacher { align-self: flex-start; background: var(--teacher-bg); color: var(--teacher-ink); border-bottom-left-radius: 4px; }
+  .teacher .tt { font-size: 11px; color: var(--old); font-weight: 700; display: block; margin-top: 4px; }
+  .student { align-self: flex-end; border-bottom-right-radius: 4px; }
+  .col.old .student { background: var(--old-bg); border: 1px solid var(--old-line); }
+  .col.new .student { background: var(--new-bg); border: 1px solid var(--new-line); }
+  .student .role { text-align: right; }
+
+  mark.leak { background: var(--leak); color: inherit; padding: 0 3px; border-radius: 3px; font-weight: 600; text-decoration: underline wavy var(--old); text-underline-offset: 3px; }
+  .draw { border-bottom: 2px solid var(--new); font-weight: 600; }
+
+  .note { margin: 2px 16px 16px; padding: 11px 13px; border-radius: 10px; font-size: 13px; line-height: 1.55; display: flex; gap: 9px; }
+  .col.old .note { background: var(--old-bg); color: var(--ink); }
+  .col.new .note { background: var(--new-bg); color: var(--ink); }
+  .note .lbl { font-weight: 800; flex-shrink: 0; }
+  .col.old .note .lbl { color: var(--old); }
+  .col.new .note .lbl { color: var(--new); }
+
+  .state { margin: 0 0 16px; align-self: center; font-family: var(--mono); font-size: 11.5px; color: var(--muted); background: var(--surface-2); border: 1px dashed var(--line); border-radius: 999px; padding: 5px 14px; text-align: center; max-width: 92%; }
+  .state b { color: var(--ink); }
+  .state .win { color: var(--new); font-weight: 700; }
+
+  .foot { margin-top: 44px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; box-shadow: var(--shadow); }
+  .card h3 { margin: 0 0 12px; font-size: 15px; font-weight: 800; }
+  .card p, .card li { font-size: 13.5px; color: var(--muted); }
+  .card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+  .card b { color: var(--ink); }
+  .pass { color: var(--new); font-weight: 700; }
+  pre { margin: 10px 0 0; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; color: var(--ink); line-height: 1.6; }
+  .cmt { color: var(--faint); }
+  .disclaimer { margin-top: 28px; font-size: 12.5px; color: var(--faint); border-top: 1px solid var(--line); padding-top: 16px; max-width: 82ch; }
+
+  @media (max-width: 760px) { .compare, .fixes, .foot { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Teach 대화 · 부실한 설명 유도 <span class="live">● 실측 · 실제 DeepSeek 캡처</span></p>
+    <h1>선생님이 설명을 잘 못할 때, 학생이 더 잘 설명하도록 이끄는가</h1>
+    <p class="lede">
+      사용자가 <b>선생님</b>, AI가 <b>초등학생</b>이 되는 ‘가르치며 배우기’ 구조에서, 진짜 관건은
+      <b>선생님의 설명이 얕거나·틀리거나·너무 어려울 때</b> AI 학생이 그 빈틈을 알아채고 더 좋은 설명을 끌어내는가입니다.
+      아래는 그 세 케이스를 <b>같은 코드베이스의 이전/이번 버전으로 실제 모델을 호출해</b> 나란히 담은 결과입니다.
+    </p>
+    <p class="meta">model: deepseek-v4-flash · 경로: generateTurn 실제 end-to-end(검증·재시도·가드 포함) · 각 케이스 1회 캡처 · 값은 가드 정규화 후 최종 응답</p>
+
+    <div class="problem">
+      <b>이전 버전의 실제 모습.</b> 세 케이스 모두 학생이 선생님 말은 듣지 않고
+      <b>정답 용어(‘분모’)를 먼저 꺼내</b> “정확히 어떻게 설명하시나요?”라고 물었고,
+      S3에서는 아예 <b>정답 문장(‘전체를 똑같이 나눈 것’)을 학생이 낭독</b>하며 되물었습니다. 배우는 아이가 아니라 답안지를 든 시험관입니다.
+    </div>
+
+    <div class="fixes">
+      <div class="fix">
+        <span class="tag">FIX A · 검증 완화</span>
+        <h3>학생이 정답 용어를 선창하도록 강제하던 규칙 제거</h3>
+        <p><code>validateSemanticRules</code>의 <code>hasKw</code>(speak에 focus 용어 포함) 요구 삭제 → 학생이 선생님의 <b>구체적 빈틈을 짚는 자유로운 질문</b>을 할 수 있게 됨.</p>
+      </div>
+      <div class="fix">
+        <span class="tag">FIX B · 페르소나·오개념</span>
+        <h3>빈틈 파고드는 질문 유도 + 오개념 주입</h3>
+        <p>few-shot을 “왜/예시/그럴듯한 오답 확인” 스타일로 교체하고, 단원의 <code>misconceptions</code>를 시스템 프롬프트에 주입.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="legend">
+    <span class="swatch"><span class="dot teacher"></span>선생님 (사용자) — 부실한 설명</span>
+    <span class="swatch"><span class="dot old"></span>이전 학생 (실측)</span>
+    <span class="swatch"><span class="dot new"></span>이번 학생 (실측)</span>
+    <span style="margin-left:auto"><mark class="leak">정답 용어/문장 선창</mark> · <span class="draw">선생님 말에 반응·눈높이 질문</span></span>
+  </div>
+
+  <!-- SCENARIO 1 -->
+  <h2 class="scenario-title"><span class="snum">S1</span>얕은 설명<span class="kase">핵심 누락</span></h2>
+  <p class="scenario-sub">선생님이 “그냥 반 나누는 것”이라고만 해 <b>‘똑같이’·‘전체 중 일부’가 빠졌습니다.</b> 학생이 이 빈틈을 채우도록 이끌어야 합니다.</p>
+  <div class="compare">
+    <div class="col old">
+      <div class="col-head"><span>이전 버전</span><span class="verdict">covered=[c1] · focus c2</span></div>
+      <div class="thread">
+        <div class="bubble teacher"><div class="role">선생님</div>분수? 그거 그냥 반 나누는 거 아냐?<span class="tt">↳ ‘똑같이’·‘전체 중 일부’ 누락</span></div>
+        <div class="bubble student"><div class="role">학생 · 실측</div>선생님, <mark class="leak">분모</mark>는 정확히 어떻게 설명하시나요?</div>
+      </div>
+      <div class="note"><span class="lbl">문제</span><span>방금 설명의 빈틈은 무시하고 <b>정답 용어 ‘분모’로 건너뜀</b>. 선생님이 첫 개념을 제대로 다듬을 기회가 없습니다.</span></div>
+    </div>
+    <div class="col new">
+      <div class="col-head"><span>이번 버전</span><span class="verdict">covered=[c1] · focus c2</span></div>
+      <div class="thread">
+        <div class="bubble teacher"><div class="role">선생님</div>분수? 그거 그냥 반 나누는 거 아냐?<span class="tt">↳ ‘똑같이’·‘전체 중 일부’ 누락</span></div>
+        <div class="bubble student"><div class="role">학생 · 실측</div>선생님, 아 그렇구나! 그런데 <span class="draw">반만 나누는 게 아니라 여러 개로 나눌 땐 어떻게 적어요?</span></div>
+      </div>
+      <div class="note"><span class="lbl">개선</span><span>선생님이 말한 <b>‘반 나누기’를 그대로 받아</b> “여러 개로 나눌 땐?”이라고 눈높이로 확장 — 정답 용어 없이 다음 설명을 자연스럽게 끌어냅니다.</span></div>
+    </div>
+  </div>
+  <p class="state">진도는 <b>양쪽 모두 covered=[c1]</b>(모델이 얕은 설명도 c1으로 수용) — 차이는 <span class="win">학생의 말투·질문 방식</span>.</p>
+
+  <!-- SCENARIO 2 -->
+  <h2 class="scenario-title"><span class="snum">S2</span>틀린 설명<span class="kase">오개념 포함</span></h2>
+  <p class="scenario-sub">선생님이 분수를 “위아래로 숫자 두 개 쓰는 표기”로 잘못 설명합니다. <b>‘똑같이 나눈 일부’ 본질이 빠진 오개념.</b></p>
+  <div class="compare">
+    <div class="col old">
+      <div class="col-head"><span>이전 버전</span><span class="verdict">covered=[c1] · focus c2</span></div>
+      <div class="thread">
+        <div class="bubble teacher"><div class="role">선생님</div>분수는 위아래로 숫자 두 개 쓰면 다 분수야.<span class="tt">↳ 오개념: ‘똑같이 나눈 일부’ 아님</span></div>
+        <div class="bubble student"><div class="role">학생 · 실측</div>선생님, <mark class="leak">분모</mark>는 정확히 무엇을 뜻하는 건가요? 자세히 알려주세요.</div>
+      </div>
+      <div class="note"><span class="lbl">문제</span><span><b>틀린 설명을 c1으로 수용하고 넘어감</b>. 오개념은 그대로 남고, 학생은 또 ‘분모’ 용어를 선창합니다.</span></div>
+    </div>
+    <div class="col new">
+      <div class="col-head"><span>이번 버전</span><span class="verdict">covered=[] · focus c1</span></div>
+      <div class="thread">
+        <div class="bubble teacher"><div class="role">선생님</div>분수는 위아래로 숫자 두 개 쓰면 다 분수야.<span class="tt">↳ 오개념: ‘똑같이 나눈 일부’ 아님</span></div>
+        <div class="bubble student"><div class="role">학생 · 실측</div>선생님, 방금 숫자 두 개면 다 분수라고 하셨는데, <span class="draw">그게 실제로 뭘 나타내는지 궁금해요. 예를 들어서 알려주세요!</span></div>
+      </div>
+      <div class="note"><span class="lbl">개선</span><span>선생님의 말을 <b>그대로 인용해 되짚고</b>, 진도를 올리지 않은 채(‘예를 들어’) 본질 설명을 요구 — 세 케이스 중 가장 뚜렷한 유도 성공.</span></div>
+    </div>
+  </div>
+  <p class="state"><span class="win">이번 버전만 covered=[]로 버팀</span> — 오개념을 삼키지 않고 c1에 머물러 재설명을 요구. 이전은 covered=[c1]로 오개념 통과.</p>
+
+  <!-- SCENARIO 3 -->
+  <h2 class="scenario-title"><span class="snum">S3</span>너무 어려운 설명<span class="kase">눈높이 실패</span></h2>
+  <p class="scenario-sub">선생님이 “유리수를 정수 분의 정수로 표현” 같은 추상적 정의를 말합니다. 맞아도 <b>초등 눈높이가 아님.</b></p>
+  <div class="compare">
+    <div class="col old">
+      <div class="col-head"><span>이전 버전</span><span class="verdict">covered=[] · focus c1</span></div>
+      <div class="thread">
+        <div class="bubble teacher"><div class="role">선생님</div>분수는 유리수를 정수 분의 정수 꼴로 표현한 거야.<span class="tt">↳ 초등 눈높이 아님 · 예시 없음</span></div>
+        <div class="bubble student"><div class="role">학생 · 실측</div>선생님, 분수에서 <mark class="leak">‘전체를 똑같이 나눈 것’은 정확히 어떻게 설명하시나요?</mark></div>
+      </div>
+      <div class="note"><span class="lbl">문제</span><span>어렵다는 신호도, 쉬운 예시 요청도 없이 <b>정답 문장 자체를 학생이 낭독</b>. 답을 다 아는 시험관 말투의 극단입니다.</span></div>
+    </div>
+    <div class="col new">
+      <div class="col-head"><span>이번 버전</span><span class="verdict">covered=[c1] · focus c2</span></div>
+      <div class="thread">
+        <div class="bubble teacher"><div class="role">선생님</div>분수는 유리수를 정수 분의 정수 꼴로 표현한 거야.<span class="tt">↳ 초등 눈높이 아님 · 예시 없음</span></div>
+        <div class="bubble student"><div class="role">학생 · 실측</div>선생님, 이제 좀 알 것 같아요! 그런데 <span class="draw">분수에서 아래쪽에 있는 숫자는 뭘 나타내는 거예요?</span></div>
+      </div>
+      <div class="note"><span class="lbl">개선</span><span>‘분모’ 대신 <b>‘아래쪽에 있는 숫자’라는 눈높이 표현</b>으로 물어, 선생님이 그 용어를 스스로 명명·설명하게 이끕니다.</span></div>
+    </div>
+  </div>
+  <p class="state">진도 판정은 케이스마다 들쭉날쭉(여기선 이전 covered=[], 이번 covered=[c1]) — 일관된 개선은 <span class="win">정답 낭독 → 눈높이 질문으로 바뀐 말투</span>.</p>
+
+  <!-- FOOTER -->
+  <div class="foot">
+    <div class="card">
+      <h3>실측이 말해주는 것 — 그리고 솔직한 한계</h3>
+      <p><b>일관되게 개선된 것(말투).</b> 이전 버전은 3케이스 <b>전부 정답 용어 ‘분모’를 선창</b>했고 S3에선 정답 문장을 낭독했습니다. 이번 버전은 <b>3케이스 모두 선생님이 실제 한 말에 반응</b>하며(‘반 나누기’, ‘숫자 두 개’) 눈높이 질문·예시 요청으로 물었습니다. FIX A/B의 목표가 실제로 달성됐습니다.</p>
+      <p style="margin-top:10px"><b>여전한 한계(진도 판정).</b> <code style="font-family:var(--mono);font-size:12px">covered</code> 전진은 모델/키워드 판정이라 <b>케이스마다 노이즈가 큽니다</b> — S1은 양쪽 다 c1 수용, S2는 이번만 버팀, S3는 반대로 이전만 c1 미수용. “설명의 <b>질</b>이 충분한지”까지 게이트하려면 별도의 설명 충실도 판정(LLM rubric)이 필요합니다.</p>
+    </div>
+    <div class="card">
+      <h3>재현 방법 &amp; 테스트 <span class="pass">· 통과</span></h3>
+      <p>OpenJDK 25.0.4. 완료 게이트 3종 <b class="pass">BUILD SUCCESSFUL</b>. 위 대화는 임시 캡처 테스트로 실제 호출해 기록.</p>
+      <pre><span class="cmt"># 실측 캡처 (일회성, 커밋 안 함)</span>
+DEEPSEEK_API_KEY=… \
+./gradlew test --tests "*TeachLiveCaptureTest"
+  <span class="cmt"># generateTurn 실제 호출 → speak 기록</span>
+
+<span class="cmt"># 완료 게이트</span>
+./gradlew test         → SUCCESS
+./gradlew ktlintCheck  → SUCCESS</pre>
+    </div>
+  </div>
+
+  <p class="disclaimer">
+    ※ 위 대화 문장은 <b>실제 DeepSeek(deepseek-v4-flash) 호출로 캡처한 값</b>입니다(케이스별 1회). 이전 버전은 <code style="font-family:var(--mono);font-size:12px">git stash</code>로 코드를 되돌려 동일 조건에서 캡처했습니다.
+    LLM은 비결정적이라 재호출 시 문장은 달라질 수 있으나, <b>“정답 용어 선창 → 선생님 말에 반응하는 눈높이 질문”</b>이라는 경향은 반복 재현됩니다.
+  </p>
+</div>
+</body>
+</html>
