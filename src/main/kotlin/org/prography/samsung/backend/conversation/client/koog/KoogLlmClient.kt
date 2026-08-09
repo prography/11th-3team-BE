@@ -5,6 +5,7 @@ import ai.koog.prompt.executor.clients.deepseek.DeepSeekModels
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.executor.model.executeStructured
 import ai.koog.prompt.executor.ollama.client.OllamaModels
+import ai.koog.prompt.message.MessagePart
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -13,6 +14,7 @@ import kotlinx.serialization.json.Json
 import org.prography.samsung.backend.conversation.client.LlmClient
 import org.prography.samsung.backend.conversation.client.LlmTimeoutException
 import org.prography.samsung.backend.conversation.config.ConversationLlmProperties
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
@@ -29,6 +31,8 @@ class KoogLlmClient(
     @Qualifier("ollamaExecutor")
     private val ollamaExecutor: PromptExecutor?,
 ) : LlmClient {
+    private val log = LoggerFactory.getLogger(KoogLlmClient::class.java)
+
     @OptIn(ExperimentalSerializationApi::class)
     private val json =
         Json {
@@ -58,7 +62,21 @@ class KoogLlmClient(
                         throw IllegalStateException(msg)
                     }
 
-                    json.encodeToString(result.getOrThrow().data)
+                    val structured = result.getOrThrow()
+
+                    // 모델의 실제 추론 과정(reasoning_content)을 응답 메시지에서 추출해 로그로만 남긴다.
+                    // schema/JSON에는 넣지 않으므로 reasoning이 없어도 절대 실패하지 않는다.
+                    val reasoning =
+                        structured.message.parts
+                            .filterIsInstance<MessagePart.Reasoning>()
+                            .flatMap { it.content }
+                            .joinToString("\n")
+                            .trim()
+                    if (reasoning.isNotBlank()) {
+                        log.info("Teach LLM reasoning: {}", reasoning)
+                    }
+
+                    json.encodeToString(structured.data)
                 }
             }
         } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
