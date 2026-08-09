@@ -120,15 +120,17 @@ class TeachApiIntegrationTest : IntegrationTestSupport() {
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.aiResponse.covered").isArray())
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.aiResponse.covered.length()", Matchers.equalTo(0)))
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.aiResponse.speak", Matchers.containsString("?")))
+            // 개선된 설계: 학생은 정답 용어를 선창하지 않고 '모르는 학생'답게 질문한다.
+            // 정답 용어 포함이 아니라 '질문성'(궁금증 어휘)만 검증한다.
             .andExpect(
                 MockMvcResultMatchers.jsonPath(
                     "$.data.aiResponse.speak",
                     Matchers.anyOf(
-                        Matchers.containsString("분모"),
-                        Matchers.containsString("분자"),
-                        Matchers.containsString("일부분"),
-                        Matchers.containsString("크기"),
-                        Matchers.containsString("비교"),
+                        Matchers.containsString("왜"),
+                        Matchers.containsString("어떻게"),
+                        Matchers.containsString("어떤"),
+                        Matchers.containsString("예를"),
+                        Matchers.containsString("뭐"),
                     ),
                 ),
             )

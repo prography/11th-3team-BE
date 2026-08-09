@@ -130,6 +130,31 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
         }
     }.trimEnd()
 
+    /**
+     * Turns unit JSON misconceptions into a readable block the student can voice as naive
+     * wrong-guesses. Supports both the docs schema ({desc, trigger_example, correction_hint})
+     * and the older seed schema ({pattern, correction}). Never emits raw JSON.
+     */
+    fun formatMisconceptions(unitJson: String): String = buildString {
+        val root = objectMapper.readTree(unitJson)
+        val nodes = root.path("misconceptions")
+        if (!nodes.isArray || nodes.size() == 0) return ""
+        nodes.forEach { m ->
+            val trigger =
+                m.path("trigger_example").asText(null)?.takeIf { it.isNotBlank() }
+                    ?: m.path("pattern").asText("").trim()
+            val desc =
+                m.path("correction_hint").asText(null)?.takeIf { it.isNotBlank() }
+                    ?: m.path("correction").asText(null)?.takeIf { it.isNotBlank() }
+                    ?: m.path("desc").asText("").trim()
+            if (trigger.isBlank() && desc.isBlank()) return@forEach
+            append("- ")
+            if (trigger.isNotBlank()) append("\"$trigger\"")
+            if (desc.isNotBlank()) append(if (trigger.isNotBlank()) " (선생님이 바로잡아줄 지점: $desc)" else desc)
+            appendLine()
+        }
+    }.trimEnd()
+
     fun parseConceptIds(unitJson: String): Set<String> = parseConceptIdOrder(unitJson).toSet()
 
     fun resolveFocusConcept(conceptOrder: List<String>, missing: List<String>, explicit: String?): String {
@@ -272,22 +297,22 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
             return "speak이 180자를 초과했습니다. 140~160자 이하로 (반응 + 짧은 질문)."
         }
 
-        // Speak quality for non-explanatory turns (affirm/garbage) and missing: must have ? + hint keyword for first missing (to make LLM produce it via prompt/retry)
+        // speak 품질: 아직 배울 개념이 남았으면 선생님의 설명을 이끄는 '질문'으로 끝나야 한다.
+        // (A) 학생이 정답 용어(key_point/name)를 speak에 담아야 한다는 강제는 제거 —
+        //     모르는 학생답게 상황·예시·오답 추측으로 물을 수 있어야 하며, 정답 용어 선창은 오히려 금지에 가깝다.
         if (!response.sessionDone && response.missing.isNotEmpty()) {
             val hasQuestion =
                 response.speak.contains('?') ||
                     response.speak.contains('？') ||
                     response.speak.contains("뭐") ||
                     response.speak.contains("어떻게") ||
-                    response.speak.contains("왜")
-            val firstMissing = response.missing.firstOrNull()
-            val focusTerms = firstMissing?.let { termsForConcept(it, unitJson) } ?: emptyList()
-            val requiredKw = firstMissing?.let { hintKeywordFor(it, unitJson) } ?: ""
-            val hasKw = focusTerms.isEmpty() || focusTerms.any { term -> response.speak.contains(term) }
-            if (!hasQuestion || !hasKw) {
+                    response.speak.contains("왜") ||
+                    response.speak.contains("어떤") ||
+                    response.speak.contains("예를")
+            if (!hasQuestion) {
                 return (
-                    "For non-teach (affirm): speak needs '?' + lesson term from '$requiredKw'. " +
-                        "covered must be []."
+                    "아직 이해 못한 개념이 남았습니다. 정답 용어를 네가 먼저 말하지 말고, " +
+                        "모르는 학생처럼 선생님의 설명을 이끄는 질문으로 speak을 끝내세요. covered는 []."
                     )
             }
         }

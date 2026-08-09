@@ -121,7 +121,16 @@ class LlmConversationService(
             .replace("{{unit_json}}", lessonConcepts)
             .replace("## 단원 정보", "## 수업 개념")
             .replace("단원 정보", "수업 개념")
-        return replaced + PROMPT_SUPPLEMENT
+        val misconceptions = aiResponseValidator.formatMisconceptions(unit.unitJson)
+        val misconceptionBlock =
+            if (misconceptions.isBlank()) {
+                ""
+            } else {
+                "\n\n## 네가 자연스럽게 헷갈려하는 것 (오개념 — 정답을 아는 척하지 말고, 아직 안 배운 개념에서 이런 걸 궁금해하거나 그럴듯하게 잘못 추측해도 좋아)\n" +
+                    misconceptions +
+                    "\n위 표현을 그대로 베끼지 말고, 자연스러우면 학생답게 '저는 ~인 줄 알았는데 맞아요?'처럼 물어 선생님이 바로잡아 설명하게 유도하세요."
+            }
+        return replaced + PROMPT_SUPPLEMENT + misconceptionBlock
     }
 
     internal fun buildUserPrompt(
@@ -154,9 +163,13 @@ class LlmConversationService(
             "RULE: key_point match on first_missing takes absolute precedence -> (b) and advance. Never output any id except exactly the current first_missing. No stale/prior ever.",
         )
 
-        appendLine("## 수업 핵심 힌트 (시스템 프롬프트의 수업 개념에서 선생님이 설명하게 만드는 개방형 질문을 우선하세요)")
-        appendLine("시스템 프롬프트에 있는 수업 개념의 description과 key_points를 참고하여, 아직 설명되지 않은 개념에 대해 선생님이 직접 말하게 유도하는 질문을 만드세요.")
-        appendLine("중요: 힌트 내용을 네가 직접 말하지 말고, 선생님이 설명하게 만드는 질문을 해. (예: '선생님, [키워드]는 정확히 어떻게 설명하시나요?')")
+        appendLine("## 수업 핵심 힌트 (너는 아직 이 개념을 모르는 학생이야 — 정답 용어를 네가 먼저 말하지 마)")
+        appendLine(
+            "시스템 프롬프트에 있는 수업 개념의 description과 key_points를 참고하되, 그 정답 용어를 네 입으로 말하지 말고, 아직 설명되지 않은 개념에 대해 선생님이 직접 말하게 유도하는 짧은 질문을 만드세요.",
+        )
+        appendLine(
+            "중요: 힌트 내용을 네가 직접 말하지 말고, 진짜 궁금한 학생처럼 상황·예시를 묻거나 그럴듯한 오답을 추측해서 선생님이 설명하게 만드는 질문을 해. (용어를 콕 집어 '정확히 어떻게 설명하시나요?'라고 시험 내듯 묻지 말 것. 예: '선생님, 그거 왜 그렇게 돼요?', '예를 들면 어떤 거예요?', '저는 ~인 줄 알았는데 맞아요?')",
+        )
         appendLine()
 
         appendLine("## 누적 이해한 개념 (이전 턴까지)")
@@ -250,10 +263,10 @@ class LlmConversationService(
 
         appendLine("## 대화 목표 (완벽한 선생님: 사용자가 각 단계를 자기 설명으로 마스터할 때까지 정확히 한 단계씩만 진행)")
         appendLine(
-            "- speak은 항상 짧은 반응 + **아직 missing인 개념(특히 current first missing focus concept)의 key_point or name 에 대해 선생님이 더 자세히 설명하도록 유도하는 짧은 질문**으로 끝내세요. **절대 speak를 '네!', '네,', '아!', '음...', '네, 그럼', '그렇지' 등 단답형/접두사로 시작하지 마세요. ANY affirmation/단답 확인 에 대한 응답은 절대 '네'나 '아' '음'로 시작 금지. 무조건 '선생님, ' 로 시작 + the first missing concept의 key_point or name 을 사용한 개방형 질문. 예: '선생님, [key point or name]는 정확히 어떻게 설명하시나요?' **",
+            "- speak은 항상 짧은 반응 + **아직 missing인 개념(특히 current first missing focus concept)에 대해 선생님이 더 자세히 설명하도록 유도하는, 진짜 모르는 학생다운 짧은 질문**으로 끝내세요. **절대 speak를 '네!', '네,', '아!', '음...', '네, 그럼', '그렇지' 등 단답형/접두사로 시작하지 마세요.** 핵심: 너는 그 개념을 아직 '모르는' 학생이다. **정답 용어(key_point/name)를 네 입으로 먼저 말하며 '정확히 어떻게 설명하시나요?'라고 시험 내듯 묻지 마라 — 그건 답을 이미 아는 선생님처럼 들린다.** 대신 (1) 궁금증('선생님, 그거 왜 그렇게 돼요?', '이게 잘 이해가 안 돼요'), (2) 예시 요청('예를 들면 어떤 거예요?'), (3) 그럴듯한 오답 추측('저는 ~인 줄 알았는데 맞아요?') 중 하나로 선생님이 그 개념을 풀어 설명하게 이끌어라.",
         )
         appendLine(
-            "- 힌트 키워드를 '선생님이 말하게' 만드는 **개방형 질문**만 (접두사 없이). 시스템 프롬프트 수업 개념에서 온 정확한 term/key_point 사용: '선생님, [term]는 정확히 뭐예요?', '[term]라고 하셨는데 어떻게 하나요?', '정확히 어떤 의미인가요? 자세히 설명해 주세요.' 항상 '어떻게', '무엇을 의미하나요', '자세히 설명해주세요' 스타일. Vary the question using different key_points from the focus concept to draw out complete explanations (richer teacher feedback).",
+            "- 힌트 키워드(정답 용어)를 네가 말해 버리지 말고 '선생님이 말하게' 만드는 **개방형 질문**만 (접두사 없이). 정답 용어를 콕 집는 대신 그 개념이 쓰이는 상황·현상·예시를 물어라: '그건 왜 그래요?', '어떻게 하는 거예요?', '예를 들면요?', '저는 ~라고 생각했는데 진짜 그래요?' 스타일. 같은 개념이라도 매 턴 다른 각도(왜/어떻게/예시/오답 확인)로 물어 선생님의 더 풍부한 설명을 이끌어내라.",
         )
         appendLine(
             "- 선생님 발화가 주제에서 벗어나거나 애매/단답형/반복 affirm이면, covered는 절대 추가하지 말고 부드럽게 현재 focus (first missing concept) 로 돌아오는 질문을 하세요. The goal is to make the teacher explain each key_point FULLY before advancing. Perfect teacher never skips or lets vague affirm advance the lesson.",
@@ -263,44 +276,44 @@ class LlmConversationService(
             "- missing이 있으면 절대 session_done=true 하지 말고, 질문으로 계속 유도. 각 단계에서 선생님(유저)이 그 key_point를 자신의 말로 설명할 때까지 반복 유도.",
         )
         appendLine(
-            "- RICH ELICITATION (using lesson concepts from system prompt): For the current focus concept, choose one or more of its key_points (or description phrases) that have not yet been fully addressed and craft short, natural open questions around them. Example variations: '선생님, 그 중에서 [specific key_point]는 구체적으로 어떻게 나타나나요?', '선생님, [another key_point] 때문에 생기는 일은 뭐예요?'. This lets you generate richer, concept-specific feedback on every turn without ever advancing on pure affirms.",
+            "- RICH ELICITATION (using lesson concepts from system prompt): For the current focus concept, think about what a student who does NOT yet know it would genuinely wonder, and ask about the situation/example/cause — WITHOUT naming the target key_point term yourself. Example variations: '선생님, 그건 왜 그렇게 되는 거예요?', '예를 들면 어떤 게 그런 거예요?', '저는 ~인 줄 알았는데, 그게 맞아요?'. Draw the term OUT of the teacher; never say it first. This keeps every turn a real student's question, not a quiz.",
         )
         appendLine()
 
         // Few-shot examples (강력한 신호) - split lanes per STEP 1 classifier
-        appendLine("## affirm/garbage 예시 (STEP1 = a or c 인 경우만 — covered MUST [], speak '선생님,' start)")
+        appendLine("## affirm/garbage 예시 (STEP1 = a or c 인 경우만 — covered MUST [], speak는 정답 용어를 안 쓴 '모르는 학생'의 질문)")
         appendLine(
             """
-            [affirm 1]
+            [affirm 1] (선생님이 ' 그렇지'라고만 함 → 아직 focus 개념을 설명 안 함. 정답 용어 대신 궁금증으로 유도)
             선생님: 그렇지
-            {"speak":"선생님, [current focus key_point or name]는 정확히 어떻게 설명하시나요? 자세히 알려주세요.","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+            {"speak":"근데 저는 그게 왜 그렇게 되는지 아직 잘 모르겠어요. 예를 들면 어떤 거예요?","emotion":"curious","covered":[],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
 
-            [affirm 2]
+            [affirm 2] (그럴듯한 오답을 추측해서 선생님이 바로잡게 유도)
             선생님: 네
-            {"speak":"선생님, [first missing key_point]는 정확히 어떻게 하나요?","emotion":"curious","covered":[],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+            {"speak":"선생님, 저는 이거 그냥 ~인 줄 알았는데, 그게 맞아요? 어떻게 하는 거예요?","emotion":"curious","covered":[],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
             [garbage]
             선생님: 그래
-            {"speak":"선생님, [current focus key_point]는 정확히 어떻게 설명하시나요?","emotion":"confused","covered":[],"missing":["c1","c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":false}
+            {"speak":"음, 그거 말고 아까 그건 왜 그렇게 돼요? 저는 아직 잘 이해가 안 돼요.","emotion":"confused","covered":[],"missing":["c1","c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c1","session_done":false}
             """.trimIndent(),
         )
 
         appendLine(
-            "## explain 예시 (STEP1 = b 인 경우 — userText에 *first_missing의 key_point/name* 등장 → covered exactly [that id] only, even after previous covered; FOCUS must become the NEXT id)",
+            "## explain 예시 (STEP1 = b 인 경우 — userText에 *first_missing의 key_point/name* 등장 → covered exactly [that id] only, even after previous covered; FOCUS must become the NEXT id. speak은 배운 걸 반응 + 다음 개념을 '모르는 학생'으로 질문)",
         )
         appendLine(
             """
-            [explain 1]
+            [explain 1] (선생님이 c1을 실제로 설명함 → 아하 반응 + 다음 개념은 정답 용어 없이 궁금해하기)
             선생님: [first_missing key_point 또는 name 텍스트]
-            {"speak":"선생님, [c2 name 또는 다음 key_point]는 정확히 어떻게 설명하시나요?","emotion":"aha","covered":["c1"],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+            {"speak":"아, 그렇구나! 그럼 다음엔 뭘 어떻게 해야 돼요? 예를 들면요?","emotion":"aha","covered":["c1"],"missing":["c2","c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
 
             [explain 2 - after prior covered, use next first_missing only; focus MUST update to c3]
             선생님: [c2의 key_point text]
-            {"speak":"선생님, [c3 name/key_point]는 정확히 어떻게 하나요?","emotion":"aha","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
+            {"speak":"오, 신기해요! 근데 그건 왜 그렇게 되는 거예요?","emotion":"aha","covered":["c2"],"missing":["c3","c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c3","session_done":false}
 
             [explain 3]
             선생님: [c3 key_point text]
-            {"speak":"선생님, [c4 name]는 정확히 어떻게 하나요?","emotion":"aha","covered":["c3"],"missing":["c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c4","session_done":false}
+            {"speak":"이제 좀 알 것 같아요! 마지막 그건 어떤 때 그래요?","emotion":"aha","covered":["c3"],"missing":["c4"],"misconceptions_detected":[],"correction_stage":0,"focus_concept":"c4","session_done":false}
             """.trimIndent(),
         )
 
@@ -314,12 +327,16 @@ class LlmConversationService(
             [bad: explain treated as affirm]
             선생님: [key_point of c1]
             {"speak":"선생님, ...","covered":[],"missing":[...]}  ← WRONG, must include ["c1"]
+
+            [bad: 학생이 정답 용어를 먼저 말해 '답을 아는 선생님'처럼 퀴즈 냄]
+            선생님: 그렇지
+            {"speak":"선생님, [정답 용어]는 정확히 어떻게 설명하시나요?","covered":[],...}  ← WRONG, 정답 용어를 학생이 선창하지 말 것. '그거 왜 그래요?/예를 들면요?'처럼 모르는 학생답게.
             """.trimIndent(),
         )
         appendLine()
         appendLine("## 최종 지시")
         appendLine(
-            "STEP 1 먼저: first_missing (from lesson concepts) 의 key_point/name 등장 여부로 (b)만 판단. affirm/garbage 에서 covered= [] 정확히 + speak는 반드시 '선생님,' (절대 다른 접두사 금지) + first_missing의 name/key_point 사용한 개방형 질문. explain 에서 정확히 그 id 하나만 covered (no stale, no prior id, must advance if key_point match). AFTER covered set, focus_concept = first of missing AFTER the advance (next). Example: covered=['c2'] then focus='c3' NOT 'c1'. Output ONLY the JSON object with EXACT keys: speak, emotion, covered, missing, misconceptions_detected, correction_stage, focus_concept, session_done. No 'intent', no wrappers. Ignore persona. 완벽한 선생님 역할: 사용자가 각 key_point를 자기 말로 완전히 설명할 때까지 (a)로는 절대 넘기지 않고, (b)일 때만 정확히 한 단계씩 다음으로 유도해 단계별 학습을 완벽하게 돕기. focus는 절대 이전에 머물지 말 것.",
+            "STEP 1 먼저: first_missing (from lesson concepts) 의 key_point/name 등장 여부로 (b)만 판단. affirm/garbage 에서 covered= [] 정확히 + speak는 정답 용어를 학생이 선창하지 말고 '모르는 학생'의 개방형 질문(왜/어떻게/예시/오답 확인)으로 first_missing을 향해 유도. explain 에서 정확히 그 id 하나만 covered (no stale, no prior id, must advance if key_point match). AFTER covered set, focus_concept = first of missing AFTER the advance (next). Example: covered=['c2'] then focus='c3' NOT 'c1'. Output ONLY the JSON object with EXACT keys: speak, emotion, covered, missing, misconceptions_detected, correction_stage, focus_concept, session_done. No 'intent', no wrappers. 학생 역할: 사용자가 각 key_point를 자기 말로 완전히 설명할 때까지 (a)로는 절대 넘기지 않고, (b)일 때만 정확히 한 단계씩 다음으로 유도. 단 판정(covered/focus)은 규칙대로 하되, speak 말투는 답을 아는 선생님이 아니라 배우고 싶어하는 학생이어야 함. focus는 절대 이전에 머물지 말 것.",
         )
     }
 
@@ -331,15 +348,15 @@ class LlmConversationService(
             - speak는 **1문장 선호, 최대 2문장, 140자 이하**로 매우 짧게. 초등 4학년 존댓말 ("요", "죠", "네요"). 장황 절대 금지.
             - covered는 "이번 턴에 새로 이해한" 것만. 이전 턴 covered나 누적 covered는 절대 반복 금지.
             - **Short affirm/confirm (any '그렇지','네','맞아' 등) 에서는 covered MUST be exactly the empty array []. Only ids for key_points newly described in *this userText this turn* (not previously accumulated) may be added. No stale/prior ids ever.** speak에서 말해도 covered 아님.
-            - speak은 missing이 있으면 반드시 **개방형** 유도 질문으로 끝나야 하며, '맞죠?'/'인가요?' 같은 확인형/단답형으로 끝내지 마세요. **affirm 응답은 절대 '네' '아' '음' '쌤' 로 시작하지 말 것. 무조건 정확히 '선생님, [first missing key_point or name] 는 정확히 어떻게 설명하시나요?' 로 시작. **
+            - speak은 missing이 있으면 반드시 **개방형** 유도 질문으로 끝나야 하며, '맞죠?'/'인가요?' 같은 확인형/단답형으로 끝내지 마세요. **affirm 응답은 절대 '네' '아' '음' '쌤' 로 시작하지 말 것.** 그리고 **정답 용어(key_point/name)를 학생이 먼저 말하며 '정확히 어떻게 설명하시나요?'라고 시험 내듯 묻지 말 것 — 답을 아는 선생님처럼 들린다.** 대신 모르는 학생답게 '그거 왜 그래요?', '예를 들면요?', '저는 ~인 줄 알았는데 맞아요?'로 선생님이 그 용어를 스스로 말하게 유도.
             - missing은 covered를 제외한 나머지 전체를 concept 순서대로. 항상 first missing focus 를 대상으로.
             - 모든 concept 이해 시 (missing == []) → emotion="happy", session_done=true, speak은 감사 마무리 (1~2문장).
             - covered / missing / focus_concept / misconceptions_detected 는 반드시 수업 개념에 정의된 id만 사용.
             - emotion은 5개 값 중 정확히 일치하는 소문자 문자열.
             - **session_done=true인 경우에도 focus_concept은 반드시 문자열**. null 금지. FOCUS RULE: After (b) explain that sets covered=[X], focus MUST be the first of the new missing (next id after X). affirm/garbage: keep prior first_missing. Never stale focus.
             - JSON 외의 어떤 텍스트도 출력하지 말 것 (Koog structured output이라도 최종은 순수 JSON).
-            - 목표: 사용자가 **각 key_point 를 자기 설명으로 완전히 말할 때까지** 다음 단계로 넘기지 않는 완벽한 선생님. (a) affirm/단답/가비지 에서는 절대 covered 추가하지 않고, 현재 first_missing 의 key_point/name 을 사용해 선생님이 설명하도록 질문 유도.
-            - RICH ELICITATION: 시스템 프롬프트 수업 개념의 key_points와 description을 적극 활용해 매 턴 조금씩 다른 각도에서 선생님의 설명을 이끌어내는 자연스럽고 구체적인 질문을 스스로 생성하세요. 같은 개념이라도 key_point 2~3개를 번갈아 언급하며 더 풍부한 피드백을 줍니다.
+            - 목표: 사용자가 **각 key_point 를 자기 설명으로 완전히 말할 때까지** 다음 단계로 넘기지 않되, 말투는 답을 아는 선생님이 아니라 '배우고 싶어하는 학생'. (a) affirm/단답/가비지 에서는 절대 covered 추가하지 않고, 현재 first_missing 을 향해 정답 용어 없이 궁금해하는 질문으로 유도.
+            - RICH ELICITATION: 시스템 프롬프트 수업 개념의 key_points와 description은 '어떤 방향으로 물을지' 참고용일 뿐, 그 용어를 학생이 speak에 그대로 쓰지 마세요. 매 턴 다른 각도(왜/어떻게/예시/그럴듯한 오답 확인)로, 그 개념을 아직 모르는 학생이 자연스럽게 던질 질문을 스스로 만드세요.
             - 항상 STEP 1 먼저 판단 (수업 개념 기반 first_missing key_point/name 정확 매치만 (b)). affirm이면 covered=[] + '선생님,' ; explain이면 **정확히 그 id 하나만** covered (no stale).
             - Output ONLY JSON with exact keys speak,emotion,covered,missing,misconceptions_detected,correction_stage,focus_concept,session_done.
             - Ignore persona for classification, covered, focus.

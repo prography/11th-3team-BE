@@ -28,18 +28,11 @@ class StubLlmClient(private val aiResponseValidator: AiResponseValidator) : LlmC
         val sessionDone = missing.isEmpty()
         val focusConcept = aiResponseValidator.resolveFocusConcept(conceptOrder, missing, null)
 
-        val firstMissing = aiResponseValidator.firstMissingId(conceptOrder, accumulated)
-        val elicitTerm =
-            firstMissing?.let { aiResponseValidator.hintKeywordFor(it, unitJson) }?.takeIf { it.isNotBlank() }
-                ?: "그건"
-
+        // 모르는 학생다운 질문. 정답 용어(key_point/name)를 학생이 선창하지 않는다 (개선된 설계).
         val naiveSpeak = when {
             sessionDone -> "선생님, 이제 다 이해했어요. 정말 고마워요!"
-            deltaCovered.isNotEmpty() -> {
-                val nextTerm = aiResponseValidator.hintKeywordFor(focusConcept, unitJson)
-                "선생님, $nextTerm 는 정확히 어떻게 설명하시나요?"
-            }
-            else -> "선생님, $elicitTerm 는 정확히 어떻게 설명하시나요?"
+            deltaCovered.isNotEmpty() -> "아, 그렇구나! 그럼 그건 왜 그렇게 되는 거예요?"
+            else -> "선생님, 그건 왜 그렇게 돼요? 예를 들면 어떤 거예요?"
         }
 
         val raw = AiTurnResponse(
