@@ -16,7 +16,7 @@ data class TeachRequest(
 data class AiTurnResponse(
     val speak: String,
     @field:Schema(
-        description = "AI가 final 응답 전에 내부적으로 수행한 추론(thinking) 텍스트 (디버깅/분석용으로 함께 저장)",
+        description = "AI 모델의 실제 추론 과정(reasoning_content) 텍스트. 사용자에게 노출되지 않고 디버깅/분석용으로만 저장된다.",
         example = "선생님이 key_point를 설명해 covered가 추가되었다. 다음 missing 개념으로 유도 질문한다.",
     )
     val thinking: String = "",

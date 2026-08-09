@@ -5,11 +5,15 @@ import ai.koog.prompt.executor.clients.deepseek.DeepSeekModels
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.executor.model.executeStructured
 import ai.koog.prompt.executor.ollama.client.OllamaModels
+import ai.koog.prompt.message.MessagePart
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import org.prography.samsung.backend.conversation.client.LlmClient
 import org.prography.samsung.backend.conversation.client.LlmTimeoutException
 import org.prography.samsung.backend.conversation.config.ConversationLlmProperties
@@ -58,7 +62,19 @@ class KoogLlmClient(
                         throw IllegalStateException(msg)
                     }
 
-                    json.encodeToString(result.getOrThrow().data)
+                    val structured = result.getOrThrow()
+                    val dataJson = json.encodeToString(structured.data)
+
+                    // 모델의 실제 reasoning(reasoning_content)을 추출해 JSON에 thinking으로 주입 —
+                    // 스키마 요청이 아니라 응답 메시지에 담긴 진짜 추론 과정을 보존한다.
+                    val reasoning =
+                        structured.message.parts
+                            .filterIsInstance<MessagePart.Reasoning>()
+                            .flatMap { it.content }
+                            .joinToString("\n")
+                            .trim()
+
+                    injectThinking(dataJson, reasoning)
                 }
             }
         } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
@@ -68,6 +84,17 @@ class KoogLlmClient(
             if (e is LlmTimeoutException) throw e
             throw IllegalStateException("LLM structured call failed: ${e.message}", e)
         }
+    }
+
+    /**
+     * 모델의 reasoning(reasoning_content)이 비어있지 않으면 구조화 응답 JSON에 "thinking" 필드로 주입한다.
+     * reasoning이 없으면 입력 JSON을 그대로 반환한다. (stub 등 reasoning 미지원 모델 대응)
+     */
+    fun injectThinking(dataJson: String, reasoning: String): String {
+        if (reasoning.isBlank()) return dataJson
+        val withThinking = json.parseToJsonElement(dataJson).jsonObject.toMutableMap()
+        withThinking["thinking"] = JsonPrimitive(reasoning)
+        return JsonObject(withThinking).toString()
     }
 
     private fun resolveExecutor(): PromptExecutor = when (properties.provider.lowercase()) {
