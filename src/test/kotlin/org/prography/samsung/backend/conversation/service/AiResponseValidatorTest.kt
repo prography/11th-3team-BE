@@ -36,7 +36,7 @@ class AiResponseValidatorTest {
     fun shouldParseValidJson() {
         val raw =
             """
-            {"speak":"아하!","emotion":"aha","covered":["c1"],"missing":["c2"],
+            {"speak":"아하!","thinking":"선생님이 key_point를 설명해 covered가 추가되었다.","emotion":"aha","covered":["c1"],"missing":["c2"],
             "misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
             """.trimIndent()
 
@@ -45,6 +45,23 @@ class AiResponseValidatorTest {
         assertEquals("아하!", result.speak)
         assertEquals(AiEmotion.AHA, result.emotion)
         assertEquals(listOf("c1"), result.covered)
+        assertEquals("선생님이 key_point를 설명해 covered가 추가되었다.", result.thinking)
+    }
+
+    @Test
+    @DisplayName("toJson/fromJson 왕복 시 thinking이 보존된다")
+    fun shouldRoundTripThinking() {
+        val raw =
+            """
+            {"speak":"아하!","thinking":"내부 추론","emotion":"aha","covered":["c1"],"missing":["c2"],
+            "misconceptions_detected":[],"correction_stage":0,"focus_concept":"c2","session_done":false}
+            """.trimIndent()
+        val parsed = sut.parseAndValidate(raw, sut.parseConceptIdOrder(unitJson))
+
+        val restored = sut.fromJson(sut.toJson(parsed))
+
+        assertEquals(parsed.thinking, restored.thinking)
+        assertEquals(parsed.speak, restored.speak)
     }
 
     @Test

@@ -17,6 +17,16 @@ data class KoogTeachTurnSchema(
     )
     val speak: String,
 
+    @SerialName("thinking")
+    @property:LLMDescription(
+        "최종 JSON을 내기 **전에** 짧게 압축한 내부 추론(thinking). " +
+            "STEP 1 판단(선생님 발화가 affirm/explain/garbage 중 무엇인지, " +
+            "first_missing 개념의 key_point/name이 실제로 등장했는지)을 1~3문장으로 써라. " +
+            "이 추론은 사용자에게 노출되지 않고 DB에만 저장되므로 자연스럽고 솔직하게 작성한다. " +
+            "최종 출력(covered/focus/speak)과 논리적으로 일치해야 한다.",
+    )
+    val thinking: String,
+
     @property:LLMDescription(
         "emotion은 정확히 다음 중 하나 (소문자): curious | confused | thoughtful | aha | happy. " +
             "새로 이해하면 aha, 질문/궁금하면 curious, 어려우면 confused, 생각 중 thoughtful, " +

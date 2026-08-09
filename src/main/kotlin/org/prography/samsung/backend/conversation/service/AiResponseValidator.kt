@@ -50,6 +50,7 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
 
         return AiTurnResponse(
             speak = filterForbiddenWords(speak),
+            thinking = node.path("thinking").asText("").trim(),
             emotion = emotion,
             covered = covered.distinct(),
             missing = missing.distinct(),
@@ -63,6 +64,7 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
     fun toJson(response: AiTurnResponse): String = objectMapper.writeValueAsString(
         mapOf(
             "speak" to response.speak,
+            "thinking" to response.thinking,
             "emotion" to response.emotion.value,
             "covered" to response.covered,
             "missing" to response.missing,
@@ -78,6 +80,7 @@ class AiResponseValidator(private val objectMapper: ObjectMapper) {
         val rawFocus = node.path("focus_concept").asText("").ifBlank { null }
         return AiTurnResponse(
             speak = node.path("speak").asText(),
+            thinking = node.path("thinking").asText(""),
             emotion = parseEmotion(node.path("emotion").asText()),
             covered = parseStringList(node.get("covered")),
             missing = parseStringList(node.get("missing")),

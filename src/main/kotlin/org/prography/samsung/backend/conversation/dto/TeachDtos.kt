@@ -16,6 +16,11 @@ data class TeachRequest(
 data class AiTurnResponse(
     val speak: String,
     @field:Schema(
+        description = "AI가 final 응답 전에 내부적으로 수행한 추론(thinking) 텍스트 (디버깅/분석용으로 함께 저장)",
+        example = "선생님이 key_point를 설명해 covered가 추가되었다. 다음 missing 개념으로 유도 질문한다.",
+    )
+    val thinking: String = "",
+    @field:Schema(
         description = "AI 감정 상태 (소문자 문자열로 직렬화)",
         allowableValues = ["curious", "confused", "thoughtful", "aha", "happy"],
         example = "curious",

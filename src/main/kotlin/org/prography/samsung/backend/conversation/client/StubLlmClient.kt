@@ -35,8 +35,15 @@ class StubLlmClient(private val aiResponseValidator: AiResponseValidator) : LlmC
             else -> "선생님, 그건 왜 그렇게 돼요? 예를 들면 어떤 거예요?"
         }
 
+        val thinking = when {
+            sessionDone -> "선생님이 모든 key_point를 설명해 covered가 완료되어 session_done=true. 감사 인사로 마무리."
+            deltaCovered.isNotEmpty() -> "선생님이 key_point를 설명해 covered가 추가됨. 다음 missing 개념으로 유도 질문."
+            else -> "선생님이 key_point를 아직 설명하지 않아 covered는 그대로. first missing 개념을 유도 질문."
+        }
+
         val raw = AiTurnResponse(
             speak = naiveSpeak,
+            thinking = thinking,
             emotion = if (sessionDone) {
                 org.prography.samsung.backend.common.domain.AiEmotion.HAPPY
             } else if (deltaCovered.isNotEmpty()) {
@@ -55,6 +62,7 @@ class StubLlmClient(private val aiResponseValidator: AiResponseValidator) : LlmC
         return buildString {
             appendLine("{")
             appendLine("  \"speak\": \"${raw.speak.replace("\"", "\\\"")}\",")
+            appendLine("  \"thinking\": \"${raw.thinking.replace("\"", "\\\"")}\",")
             appendLine("  \"emotion\": \"${raw.emotion.value}\",")
             appendLine("  \"covered\": ${toJsonArray(raw.covered)},")
             appendLine("  \"missing\": ${toJsonArray(raw.missing)},")
@@ -75,7 +83,13 @@ class StubLlmClient(private val aiResponseValidator: AiResponseValidator) : LlmC
 
     private fun extractConceptOrder(userPrompt: String): List<String> {
         val after = userPrompt.substringAfter("## 제공된 개념 ID 목록", "")
-        val line = after.lineSequence().map { it.trim() }.firstOrNull { it.isNotBlank() } ?: ""
+        // 헤더 줄에 '(반드시 이 ID만 사용)' 같은 주석이 붙을 수 있으므로,
+        // 실제 개념 ID(예: c1, c2, ...)가 담긴 줄만 선택한다.
+        val line =
+            after.lineSequence()
+                .map { it.trim() }
+                .firstOrNull { l -> l.isNotBlank() && l.contains(Regex("""[a-z]\d+""")) }
+                ?: ""
         return line.split(',').map { it.trim() }.filter { it.isNotBlank() }
     }
 
