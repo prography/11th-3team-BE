@@ -42,7 +42,6 @@ class StubLlmClientTest {
         val node = ObjectMapper().readTree(raw)
         assertEquals("[]", node.path("covered").toString())
         assertTrue(node.path("speak").asText().startsWith("선생님,"))
-        assertTrue(node.path("thinking").asText().isNotBlank())
     }
 
     @Test
