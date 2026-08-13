@@ -6,9 +6,15 @@ build/
 !**/src/test/**/build/
 .env
 
-### AI DOCS ###
+### AI ###
 docs/ai-reference/
-/.codebase-memory/
+.claude/**
+!.claude/skills/
+!.claude/skills/architecture-skill/
+!.claude/skills/architecture-skill/**
+
+/.codex/**
+.codebase-memory/
 /docs/superpowers/
 
 
@@ -23,7 +29,6 @@ docs/ai-reference/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
-.claude/**
 
 ### IntelliJ IDEA ###
 .idea
