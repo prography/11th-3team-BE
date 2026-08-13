@@ -6,9 +6,9 @@ import jakarta.validation.Valid
 import org.prography.samsung.backend.common.auth.CurrentUserHolder
 import org.prography.samsung.backend.common.response.SuccessCode
 import org.prography.samsung.backend.common.web.ApiResponseFactory
-import org.prography.samsung.backend.user.dto.UserSettingsRequest
-import org.prography.samsung.backend.user.service.UserProfileService
-import org.prography.samsung.backend.user.service.UserSettingsService
+import org.prography.samsung.backend.user.dto.request.UserSettingsRequest
+import org.prography.samsung.backend.user.usecase.UserHomeUsecase
+import org.prography.samsung.backend.user.usecase.UserProfileUsecase
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "User", description = "사용자 프로필·설정 API")
 @RestController
 class UserController(
-    private val userProfileService: UserProfileService,
-    private val userSettingsService: UserSettingsService,
+    private val userProfileUsecase: UserProfileUsecase,
+    private val userHomeUsecase: UserHomeUsecase,
 ) {
     @Operation(
         summary = "사용자 프로필 조회",
@@ -27,7 +27,7 @@ class UserController(
     @GetMapping("/user/profile")
     fun getProfile() = ApiResponseFactory.success(
         SuccessCode.OK,
-        userProfileService.getProfile(CurrentUserHolder.get().userId),
+        userProfileUsecase.getProfile(CurrentUserHolder.get().userId),
     )
 
     @Operation(
@@ -37,7 +37,7 @@ class UserController(
     @GetMapping("/user/home")
     fun getHome() = ApiResponseFactory.success(
         SuccessCode.OK,
-        userProfileService.getHome(CurrentUserHolder.get().userId),
+        userHomeUsecase.getHome(CurrentUserHolder.get().userId),
     )
 
     @Operation(
@@ -47,7 +47,7 @@ class UserController(
     @GetMapping("/user/settings")
     fun getSettings() = ApiResponseFactory.success(
         SuccessCode.OK,
-        userSettingsService.getSettings(CurrentUserHolder.get().userId),
+        userProfileUsecase.getSettings(CurrentUserHolder.get().userId),
     )
 
     @Operation(
@@ -58,6 +58,6 @@ class UserController(
     @PutMapping("/user/settings")
     fun updateSettings(@Valid @RequestBody request: UserSettingsRequest) = ApiResponseFactory.success(
         SuccessCode.OK,
-        userSettingsService.updateSettings(CurrentUserHolder.get().userId, request),
+        userProfileUsecase.updateSettings(CurrentUserHolder.get().userId, request),
     )
 }

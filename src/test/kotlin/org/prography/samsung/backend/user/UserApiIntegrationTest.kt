@@ -105,7 +105,7 @@ class UserApiIntegrationTest : IntegrationTestSupport() {
         post("/session/$sessionId/advance-phase", deviceId)
         post("/session/complete", deviceId, mapOf("sessionId" to sessionId))
 
-        expectApiSuccess(get("/user/profile", deviceId))
+        expectApiSuccess(get("/user/home", deviceId))
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.homeMessage").value("선생님 덕분에 분수의 계산 마스터! 다음에 또 만나요!"))
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.progressPercent").value(45))
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.totalCoins").value(500))

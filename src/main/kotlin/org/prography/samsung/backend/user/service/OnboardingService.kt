@@ -1,16 +1,16 @@
 package org.prography.samsung.backend.user.service
 
-import org.prography.samsung.backend.common.dto.UserScheduleResponse
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
 import org.prography.samsung.backend.common.util.KstDateTimeUtils
 import org.prography.samsung.backend.common.util.ScheduleValidator
 import org.prography.samsung.backend.curriculum.service.CurriculumService
-import org.prography.samsung.backend.user.dto.OnboardingCompleteResponse
-import org.prography.samsung.backend.user.dto.OnboardingRequest
-import org.prography.samsung.backend.user.dto.OnboardingResponse
-import org.prography.samsung.backend.user.dto.OnboardingStatusResponse
-import org.prography.samsung.backend.user.dto.UserScheduleRequest
+import org.prography.samsung.backend.user.dto.request.OnboardingRequest
+import org.prography.samsung.backend.user.dto.request.UserScheduleRequest
+import org.prography.samsung.backend.user.dto.response.OnboardingCompleteResponse
+import org.prography.samsung.backend.user.dto.response.OnboardingResponse
+import org.prography.samsung.backend.user.dto.response.OnboardingStatusResponse
+import org.prography.samsung.backend.user.dto.response.UserScheduleResponse
 import org.prography.samsung.backend.user.entity.UserCurriculum
 import org.prography.samsung.backend.user.entity.UserSchedule
 import org.prography.samsung.backend.user.entity.UserScheduleDay
@@ -19,7 +19,6 @@ import org.prography.samsung.backend.user.repository.UserProfileRepository
 import org.prography.samsung.backend.user.repository.UserRepository
 import org.prography.samsung.backend.user.repository.UserScheduleRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -31,7 +30,6 @@ class OnboardingService(
     private val userScheduleRepository: UserScheduleRepository,
     private val curriculumService: CurriculumService,
 ) {
-    @Transactional(readOnly = true)
     fun getStatus(userId: Long): OnboardingStatusResponse {
         val profile =
             userProfileRepository.findById(userId).orElseThrow {
@@ -43,7 +41,6 @@ class OnboardingService(
         )
     }
 
-    @Transactional
     fun saveCurriculum(userId: Long, request: OnboardingRequest): OnboardingResponse {
         val user = userRepository.findById(userId).orElseThrow {
             CustomException(DomainErrorCode.USER_NOT_FOUND)
@@ -67,7 +64,6 @@ class OnboardingService(
         return OnboardingResponse(curriculumId = curriculum.id, step = 1)
     }
 
-    @Transactional
     fun saveSchedule(userId: Long, request: UserScheduleRequest): UserScheduleResponse {
         val days = ScheduleValidator.parseDays(request.days)
         ScheduleValidator.validateSchedule(request.frequency, days, request.time)
@@ -104,7 +100,6 @@ class OnboardingService(
         return toScheduleResponse(schedule)
     }
 
-    @Transactional
     fun completeOnboarding(userId: Long): OnboardingCompleteResponse {
         val profile =
             userProfileRepository.findById(userId).orElseThrow {

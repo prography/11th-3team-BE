@@ -1,4 +1,4 @@
-package org.prography.samsung.backend.notification.dto
+package org.prography.samsung.backend.notification.dto.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import org.prography.samsung.backend.common.domain.DevicePlatform
@@ -10,7 +10,3 @@ data class NotificationRegisterRequest(
     @field:Schema(description = "디바이스 플랫폼", allowableValues = ["IOS", "ANDROID"], example = "IOS")
     val platform: DevicePlatform? = null,
 )
-
-data class NotificationRegisterResponse(val registered: Boolean, val scheduleCount: Int)
-
-data class NotificationRescheduleResponse(val rescheduled: Boolean)

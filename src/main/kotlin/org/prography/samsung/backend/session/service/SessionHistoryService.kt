@@ -1,18 +1,16 @@
 package org.prography.samsung.backend.session.service
 
 import org.prography.samsung.backend.common.util.KstDateTimeUtils
-import org.prography.samsung.backend.session.dto.SessionHistoryItemResponse
-import org.prography.samsung.backend.session.dto.SessionHistoryResponse
+import org.prography.samsung.backend.session.dto.response.SessionHistoryItemResponse
+import org.prography.samsung.backend.session.dto.response.SessionHistoryResponse
 import org.prography.samsung.backend.session.repository.TutoringSessionRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.Base64
 
 @Service
 class SessionHistoryService(private val tutoringSessionRepository: TutoringSessionRepository) {
-    @Transactional(readOnly = true)
     fun getHistory(userId: Long, cursor: String?, size: Int): SessionHistoryResponse {
         val pageSize = size.coerceIn(1, 50)
         val (cursorCompletedAt, cursorSessionId) = decodeCursor(cursor)

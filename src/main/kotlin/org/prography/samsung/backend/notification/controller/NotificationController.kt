@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.prography.samsung.backend.common.auth.CurrentUserHolder
 import org.prography.samsung.backend.common.response.SuccessCode
 import org.prography.samsung.backend.common.web.ApiResponseFactory
-import org.prography.samsung.backend.notification.dto.NotificationRegisterRequest
+import org.prography.samsung.backend.notification.dto.request.NotificationRegisterRequest
 import org.prography.samsung.backend.notification.service.NotificationService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody

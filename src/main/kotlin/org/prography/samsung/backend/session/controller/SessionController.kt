@@ -6,10 +6,12 @@ import jakarta.validation.Valid
 import org.prography.samsung.backend.common.auth.CurrentUserHolder
 import org.prography.samsung.backend.common.response.SuccessCode
 import org.prography.samsung.backend.common.web.ApiResponseFactory
-import org.prography.samsung.backend.session.dto.SessionCompleteRequest
-import org.prography.samsung.backend.session.dto.SessionStartRequest
-import org.prography.samsung.backend.session.service.SessionHistoryService
-import org.prography.samsung.backend.session.service.SessionService
+import org.prography.samsung.backend.session.dto.request.SessionCompleteRequest
+import org.prography.samsung.backend.session.dto.request.SessionStartRequest
+import org.prography.samsung.backend.session.usecase.SessionCompletionUsecase
+import org.prography.samsung.backend.session.usecase.SessionHistoryUsecase
+import org.prography.samsung.backend.session.usecase.SessionLessonUsecase
+import org.prography.samsung.backend.session.usecase.SessionLifeCycleUsecase
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -20,8 +22,10 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "Session", description = "수업 세션 API")
 @RestController
 class SessionController(
-    private val sessionService: SessionService,
-    private val sessionHistoryService: SessionHistoryService,
+    private val sessionLifeCycleUsecase: SessionLifeCycleUsecase,
+    private val sessionLessonUsecase: SessionLessonUsecase,
+    private val sessionCompletionUsecase: SessionCompletionUsecase,
+    private val sessionHistoryUsecase: SessionHistoryUsecase,
 ) {
     @Operation(
         summary = "세션 상태 조회",
@@ -30,7 +34,7 @@ class SessionController(
     @GetMapping("/session/status")
     fun getStatus() = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.getStatus(CurrentUserHolder.get().userId),
+        sessionLessonUsecase.getStatus(CurrentUserHolder.get().userId),
     )
 
     @Operation(
@@ -40,7 +44,7 @@ class SessionController(
     @GetMapping("/session/today")
     fun getToday() = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.getToday(CurrentUserHolder.get().userId),
+        sessionLessonUsecase.getToday(CurrentUserHolder.get().userId),
     )
 
     @Operation(
@@ -51,7 +55,7 @@ class SessionController(
     @PostMapping("/session/start")
     fun start(@RequestBody(required = false) request: SessionStartRequest?) = ApiResponseFactory.success(
         SuccessCode.CREATED,
-        sessionService.start(CurrentUserHolder.get().userId, request),
+        sessionLifeCycleUsecase.start(CurrentUserHolder.get().userId, request),
     )
 
     @Operation(
@@ -61,7 +65,7 @@ class SessionController(
     @GetMapping("/session/{sessionId}/lesson")
     fun getLesson(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.getLesson(CurrentUserHolder.get().userId, sessionId),
+        sessionLessonUsecase.getLesson(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(
@@ -71,7 +75,7 @@ class SessionController(
     @PostMapping("/session/{sessionId}/advance-phase")
     fun advancePhase(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.advancePhase(CurrentUserHolder.get().userId, sessionId),
+        sessionLifeCycleUsecase.advancePhase(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(
@@ -81,7 +85,7 @@ class SessionController(
     @GetMapping("/session/{sessionId}/reaction")
     fun getReaction(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.getReaction(CurrentUserHolder.get().userId, sessionId),
+        sessionLessonUsecase.getReaction(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(
@@ -92,7 +96,7 @@ class SessionController(
     @PostMapping("/session/complete")
     fun complete(@Valid @RequestBody request: SessionCompleteRequest) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.complete(CurrentUserHolder.get().userId, request.sessionId),
+        sessionCompletionUsecase.complete(CurrentUserHolder.get().userId, request.sessionId),
     )
 
     @Operation(
@@ -102,7 +106,7 @@ class SessionController(
     @GetMapping("/session/{sessionId}/reward")
     fun getReward(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.getReward(CurrentUserHolder.get().userId, sessionId),
+        sessionCompletionUsecase.getReward(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(
@@ -112,7 +116,7 @@ class SessionController(
     @PostMapping("/session/{sessionId}/reward/ack")
     fun acknowledgeReward(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.acknowledgeReward(CurrentUserHolder.get().userId, sessionId),
+        sessionCompletionUsecase.acknowledgeReward(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(
@@ -122,7 +126,7 @@ class SessionController(
     @PostMapping("/session/{sessionId}/abort")
     fun abort(@PathVariable sessionId: String) = ApiResponseFactory.success(
         SuccessCode.OK,
-        sessionService.abort(CurrentUserHolder.get().userId, sessionId),
+        sessionLifeCycleUsecase.abort(CurrentUserHolder.get().userId, sessionId),
     )
 
     @Operation(
@@ -133,6 +137,6 @@ class SessionController(
     fun getHistory(@RequestParam(required = false) cursor: String?, @RequestParam(defaultValue = "20") size: Int) =
         ApiResponseFactory.success(
             SuccessCode.OK,
-            sessionHistoryService.getHistory(CurrentUserHolder.get().userId, cursor, size),
+            sessionHistoryUsecase.getHistory(CurrentUserHolder.get().userId, cursor, size),
         )
 }
