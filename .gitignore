@@ -8,6 +8,9 @@ build/
 
 ### AI DOCS ###
 docs/ai-reference/
+/.codebase-memory/
+/docs/superpowers/
+
 
 ### STS ###
 .apt_generated
