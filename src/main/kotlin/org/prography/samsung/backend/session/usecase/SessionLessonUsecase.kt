@@ -1,5 +1,6 @@
 package org.prography.samsung.backend.session.usecase
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
@@ -18,6 +19,7 @@ class SessionLessonUsecase(
     private val sessionQueryService: SessionQueryService,
     private val curriculumService: CurriculumService,
     private val userProfileService: UserProfileService,
+    private val objectMapper: ObjectMapper,
 ) {
     @Transactional(readOnly = true)
     fun getToday(userId: Long): SessionTodayResponse {
@@ -56,13 +58,17 @@ class SessionLessonUsecase(
             throw CustomException(DomainErrorCode.SESSION_PHASE_MISMATCH)
         }
         val content = curriculumService.getLessonContent(snapshot.lessonTopic.id, expectedPhase)
+        val coveredConcepts = session.getCoveredConceptList(objectMapper)
+        val sections = content.hintNote.sections
+        val focusSection = sections.firstOrNull { it.id !in coveredConcepts } ?: sections.lastOrNull()
+        val filteredHintNote = content.hintNote.copy(sections = listOfNotNull(focusSection))
         return SessionLessonResponse(
             sessionId = session.id,
             conversationMode = session.conversationMode,
             currentPhase = expectedPhase,
             topicLabel = snapshot.lessonTopic.gnbTitle,
             question = content.question,
-            hintNote = content.hintNote,
+            hintNote = filteredHintNote,
         )
     }
 }
