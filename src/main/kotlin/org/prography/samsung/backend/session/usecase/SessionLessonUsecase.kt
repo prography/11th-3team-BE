@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.prography.samsung.backend.common.domain.SessionPhase
 import org.prography.samsung.backend.common.exception.CustomException
 import org.prography.samsung.backend.common.response.DomainErrorCode
+import org.prography.samsung.backend.conversation.repository.ConversationTurnRepository
 import org.prography.samsung.backend.curriculum.service.CurriculumService
 import org.prography.samsung.backend.session.SessionConstants
 import org.prography.samsung.backend.session.dto.response.SessionLessonResponse
@@ -20,6 +21,7 @@ class SessionLessonUsecase(
     private val curriculumService: CurriculumService,
     private val userProfileService: UserProfileService,
     private val objectMapper: ObjectMapper,
+    private val conversationTurnRepository: ConversationTurnRepository,
 ) {
     @Transactional(readOnly = true)
     fun getToday(userId: Long): SessionTodayResponse {
@@ -58,9 +60,16 @@ class SessionLessonUsecase(
             throw CustomException(DomainErrorCode.SESSION_PHASE_MISMATCH)
         }
         val content = curriculumService.getLessonContent(snapshot.lessonTopic.id, expectedPhase)
-        val coveredConcepts = session.getCoveredConceptList(objectMapper)
+        val lastTurn = conversationTurnRepository.findTopBySessionIdOrderByTurnNumberDesc(sessionId)
+        val focusConcept = lastTurn?.let {
+            objectMapper.readTree(it.aiResponseJson).path("focus_concept").asText("").ifBlank { null }
+        }
         val sections = content.hintNote.sections
-        val focusSection = sections.firstOrNull { it.id !in coveredConcepts } ?: sections.lastOrNull()
+        val focusSection = if (focusConcept != null) {
+            sections.firstOrNull { it.id == focusConcept } ?: sections.firstOrNull()
+        } else {
+            sections.firstOrNull()
+        }
         val filteredHintNote = content.hintNote.copy(sections = listOfNotNull(focusSection))
         return SessionLessonResponse(
             sessionId = session.id,
