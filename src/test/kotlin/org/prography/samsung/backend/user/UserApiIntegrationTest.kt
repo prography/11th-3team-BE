@@ -97,8 +97,26 @@ class UserApiIntegrationTest : IntegrationTestSupport() {
     }
 
     @Test
-    @DisplayName("수업 완료 후 홈 메시지가 완료 상태 문구로 바뀐다")
-    fun shouldUpdateHomeMessageAfterLessonCompleted() {
+    @DisplayName("모든 토픽 완료 후 홈 메시지가 완료 상태 문구로 바뀐다")
+    fun shouldUpdateHomeMessageAfterAllTopicsCompleted() {
+        val deviceId = newDeviceId()
+        completeOnboarding(deviceId)
+
+        val topicIds = topicIdsOf(deviceId)
+        topicIds.forEach { topicId ->
+            val sessionId = startSession(deviceId, topicId)
+            post("/session/$sessionId/advance-phase", deviceId)
+            post("/session/complete", deviceId, mapOf("sessionId" to sessionId))
+        }
+
+        expectApiSuccess(get("/user/home", deviceId))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.homeMessage").value("선생님 덕분에 분수의 계산 마스터! 다음에 또 만나요!"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.lessonCompletedToday").value(true))
+    }
+
+    @Test
+    @DisplayName("일부 토픽만 완료 시 마스터 메시지가 아닌 일반 메시지를 반환한다")
+    fun shouldReturnNormalMessageWhenOnlySomeTopicsCompleted() {
         val deviceId = newDeviceId()
         completeOnboarding(deviceId)
         val sessionId = startSession(deviceId)
@@ -106,8 +124,16 @@ class UserApiIntegrationTest : IntegrationTestSupport() {
         post("/session/complete", deviceId, mapOf("sessionId" to sessionId))
 
         expectApiSuccess(get("/user/home", deviceId))
-            .andExpect(MockMvcResultMatchers.jsonPath("$.data.homeMessage").value("선생님 덕분에 분수의 계산 마스터! 다음에 또 만나요!"))
-            .andExpect(MockMvcResultMatchers.jsonPath("$.data.progressPercent").value(45))
-            .andExpect(MockMvcResultMatchers.jsonPath("$.data.totalCoins").value(500))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.lessonCompletedToday").value(false))
+    }
+
+    private fun topicIdsOf(deviceId: String): List<Long> {
+        val body =
+            expectApiSuccess(get("/session/today", deviceId))
+                .andReturn()
+                .response
+                .contentAsString
+        val topics = objectMapper.readTree(body).path("data").path("topics")
+        return (0 until topics.size()).map { topics[it].path("lessonTopicId").asLong() }
     }
 }

@@ -50,7 +50,7 @@ class CurriculumService(
             ?: throw CustomException(DomainErrorCode.LESSON_TOPIC_NOT_FOUND)
 
     @Transactional(readOnly = true)
-    fun getTodayTopics(curriculumId: Long): List<TodayTopicResponse> =
+    fun getTodayTopics(curriculumId: Long, completedTopicIds: Set<Long> = emptySet()): List<TodayTopicResponse> =
         lessonTopicRepository.findAllByCurriculumIdOrderBySequenceAsc(curriculumId).map {
             TodayTopicResponse(
                 sequence = it.sequence,
@@ -58,6 +58,7 @@ class CurriculumService(
                 title = it.title,
                 subtitle = it.subtitle,
                 topicType = it.topicType,
+                completedToday = it.id in completedTopicIds,
             )
         }
 
