@@ -9,6 +9,11 @@
 
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
+    <!-- 클라이언트 조기 연결 종료(broken pipe, connection reset)는 서버가 조치할 수 없는 정상 상황이다.
+         Spring이 이 목적으로 분리해 둔 카테고리를 OFF로 내려 노이즈를 제거한다. -->
+    <logger name="org.springframework.web.servlet.handler.DisconnectedClient" level="OFF"/>
+    <logger name="org.springframework.web.servlet.mvc.method.annotation.DisconnectedClient" level="OFF"/>
+
     <springProfile name="prod">
         <logger name="org.prography" level="INFO"/>
         <logger name="org.hibernate.SQL" level="WARN"/>
