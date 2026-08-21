@@ -44,6 +44,8 @@ This file is a short map for agents working in the Prography Samsung Backend. Do
 - Add or update tests only when the user explicitly asks for test code.
 - Do not commit secrets, `.env`, AWS credentials, or machine-local values.
 - Preserve user changes already present in the worktree unless explicitly told otherwise.
+- **Never modify an already-applied Flyway migration — including comments.** Flyway checksums the entire file, so even a comment-only edit triggers `Validate failed: checksum mismatch` at startup (`validateOnMigrate` defaults to `true`), and recovery requires `flyway repair` against the live DB. Add a new version instead. Precedent: `77af720` edited the deployed `V13` in place, which is what led to the no-op `V17`.
+- **A migration logged as "applied" does not mean rows were written.** Conditional seeds (`INSERT ... WHERE NOT EXISTS`) succeed while inserting nothing. Verify the target table, not the Flyway log.
 - Use `./gradlew test` for verification when the change touches runtime logic.
 - Run `./gradlew ktlintCheck` before committing — ktlint is enforced.
 - Update `AGENTS.md` when repo-wide working rules, workflows, or agent expectations change.
