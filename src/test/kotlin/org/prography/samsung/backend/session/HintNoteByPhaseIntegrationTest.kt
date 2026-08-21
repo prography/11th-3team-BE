@@ -16,8 +16,9 @@ class HintNoteByPhaseIntegrationTest : IntegrationTestSupport() {
 
         expectApiSuccess(get("/session/$sessionId/lesson", deviceId))
             .andExpect(jsonPath("$.data.hintNote.header.title").value("분수의 개념"))
-            .andExpect(jsonPath("$.data.hintNote.sections[0].title").value("Q1. 분수란?"))
+            .andExpect(jsonPath("$.data.hintNote.sections[0].title").value("분수란?"))
             .andExpect(jsonPath("$.data.hintNote.sections[0].highlight").value(false))
+            .andExpect(jsonPath("$.data.hintNote.sections.length()").value(4))
 
         expectApiSuccess(post("/session/$sessionId/advance-phase", deviceId))
 
@@ -36,14 +37,15 @@ class HintNoteByPhaseIntegrationTest : IntegrationTestSupport() {
 
         expectApiSuccess(get("/session/$sessionId/lesson", deviceId))
             .andExpect(jsonPath("$.data.hintNote.header.title").value("분수의 덧셈과 뺄셈"))
-            .andExpect(jsonPath("$.data.hintNote.sections[0].title").value("핵심 규칙"))
+            .andExpect(jsonPath("$.data.hintNote.sections[0].title").value("분모가 같은 덧셈"))
             .andExpect(jsonPath("$.data.hintNote.sections[0].highlight").value(false))
+            .andExpect(jsonPath("$.data.hintNote.sections.length()").value(3))
 
         expectApiSuccess(post("/session/$sessionId/advance-phase", deviceId))
 
         expectApiSuccess(get("/session/$sessionId/reaction", deviceId))
             .andExpect(jsonPath("$.data.hintNote.header.title").value("분수의 덧셈과 뺄셈"))
-            .andExpect(jsonPath("$.data.hintNote.sections.length()").value(2))
+            .andExpect(jsonPath("$.data.hintNote.sections.length()").value(1))
             .andExpect(jsonPath("$.data.hintNote.sections[0].highlight").value(true))
     }
 
