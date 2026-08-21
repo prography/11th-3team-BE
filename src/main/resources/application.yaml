@@ -39,7 +39,7 @@ conversation:
   llm:
     provider: deepseek
     model: deepseek-v4-flash
-    timeout-ms: 30000
+    timeout-ms: 60000
     max-turns-per-session: 10
     max-llm-calls-per-session: 15
     context-turns: 5
