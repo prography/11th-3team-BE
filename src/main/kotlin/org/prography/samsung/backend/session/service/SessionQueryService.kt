@@ -36,6 +36,11 @@ class SessionQueryService(
         )
     }
 
+    fun findCompletedTopicIdsToday(userId: Long): Set<Long> {
+        val today = KstDateTimeUtils.todayKst()
+        return tutoringSessionRepository.findCompletedTopicIdsByUserIdAndSessionDate(userId, today)
+    }
+
     fun findActiveSession(userId: Long): ActiveSessionResponse? =
         tutoringSessionRepository.findByUserIdAndStatus(userId, SessionStatus.STARTED)?.let { toActiveSession(it) }
 

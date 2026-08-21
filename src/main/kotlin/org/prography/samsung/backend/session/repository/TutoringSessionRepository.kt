@@ -32,6 +32,20 @@ interface TutoringSessionRepository : JpaRepository<TutoringSession, String> {
         @Param("status") status: SessionStatus,
     ): Boolean
 
+    @Query(
+        """
+        SELECT DISTINCT s.lessonTopic.id
+        FROM TutoringSession s
+        WHERE s.user.id = :userId AND s.sessionDate = :sessionDate
+          AND s.status = org.prography.samsung.backend.common.domain.SessionStatus.COMPLETED
+          AND s.lessonTopic.id IS NOT NULL
+        """,
+    )
+    fun findCompletedTopicIdsByUserIdAndSessionDate(
+        @Param("userId") userId: Long,
+        @Param("sessionDate") sessionDate: LocalDate,
+    ): Set<Long>
+
     @EntityGraph(attributePaths = ["lessonTopic", "lessonTopic.curriculumUnit"])
     @Query(
         """

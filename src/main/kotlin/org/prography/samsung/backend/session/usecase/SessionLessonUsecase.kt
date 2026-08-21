@@ -23,7 +23,8 @@ class SessionLessonUsecase(
     fun getToday(userId: Long): SessionTodayResponse {
         val userCurriculum = userProfileService.getUserCurriculum(userId)
         val curriculum = userCurriculum.curriculum
-        val topics = curriculumService.getTodayTopics(curriculum.id)
+        val completedTopicIds = sessionQueryService.findCompletedTopicIdsToday(userId)
+        val topics = curriculumService.getTodayTopics(curriculum.id, completedTopicIds)
         val activeSession = sessionQueryService.findActiveSession(userId)
         return SessionTodayResponse(
             curriculumId = curriculum.id,

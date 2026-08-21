@@ -10,4 +10,5 @@ data class TodayTopicResponse(
     val subtitle: String?,
     @field:Schema(description = "토픽 유형", allowableValues = ["CONCEPT", "CALCULATION"], example = "CONCEPT")
     val topicType: TopicType,
+    val completedToday: Boolean,
 )
